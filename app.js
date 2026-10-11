@@ -265,7 +265,7 @@ const blankDb = () => ({
   plans: [], abandoned: [], logs: [], days: {}, baseline: null, pattern: null, myths: [], mythWrap: null, lab: 'hub',
   env: null, digital: null, tplans: [], landing: null,
   starts: [], startLab: null, attn: null, weeks: [], loop: null,
-  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '',
+  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '', guideSeen: false,
   ai: { calls: 0, tin: 0, tout: 0, cost: 0, day: 0, dayCalls: 0, cache: [], trend: null },
 });
 let db = blankDb();
@@ -831,6 +831,14 @@ function aiPart(task, label) {
 /* ---------- تکه‌های مشترک رابط ---------- */
 
 const A = () => db.active;
+// بخش‌های تاشو: هرچه برای قدم بعدی لازم نیست بسته می‌ماند
+const folds = {};
+const fold = (key, title, inner, openByDefault = false, sub = '') => `
+  <details class="fold" data-fold="${key}"${folds[key] ?? openByDefault ? ' open' : ''}>
+    <summary><span>${title}${sub ? `<small>${sub}</small>` : ''}</span></summary>
+    ${inner}
+  </details>`;
+const dueStack = (list) => list.slice(0, 2).join('') + (list.length > 2 ? fold('dues', `${fa(list.length - 2)} کار دیگر برای امروز`, list.slice(2).join('')) : '');
 const choice = (name, value, label, current, sub = '') => `
   <label class="choice${current === value ? ' on' : ''}">
     <input type="radio" name="${name}" value="${value}" data-bind="${name}"${current === value ? ' checked' : ''}>
@@ -935,13 +943,8 @@ function viewToday() {
   const envLeft = env && Date.now() - env.start < 7 * DAY ? auditLeft(env) : 0;
   const planNight = db.tplans.length && new Date().getHours() >= 18 && !planFor(tomorrowKey());
   const sl = db.startLab, slDay = sl ? baseDayNo(sl) : 0, at = db.attn, atN = at ? db.sessions.filter((s) => s.ping && s.date >= at.start).length : 0;
-  return `
-    <header class="top">
-      <p class="date">${dateFa(Date.now())}</p>
-      <h1>اگر همین الان منبع را ببندی، چه چیزی در ذهنت می‌ماند؟</h1>
-    </header>
-
-    ${due.length ? `
+  const dues = [
+    due.length ? `
     <section class="due">
       <h2>اول، بازیابی دیروز</h2>
       <p>قبل از مطالعهٔ تازه، ده دقیقه مطالب قبلی را از حافظه روی صفحه بیاور.</p>
@@ -950,16 +953,14 @@ function viewToday() {
           <div><b>${esc(s.subject)}</b><span>${esc(s.goal)}</span></div>
           <button class="btn" data-act="retrieve" data-id="${s.id}">بازیابی کن</button>
         </div>`).join('')}
-    </section>` : ''}
-
-    ${expDue ? `
+    </section>` : '',
+    expDue ? `
     <section class="due">
       <h2>نوبت دوم آزمایش رسیده</h2>
       <p>بدون هیچ مروری، همان پنج سؤال هر دو متن را دوباره جواب بده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="reread">ثبت نمره‌های امروز</button>
-    </section>` : ''}
-
-    ${b && baseRunning(b) ? `
+    </section>` : '',
+    b && baseRunning(b) ? `
     <section class="due">
       <h2>ثبت واقعی، روز ${fa(baseDayNo(b))} از ${fa(b.days)}</h2>
       <p>این روزها فقط اندازه بگیر. قرار نیست بهتر از همیشه باشی.</p>
@@ -969,9 +970,8 @@ function viewToday() {
       <h2>پروفایل نقطهٔ شروع آماده است</h2>
       <p>عددهای واقعی این چند روز کنار هم چیده شده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="baseline">دیدن پروفایل</button>
-    </section>` : ''}
-
-    ${m ? `
+    </section>` : '',
+    m ? `
     <section class="due">
       <h2>قانون امروز</h2>
       <p class="goal-line">${ruleLine(m)}</p>
@@ -983,9 +983,8 @@ function viewToday() {
       <h2>قانون امروز را انتخاب نکرده‌ای</h2>
       <p>روز ${fa(mythDays() + 1)} از ۷. فقط یک افسانه، فقط برای امروز.</p>
       <button class="btn" data-act="new-myth">انتخاب قانون امروز</button>
-    </section>` : ''}
-
-    ${tp && !tp.done ? `
+    </section>` : '',
+    tp && !tp.done ? `
     <section class="due">
       <h2>کار اول امروز</h2>
       <p class="goal-line">${esc(tp.task)}</p>
@@ -1004,16 +1003,14 @@ function viewToday() {
       <h2>فردا را امشب بچین</h2>
       <p>فقط سه تصمیم: کار اول، بهترین پنجره، نسخهٔ کوچک.</p>
       <button class="btn" data-act="new-tplan">طراحی فردا</button>
-    </section>` : ''}
-
-    ${db.loop && !weekNow() ? `
+    </section>` : '',
+    db.loop && !weekNow() ? `
     <section class="due">
       <h2>جلسهٔ هفتگی، بیست دقیقه</h2>
       <p>اول بررسی هفتهٔ قبل، بعد سه خروجی و دقیقاً یک اصلاح.</p>
       <button class="btn" data-act="new-week">شروع جلسهٔ هفتگی</button>
-    </section>` : ''}
-
-    ${sl && slDay <= 7 && !didStart(today()) ? `
+    </section>` : '',
+    sl && slDay <= 7 && !didStart(today()) ? `
     <section class="due">
       <h2>ورود کوچک، روز ${fa(slDay)} از ۷</h2>
       <p>امروز هنوز ورودی ثبت نشده. حالِ خوب شرط نیست؛ فقط حرکت اول.</p>
@@ -1023,55 +1020,63 @@ function viewToday() {
       <h2>هفت روزِ ورود کوچک تمام شد</h2>
       <p>عددها را کنار خط پایه ببین و نسخهٔ شخصی شروعت را بنویس.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="start">تحلیل روز هفتم</button>
-    </section>` : ''}
-
-    ${at && atN < 3 ? `
+    </section>` : '',
+    at && atN < 3 ? `
     <section class="due">
       <h2>نقشهٔ توجه، جلسهٔ ${fa(atN + 1)} از ۳</h2>
       <p>همان درس این روزها، با زنگ هر پنج دقیقه. فقط ببین و نام بگذار.</p>
       <button class="btn" data-act="attn-session">شروع جلسه با نقشه</button>
-    </section>` : ''}
-
-    ${db.ramp && rampList().length < 4 ? `
+    </section>` : '',
+    db.ramp && rampList().length < 4 ? `
     <section class="due">
       <h2>رمپ ورود، بلوک ${fa(rampList().length + 1)} از ۴</h2>
       <p>پارک، واحد کار، بارگذاریِ زمان‌دار، قفل. ورود را با خروجی بسنج، نه با حس.</p>
       <button class="btn" data-act="ramp-session">شروع بلوک با رمپ</button>
-    </section>` : ''}
-
-    ${db.keep && keepList().length < 3 ? `
+    </section>` : '',
+    db.keep && keepList().length < 3 ? `
     <section class="due">
       <h2>لنگر، پارک، بازگشت؛ جلسهٔ ${fa(keepList().length + 1)} از ۳</h2>
       <p>حواس‌پرتی می‌آید. فقط زود ببین و با یک عمل برگرد.</p>
       <button class="btn" data-act="keep-session">شروع جلسه با برگهٔ پارک</button>
-    </section>` : ''}
-
-    ${db.fmtLab && fmtList().length < 3 ? `
+    </section>` : '',
+    db.fmtLab && fmtList().length < 3 ? `
     <section class="due">
       <h2>قالب جلسه، ${fa(fmtList().length + 1)} از ۳</h2>
       <p>${has(db.fmtLab.type) ? `نوع کار: ${esc(db.fmtLab.type)}. ` : ''}همان قالب، بدون تغییر وسط جلسه؛ بعدش یک خط ثبت.</p>
       <button class="btn" data-act="fmt-session">شروع جلسهٔ این نوع کار</button>
-    </section>` : ''}
-
-    ${dig && !dig.wrap ? `
+    </section>` : '',
+    dig && !dig.wrap ? `
     <section class="due">
       <h2>${baseDayNo(dig) <= 7 ? `محیط دیجیتال، روز ${fa(baseDayNo(dig))} از ۷` : 'جمع‌بندی هفتهٔ دیجیتال'}</h2>
       <p>${baseDayNo(dig) > 7 ? 'هفت روز گذشت. عددها را کنار خط پایه ببین.'
         : has(dig.rule?.place) ? `گوشی: ${esc(dig.rule.place)}${has(dig.rule.next) ? `. چک بعدی: ${esc(dig.rule.next)}` : ''}` : 'این هفته چیزی به سیستم اضافه نکن؛ فقط اجرا و ثبت.'}</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="digital">${baseDayNo(dig) > 7 ? 'جمع‌بندی' : 'کاربرگ هفت روز'}</button>
-    </section>` : ''}
-
-    ${envLeft ? `
+    </section>` : '',
+    envLeft ? `
     <section class="due">
       <h2>بازطراحی محیط، ${fa(envLeft)} عامل مانده</h2>
       <p>با همین وسایلی که داری. اگر کش آمده، با همین وضعیت یک جلسهٔ کوتاه بخوان.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="env">ادامهٔ ممیزی</button>
-    </section>` : ''}
+    </section>` : '',
+  ].filter(Boolean);
+  return `
+    <header class="top">
+      <p class="date">${dateFa(Date.now())}</p>
+      <h1>اگر همین الان منبع را ببندی، چه چیزی در ذهنت می‌ماند؟</h1>
+    </header>
+
+    ${db.guideSeen ? '' : `
+    <section class="due">
+      <h2>راهنمای یک‌دقیقه‌ای</h2>
+      <p>هر بخش اپ برای چیست و از کجا شروع کنی. بعداً هم از دکمهٔ «راهنما» بالای هر صفحه باز می‌شود.</p>
+      <div class="row acts"><button class="btn" data-act="guide" data-focus="start">دیدن راهنما</button><button class="btn quiet" data-act="guide-skip">بعداً</button></div>
+    </section>`}
+
+    ${dueStack(dues)}
 
     <section class="start">
       <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>
-      <button class="btn big" data-act="new-quick">شروع ۶۰ ثانیه‌ای</button>
-      <button class="btn big" data-act="new-obstacle">شروع نمی‌کنم یا فرار می‌کنم</button>
+      <div class="row eq"><button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button><button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button></div>
       ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
       ${has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}
     </section>
@@ -1131,11 +1136,7 @@ function viewSession() {
       tool: 'برنامهٔ درس را تمام‌صفحه باز کن و اگر می‌شود خروج را قفل کن.', desk: 'رو به پایین هم کافی نیست؛ هنوز یک حرکت فاصله دارد.' }[a.phonePlace] || 'بی‌صدا و رو به پایین روی میز حساب نیست.';
     return `
       <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>خروجی این جلسه</h1></header>
-      <div class="field"><span>این جلسه چه جور جلسه‌ای است؟</span>
-        ${seg('mode', [['normal', 'عادی'], ['scan', 'مطلب کاملاً تازه'], ['min', 'روز کم‌انرژی']], a.mode, 'نوع جلسه')}
-        <small>${a.mode === 'scan' ? 'اول عنوان‌ها، خلاصه و سؤال‌های آخر فصل را نگاه کن. هدف این جلسه شناختن ساختار است، نه حل‌کردن.'
-          : a.mode === 'min' ? 'هدف مینیمم: یک کار کوچک که حتماً تمام می‌شود. زنجیره قطع نشود، همین کافی است.'
-          : 'یک هدف اصلی. اگر وقت ماند، هدف دوم.'}</small></div>
+      ${tip('session')}
       ${textField('موضوع باریک', 'subject', a.subject, 'مثلاً: مشتق زنجیره‌ای، تمرین‌های صفحهٔ ۸۴', 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.')}
       <label class="field"><span>تا پایان این جلسه باید بتوانم…</span>
         <textarea rows="3" data-bind="goal" data-live placeholder="${a.mode === 'min' ? 'تعریف را از حفظ بنویسم و یک مثال بزنم' : 'مسائل سقوط آزاد صفحهٔ ۶۲ را بدون حل‌المسائل حل کنم'}">${esc(a.goal || '')}</textarea></label>
@@ -1144,6 +1145,19 @@ function viewSession() {
         <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: ۵ تمرین بدون نگاه به حل؛ ۴ تا درست"></label>
       <p class="hint" id="crit-hint" ${cHint ? '' : 'hidden'}>${cHint}</p>
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}
+      <div class="field"><span>${a.fmt === 'flex' ? 'سقف قطعی' : 'مدت کار'}</span>${seg('minutes', F.opts.map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
+        <small>دقیقه. عدد فرضیه است، نه قانون؛ از جلسه‌های اخیرت بردار، نه از آرزو.${prevT ? ` آخرین بار در این نوع کار ${fa(realOf(prevT))} دقیقهٔ واقعی از ${fa(prevT.studied)} داشتی.` : ''}${a.fmt === 'deep' && a.minutes > 60 ? ' بلوک بلندتر فقط بعد از چند بلوک موفقِ کوتاه‌تر در همین نوع کار.' : ''}</small></div>
+      <div class="field"><span>گوشی کجاست؟</span>
+        ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
+        <small>${phoneHint}</small></div>
+      <button class="btn primary big" data-act="start-study">شروع مطالعه</button>
+      <p class="fine">همین‌ها برای شروع کافی است. بخش‌های پایین اختیاری‌اند؛ هر کدام را خواستی باز کن.</p>
+      ${fold('s-start', 'نوع جلسه و لحظهٔ شروع', `
+      <div class="field"><span>این جلسه چه جور جلسه‌ای است؟</span>
+        ${seg('mode', [['normal', 'عادی'], ['scan', 'مطلب کاملاً تازه'], ['min', 'روز کم‌انرژی']], a.mode, 'نوع جلسه')}
+        <small>${a.mode === 'scan' ? 'اول عنوان‌ها، خلاصه و سؤال‌های آخر فصل را نگاه کن. هدف این جلسه شناختن ساختار است، نه حل‌کردن.'
+          : a.mode === 'min' ? 'هدف مینیمم: یک کار کوچک که حتماً تمام می‌شود. زنجیره قطع نشود، همین کافی است.'
+          : 'یک هدف اصلی. اگر وقت ماند، هدف دوم.'}</small></div>
       ${textField('امروز جزو هدف نیست', 'out', a.out, 'اختیاری؛ مثلاً: مسائل ترکیبی')}
       <div class="field"><span>لحظهٔ شروع</span>
         <div class="ifthen">
@@ -1159,8 +1173,8 @@ function viewSession() {
         <small>شرط شروع نیست؛ فقط ثبت می‌شود تا ببینی بی‌حوصله هم شروع می‌کنی.</small></div>
       ${textField('چرا این؟', 'why', a.why, 'اختیاری؛ دلیل واقعی، نه شعار')}
       <div class="field"><span>بار ذهنی این کار</span>${seg('load', Object.entries(LOADS), a.load, 'بار ذهنی')}
-        <small>${loadHint}</small></div>
-      <fieldset class="group"><legend>قالب این جلسه، یک دقیقه</legend>
+        <small>${loadHint}</small></div>`, a.entry > 0 || a.mode !== 'normal')}
+      ${fold('s-fmt', 'قالب این جلسه', `
         <label class="field"><span>نوع کار</span>
           <input type="text" data-bind="wtype" list="wtypes" value="${esc(a.wtype || '')}" placeholder="مثلاً: حل تمرین فیزیک، مرور واژگان">
           <datalist id="wtypes">${wtypes().map((w) => `<option value="${esc(w)}">`).join('')}</datalist>
@@ -1172,11 +1186,8 @@ function viewSession() {
         ${a.cut === 'cont' && a.hardDay === 'no' ? `<div class="field"><span>زمان محافظت‌شده دارم و جلسه‌های اخیرم نشان می‌دهد این مدت را با کیفیت تاب می‌آورم؟</span>
           ${seg('guarded', [['yes', 'بله'], ['no', 'نه، یا طول کار معلوم نیست']], a.guarded, 'ظرفیت فعلی')}</div>` : ''}
         <div class="field"><span>قالب</span>${seg('fmt', FMT_ORDER.map((k) => [k, FMT[k].label]), a.fmt, 'قالب جلسه')}
-          <small>${sug && sug !== a.fmt ? `پیشنهادِ دو سؤال «${FMT[sug].label}» بود. ` : ''}${stretchy(a) ? 'ده دقیقه با تمدید اختیاری: سر زنگ کار را قطع نکن؛ فقط بپرس «ده دقیقهٔ دیگر می‌توانم؟»، تا سقف چهل.' : F.note}</small></div>
-        <div class="field"><span>${a.fmt === 'flex' ? 'سقف قطعی' : 'مدت کار'}</span>${seg('minutes', F.opts.map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
-          <small>دقیقه. عدد فرضیه است، نه قانون؛ از جلسه‌های اخیرت بردار، نه از آرزو.${prevT ? ` آخرین بار در این نوع کار ${fa(realOf(prevT))} دقیقهٔ واقعی از ${fa(prevT.studied)} داشتی.` : ''}${a.fmt === 'deep' && a.minutes > 60 ? ' بلوک بلندتر فقط بعد از چند بلوک موفقِ کوتاه‌تر در همین نوع کار.' : ''}</small></div>
-      </fieldset>
-      <fieldset class="group"><legend>ورود و لنگر</legend>
+          <small>${sug && sug !== a.fmt ? `پیشنهادِ دو سؤال «${FMT[sug].label}» بود. ` : ''}${stretchy(a) ? 'ده دقیقه با تمدید اختیاری: سر زنگ کار را قطع نکن؛ فقط بپرس «ده دقیقهٔ دیگر می‌توانم؟»، تا سقف چهل.' : F.note}</small></div>`, !!db.fmtLab && fmtList().length < 3)}
+      ${fold('s-ramp', 'ورود و لنگر', `
         <div class="field"><span>رمپ ورود</span>
           ${seg('ramp', [[0, 'خاموش'], [8, 'کامل'], [3, 'فشرده'], ['hot', 'گرمم']], a.ramp, 'رمپ ورود')}
           <small>${a.ramp === 8 ? 'حداکثر هشت دقیقه بارگذاری با لبهٔ آسانِ همین کار، بعد قفل. زنگ تمدید ندارد.'
@@ -1191,14 +1202,10 @@ function viewSession() {
           </div>
           <small>فقط بلندترینش. فهرست کارها را اینجا باز نکن.</small></div>
         ${textField('اگر گیر کردم، اولین قدم جایگزینم', 'fallback', a.fallback, 'مثلاً: برمی‌گردم به مثال حل‌شدهٔ صفحهٔ ۶۲', 'واحد کار همان خروجی بالاست: فعل، محدوده، خروجی. باید بشود به آن جواب غلط داد.')}` : ''}
-        ${textField('محتمل‌ترین حواس‌پرتی این جلسه: اگر…', 'guard', a.guard, 'خواستم گروه کلاس را چک کنم', 'آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم. یک جملهٔ خوب را جلسه‌ها تکرار کن.')}
-      </fieldset>
-      <fieldset class="group"><legend>حالت مطالعه، دو دقیقه</legend>
+        ${textField('محتمل‌ترین حواس‌پرتی این جلسه: اگر…', 'guard', a.guard, 'خواستم گروه کلاس را چک کنم', 'آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم. یک جملهٔ خوب را جلسه‌ها تکرار کن.')}`, !!a.ramp)}
+      ${fold('s-mode', 'حالت مطالعه', `
         ${has(rule?.place) ? `<p class="count">قاعدهٔ خودت: گوشی ${esc(rule.place)}${has(rule.people) ? `؛ فقط ${esc(rule.people)} فوری می‌رسند` : ''}${has(rule.next) ? `؛ چک بعدی ${esc(rule.next)}` : ''}.</p>` : ''}
         ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب، دفتر تمرین، مستندات پایتون', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}
-        <div class="field"><span>گوشی کجاست؟</span>
-          ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
-          <small>${phoneHint}</small></div>
         <label class="check"><input type="checkbox" data-bind="deskClear" ${a.deskClear ? 'checked' : ''}>
           <span>روی میز فقط وسایل همین جلسه است.</span></label>
         <label class="check"><input type="checkbox" data-bind="focusOn" ${a.focusOn ? 'checked' : ''}>
@@ -1209,9 +1216,7 @@ function viewSession() {
           ${seg('ping', [[0, 'خاموش'], [5, 'هر ۵ دقیقه'], [2, 'هر ۲ دقیقه'], ['end', 'فقط پایان']], a.ping, 'زنگ نمونه‌گیری')}
           <small>${a.ping === 'end' ? 'بدون زنگ میانی؛ برای وقتی که زنگ رشتهٔ حل مسئله را پاره می‌کند. سه عدد را آخر جلسه می‌نویسی.'
             : a.ping ? `با هر لرزش، ده ثانیه: یکی از سه برچسب را بزن و برگرد. بلوک ۱۵ تا ۲۵ دقیقه کافی است${a.minutes > 25 ? '؛ این جلسه را طولانی‌تر نکن' : ''}.`
-            : 'زنگ بی‌صدا وسط جلسه می‌پرسد توجهت الان کجاست.'}</small></div>
-      </fieldset>
-      <button class="btn primary big" data-act="start-study">شروع مطالعه</button>
+            : 'زنگ بی‌صدا وسط جلسه می‌پرسد توجهت الان کجاست.'}</small></div>`, !!a.ping)}
       <button class="btn big" data-act="plan-save">هدف را نگه دار برای همان لحظه</button>`;
   }
 
@@ -1846,12 +1851,9 @@ function viewTrends() {
     ${triggers.length ? `<section><h2>درست قبل از فرار</h2>
       <ul class="plain">${triggers.map((u) => `<li>${esc(u.before)}</li>`).join('')}</ul></section>` : ''}
 
-    <section>
-      <h2>نشانه‌های جاافتادن</h2>
-      ${goalList(goals)}
-    </section>
+    ${fold('t-goals', 'نشانه‌های جاافتادن', goalList(goals), false, `${fa(goals.filter(([, n, need]) => n >= need).length)} از ${fa(goals.length)}`)}
 
-    ${all.length ? `<section><h2>همهٔ جلسه‌ها</h2><ul class="log">${[...all].reverse().slice(0, 30).map(sessionRow).join('')}</ul></section>` : ''}`;
+    ${all.length ? fold('t-all', 'همهٔ جلسه‌ها', `<ul class="log">${[...all].reverse().slice(0, 30).map(sessionRow).join('')}</ul>`, false, fa(all.length)) : ''}`;
 }
 
 /* ---------- آزمایش‌ها ---------- */
@@ -1864,40 +1866,45 @@ function viewLab() {
   const b = db.baseline, e = db.experiment, en = db.env, dg = db.digital;
   const sl = db.startLab, at = db.attn, atN = at ? db.sessions.filter((s) => s.ping && s.date >= at.start).length : 0;
   const tp = planFor(tomorrowKey()) || planFor(today());
-  const card = (view, title, text, status) => `
-    <section class="due">
-      <h2>${title}</h2>
-      <p>${text}</p>
-      <div class="due-item"><div><b>${status}</b></div><button class="btn" data-act="lab-view" data-view="${view}">باز کن</button></div>
-    </section>`;
+  const card = (view, title, text, status) => [status !== 'شروع نشده', `
+    <li><button class="lab-row" data-act="lab-view" data-view="${view}">
+      <b>${title}</b>${status !== 'شروع نشده' ? `<span class="tag">${status}</span>` : ''}
+      <small>${text}</small>
+    </button></li>`];
+  const cards = [
+    card('baseline', 'سه روز ثبت واقعی', 'قبل از هر برنامه‌ای، ببین الان دقیقاً کجا ایستاده‌ای.',
+      !b ? 'شروع نشده' : baseRunning(b) ? `روز ${fa(baseDayNo(b))} از ${fa(b.days)}` : 'پروفایل آماده است'),
+    card('env', 'بازطراحی محیط مطالعه', 'یک‌بار میز، نور، صدا و جای گوشی را بچین و اثرش را با عدد ببین.',
+      !en ? 'شروع نشده' : auditLeft(en) ? `${fa(auditLeft(en))} عامل مانده` : 'ممیزی کامل شد'),
+    card('digital', 'هفت روز محیط دیجیتال', 'اعلان، دسترسی و حالت مطالعه را یک‌بار بچین؛ بعد فقط اجرا و ثبت.',
+      !dg ? 'شروع نشده' : dg.wrap ? 'هفته جمع‌بندی شد' : `روز ${fa(Math.min(7, baseDayNo(dg)))} از ۷`),
+    card('time', 'معماری زمان', 'کار سنگین در ساعت اوج، با برآورد واقعی و یک نسخهٔ کوچکِ جایگزین.',
+      tp ? `کار اولِ ${dayWord(tp)} قفل شده` : db.tplans.length ? 'کار اول فردا نوشته نشده' : 'شروع نشده'),
+    card('loop', 'حلقهٔ سبک برنامه', 'کارت پنج‌دقیقه‌ای، ثبت نودثانیه‌ای و هفته‌ای یک اصلاح؛ چهارده روز.',
+      !db.loop ? 'شروع نشده' : !weekNow() ? 'جلسهٔ هفتگی مانده' : `روز ${fa(Math.min(14, baseDayNo(db.loop)))} از ۱۴`),
+    card('start', 'ورود کوچک', 'فاصلهٔ «الان شروع می‌کنم» تا اولین کار واقعی را هفت روز اندازه بگیر و کوتاه کن.',
+      !sl ? 'شروع نشده' : baseDayNo(sl) > 7 ? 'تحلیل روز هفتم' : `روز ${fa(baseDayNo(sl))} از ۷`),
+    card('attn', 'نقشهٔ توجه', 'سه جلسه فقط ببین و نام بگذار: تمرکز کاری، شبه‌تمرکز یا حواس‌پرتی.',
+      !at ? 'شروع نشده' : atN >= 3 ? 'خط پایه آماده است' : `${fa(atN)} جلسه از ۳`),
+    card('ramp', 'رمپ ورود', 'نشسته‌ای ولی وارد نشده‌ای؟ چهار بلوک: پارک، بارگذاری، قفل و بررسی میانی.',
+      !db.ramp ? 'شروع نشده' : rampList().length >= 4 ? 'تحلیل چهار بلوک' : `${fa(rampList().length)} بلوک از ۴`),
+    card('keep', 'لنگر، پارک، بازگشت', 'سه جلسه: پرش را زود ببین و ارزان برگرد؛ هدف صفرِ حواس‌پرتی نیست.',
+      !db.keep ? 'شروع نشده' : keepList().length >= 3 ? 'جمع‌بندی سه جلسه' : `${fa(keepList().length)} جلسه از ۳`),
+    card('fmt', 'قالب جلسه', 'کوتاه، پومودورو، بلوک عمیق یا انعطاف‌پذیر؟ برای هر نوع کار، پیش‌فرض خودت را پیدا کن.',
+      !db.fmtLab ? 'شروع نشده' : fmtList().length >= 3 ? 'قاعدهٔ تصمیم آماده است' : `${fa(fmtList().length)} جلسه از ۳`),
+    card('myths', 'هفت روز «افسانه یا داده؟»', 'هر روز یک باور قدیمی را با یک قانون «اگر، آنگاه» محک بزن.',
+      db.mythWrap ? 'هفته جمع‌بندی شد' : db.myths.length ? `${fa(Math.min(7, mythDays()))} روز از ۷` : 'شروع نشده'),
+    card('reread', 'دوباره‌خوانی در برابر بازیابی', 'دو متن، دو روش، یک روز فاصله.',
+      !e ? 'شروع نشده' : e.later ? 'نتیجه آماده است' : 'منتظر نوبت دوم'),
+  ];
+  const on = cards.filter(([started]) => started).map(([, html]) => html), off = cards.filter(([started]) => !started).map(([, html]) => html);
   return `
     <header class="top"><h1>آزمایش روی خودت</h1>
-      <p>حرف هیچ‌کس را قبول نکن؛ از عملکرد خودت عدد بگیر.</p></header>
-    ${card('baseline', 'سه روز ثبت واقعی', 'قبل از هر برنامه‌ای، ببین الان دقیقاً کجا ایستاده‌ای.',
-      !b ? 'شروع نشده' : baseRunning(b) ? `روز ${fa(baseDayNo(b))} از ${fa(b.days)}` : 'پروفایل آماده است')}
-    ${card('env', 'بازطراحی محیط مطالعه', 'یک‌بار میز، نور، صدا و جای گوشی را بچین و اثرش را با عدد ببین.',
-      !en ? 'شروع نشده' : auditLeft(en) ? `${fa(auditLeft(en))} عامل مانده` : 'ممیزی کامل شد')}
-    ${card('digital', 'هفت روز محیط دیجیتال', 'اعلان، دسترسی و حالت مطالعه را یک‌بار بچین؛ بعد فقط اجرا و ثبت.',
-      !dg ? 'شروع نشده' : dg.wrap ? 'هفته جمع‌بندی شد' : `روز ${fa(Math.min(7, baseDayNo(dg)))} از ۷`)}
-    ${card('time', 'معماری زمان', 'کار سنگین در ساعت اوج، با برآورد واقعی و یک نسخهٔ کوچکِ جایگزین.',
-      tp ? `کار اولِ ${dayWord(tp)} قفل شده` : db.tplans.length ? 'کار اول فردا نوشته نشده' : 'شروع نشده')}
-    ${card('loop', 'حلقهٔ سبک برنامه', 'کارت پنج‌دقیقه‌ای، ثبت نودثانیه‌ای و هفته‌ای یک اصلاح؛ چهارده روز.',
-      !db.loop ? 'شروع نشده' : !weekNow() ? 'جلسهٔ هفتگی مانده' : `روز ${fa(Math.min(14, baseDayNo(db.loop)))} از ۱۴`)}
-    ${card('start', 'ورود کوچک', 'فاصلهٔ «الان شروع می‌کنم» تا اولین کار واقعی را هفت روز اندازه بگیر و کوتاه کن.',
-      !sl ? 'شروع نشده' : baseDayNo(sl) > 7 ? 'تحلیل روز هفتم' : `روز ${fa(baseDayNo(sl))} از ۷`)}
-    ${card('attn', 'نقشهٔ توجه', 'سه جلسه فقط ببین و نام بگذار: تمرکز کاری، شبه‌تمرکز یا حواس‌پرتی.',
-      !at ? 'شروع نشده' : atN >= 3 ? 'خط پایه آماده است' : `${fa(atN)} جلسه از ۳`)}
-    ${card('ramp', 'رمپ ورود', 'نشسته‌ای ولی وارد نشده‌ای؟ چهار بلوک: پارک، بارگذاری، قفل و بررسی میانی.',
-      !db.ramp ? 'شروع نشده' : rampList().length >= 4 ? 'تحلیل چهار بلوک' : `${fa(rampList().length)} بلوک از ۴`)}
-    ${card('keep', 'لنگر، پارک، بازگشت', 'سه جلسه: پرش را زود ببین و ارزان برگرد؛ هدف صفرِ حواس‌پرتی نیست.',
-      !db.keep ? 'شروع نشده' : keepList().length >= 3 ? 'جمع‌بندی سه جلسه' : `${fa(keepList().length)} جلسه از ۳`)}
-    ${card('fmt', 'قالب جلسه', 'کوتاه، پومودورو، بلوک عمیق یا انعطاف‌پذیر؟ برای هر نوع کار، پیش‌فرض خودت را پیدا کن.',
-      !db.fmtLab ? 'شروع نشده' : fmtList().length >= 3 ? 'قاعدهٔ تصمیم آماده است' : `${fa(fmtList().length)} جلسه از ۳`)}
-    ${card('myths', 'هفت روز «افسانه یا داده؟»', 'هر روز یک باور قدیمی را با یک قانون «اگر، آنگاه» محک بزن.',
-      db.mythWrap ? 'هفته جمع‌بندی شد' : db.myths.length ? `${fa(Math.min(7, mythDays()))} روز از ۷` : 'شروع نشده')}
-    ${card('reread', 'دوباره‌خوانی در برابر بازیابی', 'دو متن، دو روش، یک روز فاصله.',
-      !e ? 'شروع نشده' : e.later ? 'نتیجه آماده است' : 'منتظر نوبت دوم')}`;
+      <p>هر آزمایش یک تمرین چندروزه است. هم‌زمان یکی کافی است.</p></header>
+    ${on.length ? `<section><h2>شروع‌کرده‌ای</h2><ul class="lab-list">${on.join('')}</ul></section>` : ''}
+    ${off.length ? `<section><h2>${on.length ? 'بقیهٔ آزمایش‌ها' : 'یکی را انتخاب کن'}</h2><ul class="lab-list">${off.join('')}</ul></section>` : ''}`;
 }
+
 
 function viewBaseline() {
   const b = db.baseline;
@@ -2968,6 +2975,87 @@ function viewReread() {
     <button class="btn big" data-act="lab-reset">آزمایش تازه با دو متن دیگر</button>`;
 }
 
+/* ---------- راهنما ---------- */
+
+// هر بخش تازه‌ای که به اپ اضافه می‌شود، یک ردیف هم اینجا می‌گیرد: [کلید، عنوان، برای چیست، چطور]
+const GUIDE = [
+  ['start', 'از کجا شروع کنم؟', [
+    ['first', 'سه قدم، همین', 'اپ یک کار می‌کند: جلسهٔ مطالعه را با چیزی که واقعاً یاد گرفته‌ای می‌سنجد، نه با ساعت.',
+      '۱. «شروع جلسهٔ مطالعه» را بزن و بنویس آخر جلسه باید چه کاری بتوانی. ۲. تایمر که تمام شد منبع را ببند و از حفظ بنویس. ۳. فردا اپ همان مطلب را دوباره از تو می‌پرسد. بقیهٔ بخش‌ها اختیاری‌اند و لازم نیست همه را بلد باشی.'],
+  ]],
+  ['today', 'زبانهٔ امروز', [
+    ['session', 'شروع جلسهٔ مطالعه', 'کار اصلی اپ. قبل از خواندن معلوم می‌کنی آخر جلسه باید چه کاری بتوانی، و بعد با کتابِ بسته خودت را می‌سنجی.',
+      'فقط موضوع، هدف، معیار، مدت و جای گوشی را پر کن و «شروع مطالعه» را بزن. بخش‌های تاشوی پایین فرم اختیاری‌اند.'],
+    ['quick', 'فقط ۶۰ ثانیه', 'برای وقتی که حوصلهٔ یک جلسهٔ کامل را نداری. فقط یک دقیقه روی اولین حرکت درس می‌مانی.',
+      'بزن، یک حرکت کوچک انتخاب کن و یک دقیقه انجامش بده. بعدش آزادی ادامه بدهی یا بایستی.'],
+    ['obstacle', 'شروع نمی‌کنم', 'برای وقتی که از درس فرار می‌کنی. به‌جای «تنبلی»، مانع واقعی را پیدا می‌کنی و یک قدم ورودی کوچک برمی‌داری.',
+      'مانع را از فهرست انتخاب کن؛ اپ برای همان مانع یک قدم کوچک پیشنهاد می‌دهد.'],
+    ['retrieval', 'بازیابی دیروز', 'مطلبی که دیروز خوانده‌ای را امروز از حافظه بیرون می‌کشی تا ماندگار شود.',
+      'خودش بالای صفحهٔ امروز ظاهر می‌شود. «بازیابی کن» را بزن و بدون نگاه به منبع بنویس.'],
+    ['cards', 'کارت‌های بالای صفحه', 'کارهایی که امروز نوبتشان است: بازیابی، آزمایشی که شروع کرده‌ای، کار اول روز.',
+      'دو کارت اول مهم‌ترند. اگر بیشتر باشد، زیر «کار دیگر برای امروز» جمع شده‌اند.'],
+    ['day', 'خواب و انرژی', 'خواب دیشب و انرژی‌ات در طول روز را ثبت می‌کنی تا ساعت اوج و فرودت پیدا شود.',
+      'روزی یک‌بار، چند ثانیه. بعد از چند روز اپ می‌گوید کار سنگین را کِی بگذاری.'],
+    ['manual', 'بدون اپ درس خواندم', 'جلسه‌ای را که بیرون از اپ خوانده‌ای ثبت می‌کنی تا آمارت کامل بماند.',
+      'لینک پایین صفحهٔ امروز. فقط مدت و موضوع را می‌خواهد.'],
+    ['parked', 'برگهٔ پارک و هدف‌های نوشته‌شده', 'فکرهای مزاحمی که وسط جلسه کنار گذاشته‌ای و هدف‌هایی که برای بعد نگه داشته‌ای.',
+      'فقط وقتی چیزی در آن‌ها باشد دیده می‌شوند. هر خط را انجام بده، زمان بده یا حذف کن.'],
+  ]],
+  ['trends', 'زبانهٔ روند', [
+    ['week', 'عددهای هفته', 'نشان می‌دهد در هفت روز گذشته چند جلسه داشتی و در چندتا به هدف رسیدی.',
+      'اول به «به هدف رسید» نگاه کن، نه به دقیقه‌ها. جملهٔ کنار خط قرمز پیشنهاد اپ برای قدم بعدی است.'],
+    ['bars', 'شکاف‌ها، وقفه‌ها و مانع‌ها', 'پرتکرارترین دلیل‌های نرسیدن، حواس‌پرتی و شروع‌نکردن تو را می‌شمارد.',
+      'بلندترین میله را ببین؛ همان را اول درست کن.'],
+    ['signs', 'نشانه‌های جاافتادن', 'فهرست عادت‌هایی که اپ می‌خواهد در تو جا بیفتد، با پیشرفت هر کدام.',
+      'بسته است تا صفحه خلوت بماند. هر وقت خواستی بازش کن.'],
+  ]],
+  ['lab', 'زبانهٔ آزمایش', [
+    ['hub', 'آزمایش یعنی چه؟', 'هر آزمایش یک تمرین چندروزه برای حل یک مشکل مشخص است، مثل دیر شروع‌کردن یا حواس‌پرتی.',
+      'لازم نیست همه را انجام بدهی. یکی را که به مشکلت می‌خورد باز کن؛ هم‌زمان یکی کافی است. بالای هر آزمایش «این بخش برای چیست؟» را هم داری.'],
+    ['baseline', 'سه روز ثبت واقعی', 'قبل از هر تغییری می‌بینی الان واقعاً چقدر و چطور درس می‌خوانی.',
+      'سه روز فقط ثبت کن و چیزی را عوض نکن. آخرش یک پروفایل از نقطهٔ شروعت می‌گیری.'],
+    ['env', 'بازطراحی محیط مطالعه', 'میز، نور، صدا و جای گوشی را یک‌بار درست می‌چینی.',
+      'شش عامل را یکی‌یکی بررسی و اصلاح کن، با همین وسایلی که داری.'],
+    ['digital', 'هفت روز محیط دیجیتال', 'اعلان‌ها و دسترسی به گوشی را طوری می‌چینی که وسط درس مزاحم نشوند.',
+      'روز اول تنظیم کن؛ شش روز بعد فقط اجرا و هر روز یک ثبت کوتاه.'],
+    ['time', 'معماری زمان', 'هر شب کار اول فردا را با ساعت مشخص و یک نسخهٔ کوچک جایگزین می‌چینی.',
+      'شب‌ها پنج دقیقه: کار اول، بهترین ساعت، نسخهٔ کوچک. فردا همان را روی صفحهٔ امروز می‌بینی.'],
+    ['loop', 'حلقهٔ سبک برنامه', 'برنامه‌ریزی را سبک نگه می‌دارد: کارت روزانه و هفته‌ای فقط یک اصلاح.',
+      'چهارده روز: هر روز کارت و ثبت کوتاه، هر هفته یک جلسهٔ بیست‌دقیقه‌ای.'],
+    ['start', 'ورود کوچک', 'برای کسی که شروع‌کردن برایش سخت است. فاصلهٔ «الان شروع می‌کنم» تا کار واقعی را کوتاه می‌کند.',
+      'هفت روز، هر روز یک ورود پنج‌دقیقه‌ای روی اولین حرکت درس.'],
+    ['attn', 'نقشهٔ توجه', 'می‌فهمی وسط جلسه توجهت واقعاً کجاست: روی کار، ظاهراً روی کار، یا جای دیگر.',
+      'سه جلسه با زنگ بی‌صدا. هر بار فقط یکی از سه برچسب را بزن.'],
+    ['ramp', 'رمپ ورود', 'برای وقتی که پشت میز نشسته‌ای ولی وارد کار سخت نمی‌شوی.',
+      'چهار بلوک: چند دقیقه شروع آسان، بعد قفل روی کار اصلی.'],
+    ['keep', 'لنگر، پارک، بازگشت', 'یاد می‌گیری حواس‌پرتی را زود ببینی و با یک حرکت برگردی.',
+      'سه جلسه: هر فکر مزاحم را روی برگهٔ پارک بنویس و برگرد سر قدم بعدی.'],
+    ['fmt', 'قالب جلسه', 'پیدا می‌کنی برای هر نوع کار، جلسهٔ کوتاه بهتر جواب می‌دهد یا بلند.',
+      'سه جلسه با یک نوع کار و یک قالب ثابت؛ بعدش پیش‌فرض خودت را داری.'],
+    ['myths', 'هفت روز «افسانه یا داده؟»', 'باورهای قدیمی‌ات دربارهٔ درس‌خواندن را با تجربهٔ خودت محک می‌زنی.',
+      'هر روز یک باور، یک قانون «اگر، آنگاه»، و آخر روز ثبت نتیجه.'],
+    ['reread', 'دوباره‌خوانی در برابر بازیابی', 'خودت می‌بینی دوباره‌خواندن بهتر جواب می‌دهد یا از حفظ نوشتن.',
+      'دو متن کوتاه، دو روش، و فردا یک آزمون از هر دو.'],
+  ]],
+  ['settings', 'زبانهٔ تنظیمات', [
+    ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
+    ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
+      'کلید API را وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.'],
+    ['data', 'داده‌ها', 'همه‌چیز فقط روی همین گوشی ذخیره می‌شود.', 'هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.'],
+  ]],
+];
+const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
+const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
+const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
+
+function viewGuide() {
+  return `
+    <header class="flow"><button class="back" data-act="cancel">بستن راهنما</button><h1>راهنمای اپ</h1></header>
+    <p class="count">هر بخش برای چیست و چطور از آن استفاده کنی. روی هر عنوان بزن.</p>
+    ${GUIDE.map(([k, title, items]) => fold('g-' + k, title, items.map(([, t, what, how]) => `
+      <div class="guide-item"><b>${t}</b><p>${what}</p><p class="count">${how}</p></div>`).join(''), k === A().focus || k === 'start')).join('')}`;
+}
+
 function viewSettings() {
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   return `
@@ -2987,17 +3075,17 @@ function viewSettings() {
       <label class="field"><span>کلید API کلاود</span>
         <input type="password" data-ai="key" value="${esc(aiCfg.key)}" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" dir="ltr">
         <small>از console.anthropic.com بگیر. فقط روی همین دستگاه می‌ماند، وارد فایل پشتیبان نمی‌شود و فقط به خودِ Anthropic فرستاده می‌شود.</small></label>
-      <div class="field"><span>مدل</span>${pick('data-ai', 'model', Object.entries(AI_MODELS).map(([k, v]) => [k, v[0]]), aiCfg.model, 'مدل هوشواره')}
+      ${aiCfg.key ? `<div class="field"><span>مدل</span>${pick('data-ai', 'model', Object.entries(AI_MODELS).map(([k, v]) => [k, v[0]]), aiCfg.model, 'مدل هوشواره')}
         <small>Haiku برای همهٔ کارهای این اپ کافی است و حدود بیست برابر از Sonnet ارزان‌تر.</small></div>
       <div class="field"><span>سقف درخواست در روز</span>${pick('data-ai', 'cap', [[10, '۱۰'], [30, '۳۰'], [100, '۱۰۰']], aiCfg.cap, 'سقف روزانه')}</div>
-      ${aiCfg.key ? `<button class="btn big ai" data-act="ai-test"${aiBusy ? ' disabled' : ''}>${aiBusy === 'test' ? 'در حال آزمودن…' : 'آزمودن کلید'}</button>` : ''}
+      <button class="btn big ai" data-act="ai-test"${aiBusy ? ' disabled' : ''}>${aiBusy === 'test' ? 'در حال آزمودن…' : 'آزمودن کلید'}</button>
       ${facts([
         ['درخواست‌ها، امروز', db.ai.calls ? `${fa(db.ai.calls)}، ${fa(db.ai.day === today() ? db.ai.dayCalls : 0)}` : ''],
         ['توکن ورودی و خروجی', db.ai.calls ? `${fa(db.ai.tin)} و ${fa(db.ai.tout)}` : ''],
         ['هزینهٔ تقریبی تا امروز', db.ai.calls ? `${fa(db.ai.cost.toFixed(4))} دلار` : ''],
       ])}
       <p class="fine">کم‌مصرف چیده شده: مدل ارزان، پاسخ کوتاه، بدون درخواست خودکار، و جواب تکراری از حافظهٔ خود اپ. برای اطمینان، در کنسول Anthropic هم سقف خرج ماهانه بگذار.</p>
-      ${aiCfg.key ? '<button class="btn big danger" data-act="ai-off">پاک‌کردن کلید</button>' : ''}
+      <button class="btn big danger" data-act="ai-off">پاک‌کردن کلید</button>` : ''}
     </section>
     <section>
       <h2>داده‌ها</h2>
@@ -3011,14 +3099,18 @@ function viewSettings() {
 /* ---------- رندر ---------- */
 
 const TABS = [['today', 'امروز'], ['trends', 'روند'], ['lab', 'آزمایش'], ['settings', 'تنظیمات']];
-const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest };
+const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, guide: viewGuide };
 
 function render() {
   const a = A();
   const app = $('#app');
   const view = a ? FLOWS[a.kind]
     : { today: viewToday, trends: viewTrends, lab: viewLab, settings: viewSettings }[db.tab] || viewToday;
-  app.innerHTML = view();
+  const html = view();
+  // راهنما همه‌جا یک‌جور: دکمه بالای هر زبانه، توضیح کوتاه بالای هر آزمایش
+  app.innerHTML = a ? html
+    : db.tab === 'lab' && db.lab !== 'hub' && GUIDE_BY[db.lab] ? html.replace('</header>', '</header>' + tip(db.lab))
+    : html.replace('<header class="top">', '<header class="top">' + helpBtn(db.tab));
   document.body.classList.toggle('in-flow', !!a);
   document.body.classList.toggle('covered', !!$('.cover'));
   $('#tabs').innerHTML = a ? '' : TABS.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${l}</button>`).join('');
@@ -3026,7 +3118,7 @@ function render() {
 }
 
 function go(step) { A().step = step; render(); window.scrollTo(0, 0); }
-function open(active) { db.active = active; render(); window.scrollTo(0, 0); }
+function open(active) { db.active = active; for (const k in folds) delete folds[k]; render(); window.scrollTo(0, 0); }
 
 function newSession(over = {}) {
   const a = {
@@ -3058,6 +3150,8 @@ const actions = {
   tab: (el) => { db.tab = el.dataset.tab; if (el.dataset.view) db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
   'lab-view': (el) => { db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
 
+  guide: (el) => { db.guideSeen = true; open({ kind: 'guide', focus: el.dataset.focus }); },
+  'guide-skip': () => { db.guideSeen = true; render(); },
   'new-session': () => open(newSession(fromLanding())),
   'start-study': () => {
     const a = A();
@@ -3065,7 +3159,7 @@ const actions = {
     if (!has(a.criterion)) return toast('معیار را بنویس: از کجا می‌فهمی رسیده‌ای؟');
     if (!a.phonePlace) return toast('بگو گوشی الان کجاست.');
     if (a.phonePlace === 'desk') return toast('اول گوشی را از روی میز بردار؛ کشو، کیف یا بیرون اتاق.');
-    if (a.entry && !has(a.ifThen)) return toast('حرکت اول را در «آنگاه» بنویس: اولین کار روی خودِ درس، حدود دو دقیقه.');
+    if (a.entry && !has(a.ifThen)) { folds['s-start'] = true; render(); return toast('حرکت اول را در «آنگاه» بنویس: اولین کار روی خودِ درس، حدود دو دقیقه.'); }
     db.plans = db.plans.filter((p) => p.id !== a.planId);
     db.landing = null;
     a.startedAt = Date.now(); a.endsAt = a.startedAt + a.minutes * 6e4; a.rang = false;
@@ -3679,11 +3773,16 @@ document.addEventListener('input', (e) => {
   save();
 });
 
+document.addEventListener('toggle', (e) => {
+  if (e.target.dataset?.fold) folds[e.target.dataset.fold] = e.target.open;
+}, true);
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.id === 'urge') actions.urge();
 });
 
 document.addEventListener('change', (e) => {
+  if (e.target.dataset.ai === 'key') return render();
   if (!('import' in e.target.dataset) || !e.target.files[0]) return;
   e.target.files[0].text().then((txt) => {
     const data = JSON.parse(txt);

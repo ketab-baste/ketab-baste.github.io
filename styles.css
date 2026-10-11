@@ -85,7 +85,7 @@ p { text-wrap: pretty; }
 .field { display: block; }
 .field > span { display: block; font-weight: 700; margin-bottom: .4rem; }
 .field small { display: block; color: var(--ink-soft); font-size: .85rem; margin-top: .35rem; }
-input[type=text], input[type=number], input[type=time], select, textarea {
+input[type=text], input[type=password], input[type=number], input[type=time], select, textarea {
   width: 100%; padding: .7rem .85rem;
   border: 1.5px solid var(--rule); border-radius: var(--r);
   background: var(--sheet); color: var(--ink);
@@ -298,3 +298,21 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .ai-box p { margin: .3rem 0; }
 .ai-box .btn { margin-top: .5rem; }
 .pre { white-space: pre-line; }
+
+/* تاشوها و راهنما */
+.fold { border-top: 1.5px solid var(--rule); padding-top: .75rem; }
+.fold > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.75rem; cursor: pointer; list-style: none; font-weight: 900; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: '+'; font-size: 1.4rem; font-weight: 400; color: var(--ink-soft); line-height: 1; }
+.fold[open] > summary::after { content: '−'; }
+.fold > summary small { margin-inline-start: .6rem; font-weight: 400; font-size: .85rem; color: var(--ink-soft); }
+.fold > * + * { margin-top: .75rem; }
+.fold > .due + .due, .fold > summary + .due { margin-top: 1rem; }
+.top .help { float: inline-end; margin-inline-start: .75rem; }
+.guide-item { padding: .6rem 0; border-top: 1px dashed var(--rule); }
+.guide-item b { display: block; }
+.lab-list { list-style: none; padding: 0; }
+.lab-row { display: grid; grid-template-columns: 1fr auto; gap: 0 .75rem; align-items: baseline; width: 100%; padding: .8rem 0; border: 0; border-top: 1.5px solid var(--rule); background: none; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.lab-row b { font-weight: 700; }
+.lab-row small { grid-column: 1 / -1; color: var(--ink-soft); font-size: .88rem; }
+.lab-row .tag { color: var(--green); }

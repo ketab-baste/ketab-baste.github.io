@@ -265,7 +265,7 @@ const blankDb = () => ({
   plans: [], abandoned: [], logs: [], days: {}, baseline: null, pattern: null, myths: [], mythWrap: null, lab: 'hub',
   env: null, digital: null, tplans: [], landing: null,
   starts: [], startLab: null, attn: null, weeks: [], loop: null,
-  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '', guideSeen: false,
+  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '', guideSeen: false, book: {},
   ai: { calls: 0, tin: 0, tout: 0, cost: 0, day: 0, dayCalls: 0, cache: [], trend: null },
 });
 let db = blankDb();
@@ -3037,6 +3037,10 @@ const GUIDE = [
     ['reread', 'دوباره‌خوانی در برابر بازیابی', 'خودت می‌بینی دوباره‌خواندن بهتر جواب می‌دهد یا از حفظ نوشتن.',
       'دو متن کوتاه، دو روش، و فردا یک آزمون از هر دو.'],
   ]],
+  ['book', 'زبانهٔ کتاب', [
+    ['read', 'خواندن فصل‌ها', 'متن کامل فصل‌های کتاب، بی‌هیچ تغییری، برای وقتی که می‌خواهی خودِ فصل را بخوانی نه اینکه تمرینش را اجرا کنی.',
+      'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.'],
+  ]],
   ['settings', 'زبانهٔ تنظیمات', [
     ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
     ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
@@ -3098,14 +3102,14 @@ function viewSettings() {
 
 /* ---------- رندر ---------- */
 
-const TABS = [['today', 'امروز'], ['trends', 'روند'], ['lab', 'آزمایش'], ['settings', 'تنظیمات']];
-const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, guide: viewGuide };
+const TABS = [['today', 'امروز'], ['trends', 'روند'], ['lab', 'آزمایش'], ['book', 'کتاب'], ['settings', 'تنظیمات']];
+const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, guide: viewGuide, book: viewBook };
 
 function render() {
   const a = A();
   const app = $('#app');
   const view = a ? FLOWS[a.kind]
-    : { today: viewToday, trends: viewTrends, lab: viewLab, settings: viewSettings }[db.tab] || viewToday;
+    : { today: viewToday, trends: viewTrends, lab: viewLab, book: viewBookTab, settings: viewSettings }[db.tab] || viewToday;
   const html = view();
   // راهنما همه‌جا یک‌جور: دکمه بالای هر زبانه، توضیح کوتاه بالای هر آزمایش
   app.innerHTML = a ? html
@@ -3114,6 +3118,7 @@ function render() {
   document.body.classList.toggle('in-flow', !!a);
   document.body.classList.toggle('covered', !!$('.cover'));
   $('#tabs').innerHTML = a ? '' : TABS.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${l}</button>`).join('');
+  if (a && a.kind === 'book') bookMount();
   save();
 }
 
@@ -3147,6 +3152,7 @@ function applyMode(a) {
 /* ---------- رویدادها ---------- */
 
 const actions = {
+  ...bookActions,
   tab: (el) => { db.tab = el.dataset.tab; if (el.dataset.view) db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
   'lab-view': (el) => { db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
 

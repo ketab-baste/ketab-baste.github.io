@@ -1,5 +1,5 @@
-const CACHE = 'ketab-baste-v7';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'ketab-baste-v8';
+const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

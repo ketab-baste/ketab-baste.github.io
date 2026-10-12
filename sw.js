@@ -1,4 +1,4 @@
-const CACHE = 'ketab-baste-v8';
+const CACHE = 'ketab-baste-v9';
 const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -15,7 +15,8 @@ self.addEventListener('activate', (e) => {
 
 // Stale-while-revalidate: answer from cache, refresh it in the background.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  // درخواست‌های حساب و همگام‌سازی هیچ‌وقت از حافظهٔ نهان جواب نمی‌گیرند
+  if (e.request.method !== 'GET' || /^(firestore|identitytoolkit|securetoken)\./.test(new URL(e.request.url).hostname)) return;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(e.request);

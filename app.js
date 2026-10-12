@@ -275,6 +275,128 @@ try {
 
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { toast('ذخیره نشد؛ حافظهٔ مرورگر پر است.'); }
+  if (!acc.uid) return;
+  const c = coreOf(db);
+  if (c !== lastCore) { lastCore = c; acc.dirty = true; saveAcc(); syncSoon(); }
+}
+
+/* ---------- حساب و همگام‌سازی ---------- */
+
+// Firebase از راه REST و بدون کتابخانه. این کلید عمومی است؛ امنیت را قانون‌های Firestore می‌دهد:
+// هر کاربر فقط سند users/{uid} خودش را می‌خواند و می‌نویسد.
+const FB = { key: 'AIzaSyDk4Wzf7GHn6cn4EjKkTIyfTx8PmjlelI4', project: 'ketab-baste' };
+const ACC_KEY = 'ketab-baste-acc';
+let acc = {};
+try { acc = JSON.parse(localStorage.getItem(ACC_KEY) || '{}'); } catch (e) { /* بدون حساب */ }
+const saveAcc = () => { try { localStorage.setItem(ACC_KEY, JSON.stringify(acc)); } catch (e) { /* بدون ذخیره */ } };
+
+// جابه‌جایی بین زبانه‌ها تغییر داده نیست و نباید چیزی بفرستد
+const coreOf = (d) => JSON.stringify({ ...d, tab: '', lab: '' });
+let lastCore = acc.uid ? coreOf(db) : '', syncTimer = 0, syncing = false, syncErr = '';
+const syncSoon = () => { clearTimeout(syncTimer); syncTimer = setTimeout(sync, 4000); };
+
+const ACC_ERR = {
+  EMAIL_EXISTS: 'با این ایمیل قبلاً حساب ساخته شده. «ورود» را بزن.',
+  INVALID_LOGIN_CREDENTIALS: 'ایمیل یا رمز درست نیست.',
+  EMAIL_NOT_FOUND: 'ایمیل یا رمز درست نیست.',
+  INVALID_PASSWORD: 'ایمیل یا رمز درست نیست.',
+  INVALID_EMAIL: 'ایمیل را درست بنویس.',
+  WEAK_PASSWORD: 'رمز دست‌کم ۶ نویسه باشد.',
+  MISSING_PASSWORD: 'رمز را بنویس.',
+  TOO_MANY_ATTEMPTS_TRY_LATER: 'تلاش زیاد بود. چند دقیقه بعد دوباره امتحان کن.',
+  USER_DISABLED: 'این حساب بسته شده است.',
+};
+
+async function fbFetch(url, opts) {
+  const r = await fetch(url, { cache: 'no-store', ...opts }).catch(() => { throw new Error('اینترنت وصل نیست.'); });
+  return [r, await r.json().catch(() => ({}))];
+}
+
+async function fbAuth(path, body) {
+  const [r, j] = await fbFetch(`https://identitytoolkit.googleapis.com/v1/accounts:${path}?key=${FB.key}`,
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(ACC_ERR[(j.error?.message || '').split(' ')[0]] || 'نشد. دوباره امتحان کن.');
+  return j;
+}
+
+async function fbToken() {
+  if (acc.exp - Date.now() > 6e4) return acc.idToken;
+  const [r, j] = await fbFetch(`https://securetoken.googleapis.com/v1/token?key=${FB.key}`,
+    { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(acc.refresh) });
+  if (r.status === 400) { accLeave(); throw new Error('از حساب بیرون افتاده‌ای. دوباره وارد شو.'); }
+  if (!r.ok) throw new Error('همگام‌سازی نشد. بعداً دوباره تلاش می‌شود.');
+  Object.assign(acc, { idToken: j.id_token, refresh: j.refresh_token, exp: Date.now() + j.expires_in * 1000 }); saveAcc();
+  return acc.idToken;
+}
+
+async function fbDoc(method, query = '', body) {
+  return fbFetch(`https://firestore.googleapis.com/v1/projects/${FB.project}/databases/(default)/documents/users/${acc.uid}${query}`,
+    { method, headers: { authorization: 'Bearer ' + await fbToken(), 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
+}
+
+async function pull() {
+  const [r, j] = await fbDoc('GET');
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('همگام‌سازی نشد. بعداً دوباره تلاش می‌شود.');
+  return { data: JSON.parse(j.fields.data.stringValue), at: j.updateTime };
+}
+
+// فقط وقتی می‌نویسد که حساب از آخرین دیدارِ این دستگاه عوض نشده باشد؛ وگرنه false
+async function push() {
+  const sent = lastCore;
+  const [r, j] = await fbDoc('PATCH', acc.at ? '?currentDocument.updateTime=' + encodeURIComponent(acc.at) : '?currentDocument.exists=false',
+    { fields: { data: { stringValue: JSON.stringify(db) } } });
+  if (['FAILED_PRECONDITION', 'ALREADY_EXISTS', 'NOT_FOUND'].includes(j.error?.status)) return false;
+  if (!r.ok) throw new Error(r.status === 400 ? 'داده‌ها برای حساب بیش از اندازه بزرگ شده. یک فایل پشتیبان بگیر.' : 'همگام‌سازی نشد. بعداً دوباره تلاش می‌شود.');
+  acc.at = j.updateTime; acc.dirty = lastCore !== sent;
+  return true;
+}
+
+function adopt(remote) {
+  db = Object.assign(blankDb(), remote.data, { tab: db.tab });
+  acc.at = remote.at; acc.dirty = false; lastCore = coreOf(db);
+  render();
+}
+
+async function sync() {
+  if (!acc.uid || syncing) return;
+  syncing = true; clearTimeout(syncTimer);
+  try {
+    if (!acc.dirty || !await push()) {
+      const remote = await pull();
+      if (!remote) { acc.at = ''; await push(); }
+      else if (remote.at !== acc.at) {
+        if (acc.dirty && !confirm('هم این دستگاه و هم حسابت از آخرین همگام‌سازی عوض شده‌اند.\n\nتأیید: دادهٔ حساب می‌آید.\nلغو: دادهٔ این دستگاه می‌ماند و به حساب می‌رود.')) { acc.at = remote.at; await push(); }
+        else adopt(remote);
+      }
+    }
+    syncErr = '';
+  } catch (e) { syncErr = e.message; }
+  syncing = false; saveAcc();
+  if (acc.dirty && !syncErr) syncSoon();
+  if (db.tab === 'settings' && !A() && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) render();
+}
+
+const hasLocal = () => coreOf({ ...db, guideSeen: false, active: null }) !== coreOf(blankDb());
+
+async function accEnter(j) {
+  const mine = acc.owner === j.localId, fresh = !acc.owner;
+  acc = { uid: j.localId, email: j.email, idToken: j.idToken, refresh: j.refreshToken, exp: Date.now() + j.expiresIn * 1000,
+    owner: j.localId, at: mine ? acc.at : '', dirty: mine && !!acc.dirty };
+  lastCore = coreOf(db);
+  if (!mine) {
+    const remote = await pull();
+    // دادهٔ این دستگاه یا مال کاربر دیگری است، یا هنوز به هیچ حسابی نرفته
+    if (!fresh) adopt(remote || { data: {}, at: '' });
+    else if (remote && (!hasLocal() || confirm('این حساب از قبل داده دارد.\n\nتأیید: دادهٔ حساب جای دادهٔ این دستگاه می‌آید.\nلغو: دادهٔ این دستگاه می‌ماند و به حساب می‌رود.'))) adopt(remote);
+    else { acc.at = remote ? remote.at : ''; acc.dirty = true; }
+  }
+  saveAcc(); await sync();
+}
+
+// خروج: دادهٔ همین دستگاه می‌ماند و اگر همین کاربر برگردد، از همان‌جا ادامه می‌دهد
+function accLeave() {
+  acc = { owner: acc.owner, at: acc.at, dirty: acc.dirty }; saveAcc(); clearTimeout(syncTimer);
 }
 
 /* ---------- ابزارها ---------- */
@@ -3045,7 +3167,9 @@ const GUIDE = [
     ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
     ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
       'کلید API را وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.'],
-    ['data', 'داده‌ها', 'همه‌چیز فقط روی همین گوشی ذخیره می‌شود.', 'هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.'],
+    ['account', 'حساب', 'داده‌هایت را روی اینترنت هم نگه می‌دارد تا با عوض‌شدن گوشی یا پاک‌شدن مرورگر از بین نرود. هر کس حساب و دادهٔ جدای خودش را دارد.',
+      'یک‌بار با ایمیل و رمز حساب بساز. از آن به بعد خودش همگام می‌شود؛ روی گوشی دیگر فقط «ورود» را بزن.'],
+    ['data', 'داده‌ها', 'بدون حساب، همه‌چیز فقط روی همین گوشی ذخیره می‌شود.', 'اگر حساب نداری، هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.'],
   ]],
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
@@ -3091,9 +3215,24 @@ function viewSettings() {
       <p class="fine">کم‌مصرف چیده شده: مدل ارزان، پاسخ کوتاه، بدون درخواست خودکار، و جواب تکراری از حافظهٔ خود اپ. برای اطمینان، در کنسول Anthropic هم سقف خرج ماهانه بگذار.</p>
       <button class="btn big danger" data-act="ai-off">پاک‌کردن کلید</button>` : ''}
     </section>
+    ${!FB.key ? '' : acc.uid ? `<section>
+      <h2>حساب</h2>
+      <p>با <b dir="ltr">${esc(acc.email)}</b> وارد شده‌ای. ${syncErr ? esc(syncErr) : acc.dirty ? 'تغییرهای تازه تا چند لحظهٔ دیگر به حساب می‌رود.' : 'همه‌چیز با حسابت همگام است.'}</p>
+      <button class="btn big" data-act="acc-sync">همین حالا همگام کن</button>
+      <button class="btn big danger" data-act="acc-out">خروج از حساب</button>
+    </section>` : `<section>
+      <h2>حساب</h2>
+      <p>اختیاری است. با حساب، داده‌هایت روی اینترنت هم نگه داشته می‌شود و روی هر گوشی که وارد شوی همان را می‌بینی.</p>
+      <label class="field"><span>ایمیل</span><input type="email" id="acc-email" autocomplete="email" spellcheck="false" dir="ltr"></label>
+      <label class="field"><span>رمز</span><input type="password" id="acc-pass" autocomplete="current-password" dir="ltr">
+        <small>دست‌کم ۶ نویسه.</small></label>
+      <button class="btn big primary" data-act="acc-go" data-path="signInWithPassword">ورود</button>
+      <button class="btn big" data-act="acc-go" data-path="signUp">ساختن حساب تازه</button>
+      <button class="btn link" data-act="acc-reset">رمز را فراموش کرده‌ام</button>
+    </section>`}
     <section>
       <h2>داده‌ها</h2>
-      <p>همه‌چیز فقط روی همین دستگاه و همین مرورگر ذخیره می‌شود.</p>
+      <p>${acc.uid ? 'داده‌ها هم روی این دستگاه است و هم در حسابت. بدون اینترنت هم کار می‌کند و بعداً همگام می‌شود.' : 'همه‌چیز فقط روی همین دستگاه و همین مرورگر ذخیره می‌شود.'}</p>
       <button class="btn big" data-act="export">گرفتن فایل پشتیبان</button>
       <label class="btn big file">بازگرداندن از فایل پشتیبان<input type="file" accept="application/json" data-import hidden></label>
       <button class="btn big danger" data-act="wipe">پاک‌کردن همهٔ داده‌ها</button>
@@ -3729,10 +3868,28 @@ const actions = {
     aiBusy = ''; render();
   },
   'ai-off': () => { if (!confirm('کلید از این دستگاه پاک می‌شود. پاک کنم؟')) return; aiCfg.key = ''; saveAi(); render(); },
+  'acc-go': async (el) => {
+    const email = $('#acc-email').value.trim(), password = $('#acc-pass').value;
+    if (!email || password.length < 6) return toast('ایمیل و رمزِ دست‌کم ۶ نویسه‌ای را بنویس.');
+    el.disabled = true;
+    try { await accEnter(await fbAuth(el.dataset.path, { email, password, returnSecureToken: true })); toast('وارد شدی.'); render(); }
+    catch (e) { toast(e.message); el.disabled = false; }
+  },
+  'acc-reset': async () => {
+    const email = $('#acc-email').value.trim();
+    if (!email) return toast('اول ایمیلت را بنویس.');
+    try { await fbAuth('sendOobCode', { requestType: 'PASSWORD_RESET', email }); toast('اگر با این ایمیل حسابی باشد، پیوند تغییر رمز برایش فرستاده شد.'); } catch (e) { toast(e.message); }
+  },
+  'acc-sync': async () => { await sync(); toast(syncErr || 'همگام شد.'); render(); },
+  'acc-out': async () => {
+    if (acc.dirty) await sync();
+    if (acc.dirty && !confirm('تغییرهای آخر هنوز به حساب نرفته. با این حال خارج شوم؟')) return;
+    accLeave(); render(); toast('خارج شدی. داده‌های این دستگاه سر جایش است.');
+  },
   notif: () => Notification.requestPermission().then(render),
   export: () => download('ketab-baste-backup.json', JSON.stringify(db, null, 2), 'application/json'),
   wipe: () => {
-    if (!confirm('همهٔ جلسه‌ها و ثبت‌ها برای همیشه پاک می‌شود. پاک کنم؟')) return;
+    if (!confirm(`همهٔ جلسه‌ها و ثبت‌ها ${acc.uid ? 'روی این دستگاه و در حسابت ' : ''}برای همیشه پاک می‌شود. پاک کنم؟`)) return;
     db = blankDb(); db.tab = 'settings'; render(); toast('همه‌چیز پاک شد.');
   },
 };
@@ -3838,7 +3995,12 @@ setInterval(() => {
   }
 }, 500);
 
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !A()) render(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !A()) render();
+  if (!document.hidden || acc.dirty) sync();
+});
+window.addEventListener('online', sync);
+sync();
 
 // خط‌های بسته‌شدهٔ برگهٔ پارک بعد از سه هفته پاک می‌شوند
 db.parked = db.parked.filter((p) => p.state !== 'done' && p.state !== 'drop' || Date.now() - p.closed < 21 * DAY);

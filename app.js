@@ -105,6 +105,7 @@ const MYTHS = {
   },
 };
 
+const MODEL = { attn: 'توجه: دروازهٔ باریک', work: 'حافظهٔ کاری: میز کوچک', long: 'حافظهٔ بلندمدت: وصل‌کردن به دانسته‌ها', forget: 'فراموشی و بازیابی' };
 const SCAN_GOAL = 'بگویم این مبحث از چه اجزایی ساخته شده و کدام پیش‌نیازهایش را بلد نیستم';
 const SCAN_CRITERION = 'اجزا و پیش‌نیازهای ناآشنا را بدون نگاه به منبع فهرست می‌کنم';
 const SLOTS = ['صبح', 'ظهر', 'عصر', 'شب'];
@@ -268,14 +269,18 @@ const blankDb = () => ({
   plans: [], abandoned: [], logs: [], days: {}, baseline: null, pattern: null, myths: [], mythWrap: null, lab: 'hub',
   env: null, digital: null, tplans: [], landing: null,
   starts: [], startLab: null, attn: null, weeks: [], loop: null,
-  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '', guideSeen: false, book: {}, chapters: [],
+  ramp: null, keep: null, fmtLab: null, parked: [], formats: {}, guard: '', guideSeen: false, book: {}, chapters: [], habits: [{}, {}],
   ai: { calls: 0, tin: 0, tout: 0, cost: 0, day: 0, dayCalls: 0, cache: [], trend: null },
 });
 let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [0, 'بقیهٔ فصل‌ها']];
+// آزمایش‌های زبانهٔ «آزمایش» و فصلشان؛ هرچه اینجا نیست زیر «بقیه» است
+const LAB_CH = { reread: 3 };
+const labOn = (view) => chOn(LAB_CH[view] ?? 0);
+const anyLab = () => chOn(0) || Object.values(LAB_CH).some((c) => chOn(c));
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
 try {
   db = Object.assign(blankDb(), JSON.parse(localStorage.getItem(KEY) || '{}'));
@@ -1109,8 +1114,9 @@ function viewToday() {
   const envLeft = env && Date.now() - env.start < 7 * DAY ? auditLeft(env) : 0;
   const planNight = db.tplans.length && new Date().getHours() >= 18 && !planFor(tomorrowKey());
   const sl = db.startLab, slDay = sl ? baseDayNo(sl) : 0, at = db.attn, atN = at ? db.sessions.filter((s) => s.ping && s.date >= at.start).length : 0;
-  const dues = [
-    due.length ? `
+  // هر کارت: [فصل، محتوا]
+  const allDues = [
+    [3, due.length ? `
     <section class="due">
       <h2>اول، بازیابی دیروز</h2>
       <p>قبل از مطالعهٔ تازه، ده دقیقه مطالب قبلی را از حافظه روی صفحه بیاور.</p>
@@ -1119,14 +1125,14 @@ function viewToday() {
           <div><b>${esc(s.subject)}</b><span>${esc(s.goal)}</span></div>
           <button class="btn" data-act="retrieve" data-id="${s.id}">بازیابی کن</button>
         </div>`).join('')}
-    </section>` : '',
-    expDue ? `
+    </section>` : ''],
+    [3, expDue ? `
     <section class="due">
       <h2>نوبت دوم آزمایش رسیده</h2>
       <p>بدون هیچ مروری، همان پنج سؤال هر دو متن را دوباره جواب بده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="reread">ثبت نمره‌های امروز</button>
-    </section>` : '',
-    b && baseRunning(b) ? `
+    </section>` : ''],
+    [0, b && baseRunning(b) ? `
     <section class="due">
       <h2>ثبت واقعی، روز ${fa(baseDayNo(b))} از ${fa(b.days)}</h2>
       <p>این روزها فقط اندازه بگیر. قرار نیست بهتر از همیشه باشی.</p>
@@ -1136,8 +1142,8 @@ function viewToday() {
       <h2>پروفایل نقطهٔ شروع آماده است</h2>
       <p>عددهای واقعی این چند روز کنار هم چیده شده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="baseline">دیدن پروفایل</button>
-    </section>` : '',
-    m ? `
+    </section>` : ''],
+    [0, m ? `
     <section class="due">
       <h2>قانون امروز</h2>
       <p class="goal-line">${ruleLine(m)}</p>
@@ -1149,8 +1155,8 @@ function viewToday() {
       <h2>قانون امروز را انتخاب نکرده‌ای</h2>
       <p>روز ${fa(mythDays() + 1)} از ۷. فقط یک افسانه، فقط برای امروز.</p>
       <button class="btn" data-act="new-myth">انتخاب قانون امروز</button>
-    </section>` : '',
-    tp && !tp.done ? `
+    </section>` : ''],
+    [0, tp && !tp.done ? `
     <section class="due">
       <h2>کار اول امروز</h2>
       <p class="goal-line">${esc(tp.task)}</p>
@@ -1169,14 +1175,14 @@ function viewToday() {
       <h2>فردا را امشب بچین</h2>
       <p>فقط سه تصمیم: کار اول، بهترین پنجره، نسخهٔ کوچک.</p>
       <button class="btn" data-act="new-tplan">طراحی فردا</button>
-    </section>` : '',
-    db.loop && !weekNow() ? `
+    </section>` : ''],
+    [0, db.loop && !weekNow() ? `
     <section class="due">
       <h2>جلسهٔ هفتگی، بیست دقیقه</h2>
       <p>اول بررسی هفتهٔ قبل، بعد سه خروجی و دقیقاً یک اصلاح.</p>
       <button class="btn" data-act="new-week">شروع جلسهٔ هفتگی</button>
-    </section>` : '',
-    sl && slDay <= 7 && !didStart(today()) ? `
+    </section>` : ''],
+    [0, sl && slDay <= 7 && !didStart(today()) ? `
     <section class="due">
       <h2>ورود کوچک، روز ${fa(slDay)} از ۷</h2>
       <p>امروز هنوز ورودی ثبت نشده. حالِ خوب شرط نیست؛ فقط حرکت اول.</p>
@@ -1186,45 +1192,46 @@ function viewToday() {
       <h2>هفت روزِ ورود کوچک تمام شد</h2>
       <p>عددها را کنار خط پایه ببین و نسخهٔ شخصی شروعت را بنویس.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="start">تحلیل روز هفتم</button>
-    </section>` : '',
-    at && atN < 3 ? `
+    </section>` : ''],
+    [0, at && atN < 3 ? `
     <section class="due">
       <h2>نقشهٔ توجه، جلسهٔ ${fa(atN + 1)} از ۳</h2>
       <p>همان درس این روزها، با زنگ هر پنج دقیقه. فقط ببین و نام بگذار.</p>
       <button class="btn" data-act="attn-session">شروع جلسه با نقشه</button>
-    </section>` : '',
-    db.ramp && rampList().length < 4 ? `
+    </section>` : ''],
+    [0, db.ramp && rampList().length < 4 ? `
     <section class="due">
       <h2>رمپ ورود، بلوک ${fa(rampList().length + 1)} از ۴</h2>
       <p>پارک، واحد کار، بارگذاریِ زمان‌دار، قفل. ورود را با خروجی بسنج، نه با حس.</p>
       <button class="btn" data-act="ramp-session">شروع بلوک با رمپ</button>
-    </section>` : '',
-    db.keep && keepList().length < 3 ? `
+    </section>` : ''],
+    [0, db.keep && keepList().length < 3 ? `
     <section class="due">
       <h2>لنگر، پارک، بازگشت؛ جلسهٔ ${fa(keepList().length + 1)} از ۳</h2>
       <p>حواس‌پرتی می‌آید. فقط زود ببین و با یک عمل برگرد.</p>
       <button class="btn" data-act="keep-session">شروع جلسه با برگهٔ پارک</button>
-    </section>` : '',
-    db.fmtLab && fmtList().length < 3 ? `
+    </section>` : ''],
+    [0, db.fmtLab && fmtList().length < 3 ? `
     <section class="due">
       <h2>قالب جلسه، ${fa(fmtList().length + 1)} از ۳</h2>
       <p>${has(db.fmtLab.type) ? `نوع کار: ${esc(db.fmtLab.type)}. ` : ''}همان قالب، بدون تغییر وسط جلسه؛ بعدش یک خط ثبت.</p>
       <button class="btn" data-act="fmt-session">شروع جلسهٔ این نوع کار</button>
-    </section>` : '',
-    dig && !dig.wrap ? `
+    </section>` : ''],
+    [0, dig && !dig.wrap ? `
     <section class="due">
       <h2>${baseDayNo(dig) <= 7 ? `محیط دیجیتال، روز ${fa(baseDayNo(dig))} از ۷` : 'جمع‌بندی هفتهٔ دیجیتال'}</h2>
       <p>${baseDayNo(dig) > 7 ? 'هفت روز گذشت. عددها را کنار خط پایه ببین.'
         : has(dig.rule?.place) ? `گوشی: ${esc(dig.rule.place)}${has(dig.rule.next) ? `. چک بعدی: ${esc(dig.rule.next)}` : ''}` : 'این هفته چیزی به سیستم اضافه نکن؛ فقط اجرا و ثبت.'}</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="digital">${baseDayNo(dig) > 7 ? 'جمع‌بندی' : 'کاربرگ هفت روز'}</button>
-    </section>` : '',
-    envLeft ? `
+    </section>` : ''],
+    [0, envLeft ? `
     <section class="due">
       <h2>بازطراحی محیط، ${fa(envLeft)} عامل مانده</h2>
       <p>با همین وسایلی که داری. اگر کش آمده، با همین وضعیت یک جلسهٔ کوتاه بخوان.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="env">ادامهٔ ممیزی</button>
-    </section>` : '',
-  ].filter(Boolean);
+    </section>` : ''],
+  ].filter(([, html]) => html);
+  const dues = allDues.filter(([c]) => chOn(c)).map(([, html]) => html), hiddenDues = allDues.length - dues.length;
   const R = chOn(0);
   return `
     <header class="top">
@@ -1241,7 +1248,8 @@ function viewToday() {
       <div class="row acts"><button class="btn" data-act="guide" data-focus="start">دیدن راهنما</button><button class="btn quiet" data-act="guide-skip">بعداً</button></div>
     </section>`}
 
-    ${R ? dueStack(dues) : dues.length ? `<p class="fine">${fa(dues.length)} کار امروز مال فصل‌هایی است که الان انتخاب نکرده‌ای. <button class="btn link" data-act="ch" data-ch="all">همه را نشان بده</button></p>` : ''}
+    ${dueStack(dues)}
+    ${hiddenDues ? `<p class="fine">${fa(hiddenDues)} کار امروز مال فصل‌هایی است که الان انتخاب نکرده‌ای. <button class="btn link" data-act="ch" data-ch="all">همه را نشان بده</button></p>` : ''}
 
     <section class="start">
       <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>
@@ -1299,7 +1307,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1321,6 +1329,9 @@ function viewSession() {
       <p class="hint" id="goal-hint" ${hint ? '' : 'hidden'}>${hint}</p>
       <div class="field"><span>مدت مطالعه</span>${seg('minutes', LEAN_MIN.map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
         <small>دقیقه. تایمر که تمام شد، منبع را می‌بندی و از حفظ می‌نویسی.</small></div>
+      ${C3 ? `<div class="field"><span>گوشی کجاست؟</span>
+        ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
+        <small>${phoneHint}</small></div>` : ''}
       <button class="btn primary big" data-act="start-study">شروع مطالعه</button>`}
       ${!R ? '' : `
       ${textField('موضوع باریک', 'subject', a.subject, 'مثلاً: مشتق زنجیره‌ای، تمرین‌های صفحهٔ ۸۴', 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.')}
@@ -1478,14 +1489,14 @@ function viewSession() {
       ${R ? `<label class="field"><span>لنگر: قدم بعدی</span>
         <input type="text" data-bind="anchor" value="${esc(a.anchor || '')}" placeholder="کوچک‌ترین عملِ مانده: خط بعدیِ راه‌حل، سؤال بعدی"></label>` : ''}
       <div class="timer" data-timer="${a.endsAt}" aria-live="off">${clock(a.endsAt - Date.now())}</div>
-      <p class="timer-note">${over ? bell : R ? 'هر بخش سه یا چهار ایده دارد. بخش را که خواندی، ببند و بنویس.' : 'فقط چیزی را علامت بزن که به همین خروجی مربوط است، و کنارش بنویس چرا: تعریف، مثال، مرحلهٔ حل.'}</p>
+      <p class="timer-note">${over ? bell : R || C3 ? 'هر بخش سه یا چهار ایده دارد. بخش را که خواندی، ببند و بنویس.' : 'فقط چیزی را علامت بزن که به همین خروجی مربوط است، و کنارش بنویس چرا: تعریف، مثال، مرحلهٔ حل.'}</p>
       ${a.rampState === 'lock' ? `<p class="count">قفل: تا پایان بلوک جابه‌جایی اختیاری نداری. گیر کردی؟ حدود هفت دقیقه روی همان گره بمان و روی کاغذ راه امتحان کن${has(a.fallback) ? `؛ بعد: ${esc(a.fallback)}` : ''}.</p>` : ''}
       ${has(a.guard) ? `<p class="count">اگر ${esc(a.guard)}، آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم.</p>` : ''}
       ${a.chunks.length ? `<p class="count">${fa(a.chunks.length)} بخش را بسته و بازسازی کرده‌ای.</p>` : ''}
       ${a.pings?.length ? `<p class="count">نقشهٔ توجه: ${fa(a.pings.length)} نمونه. هر پرش را پایین با علتش بزن.</p>` : ''}
       ${!over || !F ? '' : stretchy(a) ? (total + 10 <= 40 ? '<button class="btn big" data-act="stretch">ده دقیقهٔ دیگر می‌توانم</button>' : '')
         : F.bell !== 'cap' && !a.ext ? '<button class="btn big" data-act="extend">تا پایان همین واحد؛ یک بار، حداکثر پنج دقیقه</button>' : ''}
-      ${over || !R ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
+      ${over || !(R || C3) ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
       <button class="btn primary big" data-act="to-feel">${over ? 'برو به آزمون کتاب‌بسته' : 'جلسه را تمام کن'}</button>
       ${R || C2 ? urgeBox(a) : ''}
       <button class="btn link" data-act="halve">هدف برای این جلسه بزرگ است</button>
@@ -1506,6 +1517,7 @@ function viewSession() {
     return cover(`
       <h1>منبع را ببند</h1>
       <p>هرچه از همین بخش یادت مانده بنویس. ناقص و به‌هم‌ریخته اشکالی ندارد.</p>
+      <p class="fine">درس مسئله‌ای است؟ به‌جای خلاصه، یک تمرین همین بخش را بدون نگاه به راه‌حل حل کن.</p>
       <textarea class="sheet" rows="8" data-bind="chunkDraft" placeholder="از حافظه…" autofocus>${esc(a.chunkDraft || '')}</textarea>
       <button class="btn primary big" data-act="chunk-check">نوشتم؛ حالا با منبع مقایسه می‌کنم</button>`);
   }
@@ -1644,10 +1656,10 @@ function viewSession() {
         ${textField('اگر چه شد؟', 'nextWhen', a.nextWhen, 'مثلاً: ساعت ۱۸ شد / ظرف ناهار را شستم', 'الان که ذهنت هنوز وسط درس است، شروعِ فردا را بساز؛ روزهای خوب هم.')}
         <label class="check"><input type="checkbox" data-bind="landed" ${a.landed ? 'checked' : ''}>
           <span>کتاب روی همان صفحه باز مانده، خودکار کنارش است و بقیهٔ وسایل برگشته سر جایش.</span></label>
-      </fieldset>
-      <p>فردا، قبل از هر مطالعهٔ تازه، همین جلسه را ده دقیقه از حافظه بازیابی کن. با بازکردن اپ یادآورش را می‌بینی.</p>
-      <button class="btn big" data-act="ics" data-id="${s.id}">یادآور فردا را به تقویم اضافه کن</button>
-      <button class="btn big" data-act="rest" data-id="${s.id}">استراحت با مرز و نوبت بعد</button>
+      </fieldset>`}
+      ${!(R || C3) ? '' : `<p>فردا، قبل از هر مطالعهٔ تازه، همین جلسه را ده دقیقه از حافظه بازیابی کن. با بازکردن اپ یادآورش را می‌بینی.</p>
+      <button class="btn big" data-act="ics" data-id="${s.id}">یادآور فردا را به تقویم اضافه کن</button>`}
+      ${!R ? '' : `<button class="btn big" data-act="rest" data-id="${s.id}">استراحت با مرز و نوبت بعد</button>
       <button class="btn big" data-act="phone-window">پنجرهٔ گوشی، ده دقیقه</button>`}
       <button class="btn primary big" data-act="close">برگشت به امروز</button>`;
   }
@@ -1961,14 +1973,14 @@ function viewTrends() {
     ['سه جلسه با هدف خروجی و آزمون کتاب‌بسته', all.length, 3, 1],
     ['سه جلسه که معیارش واقعاً اجرا شد', all.filter((s) => s.ran === 'yes').length, 3],
     ['چهار پایانِ آگاهانه: «حالا می‌توانم…»', all.filter((s) => has(s.can)).length, 4],
-    ['سه بار «بخوان، ببند، بنویس» وسط جلسه', chunks, 3],
+    ['سه بار «بخوان، ببند، بنویس» وسط جلسه', chunks, 3, 3],
     ['سه لحظهٔ مقاومت با مانع مشخص، نه «تنبلی»', db.obstacles.length, 3, 2],
     ['دو گام ورودی که واقعاً انجام شد', stepsDone, 2, 2],
-    ['دو بازیابی روز بعد', retrieved.length, 2],
+    ['دو بازیابی روز بعد', retrieved.length, 2, 3],
     ['یک مبحث در دو روز جدا، نه یک نشست فشرده', spreadSubjects(0), 1],
     ['پروفایل نقطهٔ شروع از سه روز ثبت واقعی', b && !baseRunning(b) && baselineProfile(b).records ? 1 : 0, 1],
     ['هفت روز «افسانه یا داده؟»', mythDays(), 7],
-    ['آزمایش دوباره‌خوانی در برابر بازیابی', db.experiment?.later ? 1 : 0, 1],
+    ['آزمایش دوباره‌خوانی در برابر بازیابی', db.experiment?.later ? 1 : 0, 1, 3],
     ['شش عامل محیط، ممیزی و اصلاح شد', db.env ? 6 - auditLeft(db.env) : 0, 6],
     ['پنج پایانِ جلسه با نقطهٔ فرودِ آماده', all.filter((s) => s.landed).length, 5],
     ['هفت روز ثبت محیط دیجیتال', db.digital ? digDays(db.digital).filter((d) => d.n).length : 0, 7],
@@ -1994,10 +2006,10 @@ function viewTrends() {
 
     <section>
       <h2>هفت روز گذشته</h2>
-      <div class="verdict${R ? ' three' : ''}">
+      <div class="verdict${R || chOn(3) ? ' three' : ''}">
         <div><span>جلسهٔ سنجیده</span><b>${fa(week.length)}</b></div>
         <div><span>به هدف رسید</span><b>${fa(week.filter((s) => s.outcome === 'full').length)}</b></div>
-        ${R ? `<div><span>بازیابی روز بعد</span><b>${fa(week.filter((s) => s.retrieved).length)}</b></div>` : ''}
+        ${R || chOn(3) ? `<div><span>بازیابی روز بعد</span><b>${fa(week.filter((s) => s.retrieved).length)}</b></div>` : ''}
       </div>
       ${R && week.length >= 5 && week.filter((s) => s.outcome === 'full').length * 5 < week.length * 2 ? '<p class="advice">هدف می‌نویسی ولی کمتر به معیار می‌رسی. مسئله هدف‌گذاری نیست، روش است: وسط جلسه بیشتر ببند و بنویس و خروجی را کوچک‌تر بگیر.</p>' : ''}
     </section>
@@ -2064,11 +2076,12 @@ const labBack = '<button class="back" data-act="lab-view" data-view="hub">همه
 
 function viewLab() {
   const sub = { reread: viewReread, baseline: viewBaseline, myths: viewMyths, env: viewEnv, digital: viewDigital, time: viewTime, loop: viewLoop, attn: viewAttn, start: viewStart, ramp: viewRamp, keep: viewKeep, fmt: viewFmt }[db.lab];
-  if (sub) return sub();
+  if (sub && labOn(db.lab)) return sub();
+  db.lab = 'hub';
   const b = db.baseline, e = db.experiment, en = db.env, dg = db.digital;
   const sl = db.startLab, at = db.attn, atN = at ? db.sessions.filter((s) => s.ping && s.date >= at.start).length : 0;
   const tp = planFor(tomorrowKey()) || planFor(today());
-  const card = (view, title, text, status) => [status !== 'شروع نشده', `
+  const card = (view, title, text, status) => !labOn(view) ? [false, ''] : [status !== 'شروع نشده', `
     <li><button class="lab-row" data-act="lab-view" data-view="${view}">
       <b>${title}</b>${status !== 'شروع نشده' ? `<span class="tag">${status}</span>` : ''}
       <small>${text}</small>
@@ -2099,7 +2112,7 @@ function viewLab() {
     card('reread', 'دوباره‌خوانی در برابر بازیابی', 'دو متن، دو روش، یک روز فاصله.',
       !e ? 'شروع نشده' : e.later ? 'نتیجه آماده است' : 'منتظر نوبت دوم'),
   ];
-  const on = cards.filter(([started]) => started).map(([, html]) => html), off = cards.filter(([started]) => !started).map(([, html]) => html);
+  const on = cards.filter(([started]) => started).map(([, html]) => html), off = cards.filter(([started, html]) => !started && html).map(([, html]) => html);
   return `
     <header class="top"><h1>آزمایش روی خودت</h1>
       <p>هر آزمایش یک تمرین چندروزه است. هم‌زمان یکی کافی است.</p></header>
@@ -3174,6 +3187,13 @@ function viewReread() {
       </tbody>
     </table>
     <p>${verdict}</p>
+    <fieldset class="group"><legend>دو عادتِ ناسازگار با مدل</legend>
+      <p class="fine">کدام عادت فعلی‌ات با طرز کار توجه و حافظه نمی‌خواند، و از امروز چه چیزی جایش می‌آید؟ مثال: «هایلایت‌کردن هنگام خواندن» ← «بستن کتاب و نوشتن سه خط».</p>
+      ${db.habits.map((h, i) => `
+      ${dbText(`عادت ${fa(i + 1)}`, `habits.${i}.h`, h.h, 'مثلاً: چک‌کردن پیام وسط درس')}
+      ${pick('data-db', `habits.${i}.p`, Object.entries(MODEL), h.p, 'با کدام بخش مدل ناسازگار است؟', 'با کدام بخش ناسازگار است؟')}
+      ${dbText('جایگزین از امروز', `habits.${i}.s`, h.s, 'مثلاً: گوشی بیرون اتاق تا آخر جلسه')}`).join('')}
+    </fieldset>
     <button class="btn big" data-act="lab-reset">آزمایش تازه با دو متن دیگر</button>`;
 }
 
@@ -3257,7 +3277,7 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2 };
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3 };
 const guideOn = (group, key) => group === 'book' || group === 'settings' || chOn(GUIDE_CH[key] ?? 0);
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
@@ -3340,8 +3360,8 @@ const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRet
 function render() {
   const a = A();
   const app = $('#app');
-  // تا وقتی آزمایش‌ها زیر «بقیه»‌اند، بدون آن زبانه‌شان هم پنهان است
-  const tabs = TABS.filter(([k]) => k !== 'lab' || chOn(0));
+  // زبانهٔ «آزمایش» فقط وقتی هست که فصل‌های انتخاب‌شده آزمایشی داشته باشند
+  const tabs = TABS.filter(([k]) => k !== 'lab' || anyLab());
   if (!tabs.some(([k]) => k === db.tab)) db.tab = 'today';
   const view = a ? FLOWS[a.kind]
     : { today: viewToday, trends: viewTrends, lab: viewLab, book: viewBookTab, settings: viewSettings }[db.tab] || viewToday;
@@ -3450,6 +3470,8 @@ const actions = {
     const R = chOn(0, a.ch || []);
     if (!has(a.subject) || !has(a.goal)) return toast('موضوع و خروجی جلسه را بنویس.');
     if (!R) {
+      if (chOn(3, a.ch) && !a.phonePlace) return toast('بگو گوشی الان کجاست.');
+      if (chOn(3, a.ch) && a.phonePlace === 'desk') return toast('اول گوشی را از روی میز بردار؛ کشو، کیف یا بیرون اتاق.');
       Object.assign(a, { startedAt: Date.now(), endsAt: Date.now() + a.minutes * 6e4, rang: false, pings: [], entryState: '', rampState: '', anchor: '', signs: [], ext: 0, away: null });
       return go('study');
     }

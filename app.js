@@ -4048,6 +4048,11 @@ sync();
 // خط‌های بسته‌شدهٔ برگهٔ پارک بعد از سه هفته پاک می‌شوند
 db.parked = db.parked.filter((p) => p.state !== 'done' && p.state !== 'drop' || Date.now() - p.closed < 21 * DAY);
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  // نسخهٔ تازه همان بار اول دیده شود، نه بعد از چند بار باز و بسته کردن اپ
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !A()) location.reload(); });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 
 render();

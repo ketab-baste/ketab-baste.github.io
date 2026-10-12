@@ -1,8 +1,9 @@
-const CACHE = 'ketab-baste-v10';
+const CACHE = 'ketab-baste-v11';
 const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
+// cache: 'reload' تا نسخهٔ تازه از خودِ سرور بیاید، نه از حافظهٔ مرورگر
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

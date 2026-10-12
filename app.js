@@ -455,7 +455,7 @@ function ding() {
 
 function notify(body) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return;
-  navigator.serviceWorker?.ready.then((r) => r.showNotification('کتاب‌بسته', { body, icon: 'icons/icon-192.png', lang: 'fa', dir: 'rtl' })).catch(() => {});
+  navigator.serviceWorker?.ready.then((r) => r.showNotification('ویر', { body, icon: 'icons/icon-192.png', lang: 'fa', dir: 'rtl' })).catch(() => {});
 }
 
 function download(name, text, type) {
@@ -4029,7 +4029,7 @@ document.addEventListener('change', (e) => {
     if (!Array.isArray(data.sessions) || !Array.isArray(data.obstacles)) throw new Error('shape');
     if (!confirm('داده‌های فعلی با این فایل جایگزین می‌شود. ادامه بدهم؟')) return;
     db = Object.assign(blankDb(), data, { active: null, tab: 'settings' }); render(); toast('بازگردانده شد.');
-  }).catch(() => toast('این فایل پشتیبانِ کتاب‌بسته نیست.'));
+  }).catch(() => toast('این فایل پشتیبانِ ویر نیست.'));
 });
 
 /* ---------- تایمر ---------- */

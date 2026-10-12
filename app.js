@@ -276,9 +276,9 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [0, 'بقیهٔ فصل‌ها']];
 // آزمایش‌های زبانهٔ «آزمایش» و فصلشان؛ هرچه اینجا نیست زیر «بقیه» است
-const LAB_CH = { reread: 3 };
+const LAB_CH = { reread: 3, myths: 4 };
 const labOn = (view) => chOn(LAB_CH[view] ?? 0);
 const anyLab = () => chOn(0) || Object.values(LAB_CH).some((c) => chOn(c));
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
@@ -764,6 +764,18 @@ function startDays(lab) {
   });
 }
 
+// «اگر جواب نداد چه؟» فصل ۴: [وضعیت، کار بعدی، دقیقهٔ جلسهٔ کوچک]
+const MYTH_FIX = [
+  ['قانون را نوشتم ولی شروع نمی‌کنم', 'کار هنوز بزرگ است. آن را به دو دقیقه برسان: فقط بازکردن کتاب، فقط خواندن عنوان.', 2],
+  ['بلافاصله بعد از خواندن هم چیزی یادم نمی‌آید', 'مشکل از روش خواندن است، نه از باور. متن را به بخش‌های کوچک‌تر بشکن و بعد از هر بخش ببند و بنویس (فصل ۱۸ و ۱۹).'],
+  ['همان لحظه یادم می‌آید، فردا نه', 'طبیعی است؛ مرور کم است. همان مبحث را فردا چند دقیقه از حافظه بنویس (فصل ۲۰).'],
+  ['بدون ساعت‌شماری کارم کم شد یا مضطرب شدم', 'ساعت را دور نریز؛ فقط زیر خروجی بنویسش، نه بالای آن.'],
+  ['در بلوک کوتاه هم تمرکز ندارم', 'با ده دقیقه شروع کن. اگر مزاحم بیرونی است (گوشی، صدا) فصل ۷ و ۸؛ اگر فکر مزاحم است فصل ۱۴.', 10],
+  ['می‌دانم فاصله‌گذاری بهتر است ولی باز عقب می‌اندازم', 'این دیگر باور نیست؛ الگوی اهمال‌کاری است (فصل ۲۵).'],
+  ['باور عوض شد ولی احساس گناه مانده', 'طبیعی است؛ احساس کندتر از باور به‌روز می‌شود. اگر سرزنش مداوم و آزاردهنده است، فصل ۳۰.'],
+  ['امتحان چند روز دیگر است', 'این فصل روش عادی است، نه اضطراری. پروتکل اضطراری در فصل ۳۸ است.'],
+  ['چند روز است تقریباً نمی‌خوابم یا حتی کار کوچک ناممکن است', 'به زور ادامه نده و این را «باور غلط» حساب نکن. کمک‌گرفتن از یک متخصص مناسب است.'],
+];
 const mythToday = () => db.myths.find((m) => dayKey(m.date) === today());
 const mythDays = () => new Set(db.myths.map((m) => dayKey(m.date))).size;
 
@@ -780,7 +792,7 @@ function weekSigns() {
   const week = db.sessions.filter((s) => s.date >= since);
   const between = (list, from, to) => list.filter((x) => x.date >= from && x.date < to).length;
   const studyDays = new Set(week.map((s) => dayKey(s.date)));
-  const outputDays = new Set(week.filter((s) => has(s.can)).map((s) => dayKey(s.date)));
+  const outputDays = new Set([...week.filter((s) => has(s.can)), ...db.myths.filter((m) => m.date >= since && (has(m.can) || has(m.output)))].map((x) => dayKey(x.date)));
   return {
     week,
     startDays: new Set([...studyDays, ...db.logs.filter((l) => l.date >= since).map((l) => dayKey(l.date))]).size,
@@ -1143,7 +1155,7 @@ function viewToday() {
       <p>عددهای واقعی این چند روز کنار هم چیده شده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="baseline">دیدن پروفایل</button>
     </section>` : ''],
-    [0, m ? `
+    [4, m ? `
     <section class="due">
       <h2>قانون امروز</h2>
       <p class="goal-line">${ruleLine(m)}</p>
@@ -1307,7 +1319,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1327,7 +1339,7 @@ function viewSession() {
       <label class="field"><span>تا پایان این جلسه باید بتوانم…</span>
         <textarea rows="3" data-bind="goal" data-live placeholder="تفاوت list و tuple را با دو مثال توضیح بدهم">${esc(a.goal || '')}</textarea></label>
       <p class="hint" id="goal-hint" ${hint ? '' : 'hidden'}>${hint}</p>
-      <div class="field"><span>مدت مطالعه</span>${seg('minutes', LEAN_MIN.map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
+      <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short ? [a.short, ...LEAN_MIN] : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
         <small>دقیقه. تایمر که تمام شد، منبع را می‌بندی و از حفظ می‌نویسی.</small></div>
       ${C3 ? `<div class="field"><span>گوشی کجاست؟</span>
         ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
@@ -1496,7 +1508,7 @@ function viewSession() {
       ${a.pings?.length ? `<p class="count">نقشهٔ توجه: ${fa(a.pings.length)} نمونه. هر پرش را پایین با علتش بزن.</p>` : ''}
       ${!over || !F ? '' : stretchy(a) ? (total + 10 <= 40 ? '<button class="btn big" data-act="stretch">ده دقیقهٔ دیگر می‌توانم</button>' : '')
         : F.bell !== 'cap' && !a.ext ? '<button class="btn big" data-act="extend">تا پایان همین واحد؛ یک بار، حداکثر پنج دقیقه</button>' : ''}
-      ${over || !(R || C3) ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
+      ${over || !(R || C3 || C4) ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
       <button class="btn primary big" data-act="to-feel">${over ? 'برو به آزمون کتاب‌بسته' : 'جلسه را تمام کن'}</button>
       ${R || C2 ? urgeBox(a) : ''}
       <button class="btn link" data-act="halve">هدف برای این جلسه بزرگ است</button>
@@ -1931,6 +1943,7 @@ function viewMyth() {
           <label><i>آنگاه</i><input type="text" data-bind="thenText" value="${esc(a.thenText || '')}"></label>
         </div>
         <small>رفتار بنویس، نه شعار. «باید منظم باشم» اجراشدنی نیست.</small></div>
+      ${textField('کار مشخص امروز', 'task', a.task, 'مثلاً: سه مسئلهٔ صفحهٔ ۴۱', 'جلسهٔ آزمایشی امروز روی همین کار است.')}
       ${textField('قانون قدیمی پیش‌بینی می‌کند که…', 'predict', a.predict, 'مثلاً: بدون حال خوب هیچ‌چیز یاد نمی‌گیرم')}
       <button class="btn primary big" data-act="myth-save">این قانونِ امروز من است</button>`;
   }
@@ -1940,7 +1953,8 @@ function viewMyth() {
     <p class="goal-line">${ruleLine(m)}</p>
     <div class="field"><span>قانون را اجرا کردم؟</span>
       ${choice('did', 'yes', 'بله', a.did)}${choice('did', 'no', 'نه', a.did, 'یک روز بدون اجرا داده است، نه جرم.')}</div>
-    ${textField('خروجی مشخص', 'output', a.output, 'مثلاً: سه مسئله حل شد')}
+    ${textField('خروجی قابل دیدن', 'output', a.output, 'مثلاً: سه مسئله حل شد')}
+    ${textField('بدون نگاه به کتاب چه چیزی توانستم بگویم یا حل کنم؟', 'can', a.can, 'مثلاً: تعریف مشتق را از حفظ نوشتم', 'ساعت را بعد از این بنویس، نه به‌جای این.')}
     <div class="pair">
       <div><span>قانون قدیمی پیش‌بینی کرده بود</span><p>${esc(m.predict) || 'چیزی ننوشته بودی.'}</p></div>
     </div>
@@ -1978,9 +1992,9 @@ function viewTrends() {
     ['سه لحظهٔ مقاومت با مانع مشخص، نه «تنبلی»', db.obstacles.length, 3, 2],
     ['دو گام ورودی که واقعاً انجام شد', stepsDone, 2, 2],
     ['دو بازیابی روز بعد', retrieved.length, 2, 3],
-    ['یک مبحث در دو روز جدا، نه یک نشست فشرده', spreadSubjects(0), 1],
+    ['یک مبحث در دو روز جدا، نه یک نشست فشرده', spreadSubjects(0), 1, 4],
     ['پروفایل نقطهٔ شروع از سه روز ثبت واقعی', b && !baseRunning(b) && baselineProfile(b).records ? 1 : 0, 1],
-    ['هفت روز «افسانه یا داده؟»', mythDays(), 7],
+    ['هفت روز «افسانه یا داده؟»', mythDays(), 7, 4],
     ['آزمایش دوباره‌خوانی در برابر بازیابی', db.experiment?.later ? 1 : 0, 1, 3],
     ['شش عامل محیط، ممیزی و اصلاح شد', db.env ? 6 - auditLeft(db.env) : 0, 6],
     ['پنج پایانِ جلسه با نقطهٔ فرودِ آماده', all.filter((s) => s.landed).length, 5],
@@ -2247,8 +2261,12 @@ function viewMyths() {
           <p>${MYTHS[m.myth].test}</p>
           <button class="btn primary big" data-act="myth-session">شروع جلسهٔ آزمایشی</button>
           <button class="btn big" data-act="myth-close">ثبت نتیجه${todayHas ? '' : '، بدون جلسه'}</button>
-          <button class="btn link" data-act="new-obstacle">قانون را نوشتم ولی شروع نمی‌کنم</button>`}`}
+`}`}
     </section>
+
+    ${db.myths.length ? fold('myth-fix', 'جواب نداد؟', `<ul class="log">${MYTH_FIX.map(([when, then, n]) => `
+      <li><b>${when}</b><p>${then}</p>
+        ${n ? `<button class="btn" data-act="myth-small" data-n="${n}">جلسهٔ ${fa(n)} دقیقه‌ای</button>` : ''}</li>`).join('')}</ul>`) : ''}
 
     ${db.myths.length ? `
     <section>
@@ -2257,7 +2275,9 @@ function viewMyths() {
         <li>
           <div class="log-head"><b>${MYTHS[x.myth].label}</b><span class="tag ${x.done === 'yes' ? 'full' : x.done === 'no' ? 'none' : ''}">${x.done === 'yes' ? 'اجرا شد' : x.done === 'no' ? 'اجرا نشد' : 'باز'}</span></div>
           <p>${ruleLine(x)}</p>
+          ${has(x.task) ? `<p class="count">کار امروز: ${esc(x.task)}</p>` : ''}
           ${has(x.output) ? `<p class="count">خروجی: ${esc(x.output)}</p>` : ''}
+          ${has(x.can) ? `<p class="count">بدون کتاب: ${esc(x.can)}</p>` : ''}
           <small>${weekdayFa(x.date)}${has(x.predict) ? `، پیش‌بینی: ${esc(x.predict)}` : ''}${has(x.happened) ? `، واقعیت: ${esc(x.happened)}` : ''}</small>
         </li>`).join('')}</ul>
     </section>` : ''}
@@ -3278,7 +3298,7 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3 };
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4 };
 const guideOn = (group, key) => group === 'book' || group === 'settings' || chOn(GUIDE_CH[key] ?? 0);
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
@@ -3433,7 +3453,7 @@ function newSession(over = {}) {
   if (!FMT[a.fmt].opts.includes(a.minutes)) applyFmt(a);
   a.ch = [...db.chapters];
   // فقط ابزار فصل ۱: جلسهٔ ساده، بدون تکه‌های فصل‌های دیگر
-  if (!chOn(0)) Object.assign(a, { fmt: '', entry: 0, ramp: 0, ping: 0, sheet: false, minutes: LEAN_MIN.includes(a.minutes) ? a.minutes : 25 });
+  if (!chOn(0)) Object.assign(a, { fmt: '', entry: 0, ramp: 0, ping: 0, sheet: false, minutes: LEAN_MIN.includes(a.minutes) || a.minutes === a.short ? a.minutes : 25 });
   return a;
 }
 const fromLanding = () => (db.landing ? { ifThen: db.landing.text, ifWhen: db.landing.when || '', loadLast: db.landing.at || '' } : {});
@@ -3683,7 +3703,7 @@ const actions = {
     const tp = db.tplans.find((p) => p.id === a.tplanId);
     if (tp) Object.assign(tp, { done: winOf(tp, a.startedAt), actual: s.studied, sessionId: s.id, state: a.viaSmall ? 'min' : s.outcome === 'full' ? 'full' : 'part' });
     const m = mythToday();
-    if (R && m && !m.done) return open({ kind: 'myth', step: 'close', entryId: m.id, did: 'yes', output: s.can, after: s.id });
+    if (chOn(4, a.ch || []) && m && !m.done) return open({ kind: 'myth', step: 'close', entryId: m.id, did: 'yes', can: s.can, after: s.id, ch: a.ch });
     a.savedId = s.id; go('done');
   },
   ics: (el) => calendarReminder(db.sessions.find((s) => s.id === el.dataset.id)),
@@ -3803,27 +3823,29 @@ const actions = {
     if (!has(a.ifText) || !has(a.thenText)) return toast('قانون «اگر، آنگاه» را کامل بنویس.');
     db.myths.push({
       id: uid(), date: Date.now(), myth: a.myth, hidden: (a.hidden || '').trim(), ifText: a.ifText.trim(), thenText: a.thenText.trim(),
-      predict: (a.predict || '').trim(), done: null, output: '', happened: '',
+      task: (a.task || '').trim(), predict: (a.predict || '').trim(), done: null, output: '', can: '', happened: '',
     });
     db.active = null; db.tab = 'lab'; db.lab = 'myths'; render(); window.scrollTo(0, 0);
   },
   'myth-session': () => {
     const m = mythToday();
-    open(newSession(MYTHS[m.myth].minutes ? { minutes: MYTHS[m.myth].minutes } : {}));
+    const n = MYTHS[m.myth].minutes;
+    open(newSession({ subject: m.task || '', ...(n ? { minutes: n, short: n } : {}) }));
     toast(MYTHS[m.myth].test);
   },
   'myth-close': () => {
     const m = mythToday();
     const last = db.sessions.filter((s) => dayKey(s.date) === today()).pop();
-    open({ kind: 'myth', step: 'close', entryId: m.id, did: 'yes', output: last?.can || '' });
+    open({ kind: 'myth', step: 'close', entryId: m.id, did: 'yes', can: last?.can || '' });
   },
   'myth-done': () => {
     const a = A();
     if (!has(a.happened)) return toast('بنویس واقعاً چه شد؛ همین داده است.');
-    Object.assign(db.myths.find((x) => x.id === a.entryId), { done: a.did, output: (a.output || '').trim(), happened: a.happened.trim() });
+    Object.assign(db.myths.find((x) => x.id === a.entryId), { done: a.did, output: (a.output || '').trim(), can: (a.can || '').trim(), happened: a.happened.trim() });
     actions['myth-later']();
   },
-  'myth-later': () => { const a = A(); open(a.after ? { kind: 'session', step: 'done', savedId: a.after } : null); },
+  'myth-small': (el) => { const n = +el.dataset.n; open(newSession({ subject: mythToday()?.task || '', minutes: n, short: n })); },
+  'myth-later': () => { const a = A(); open(a.after ? { kind: 'session', step: 'done', savedId: a.after, ch: a.ch } : null); },
   'myth-wrap': () => {
     const { wrapData, wrapDecision } = db.labDraft || {};
     if (!has(wrapData) || !has(wrapDecision)) return toast('هر دو جمله را کامل کن.');

@@ -276,9 +276,9 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [7, 'محیط مطالعه'], [8, 'محیط دیجیتال'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [7, 'محیط مطالعه'], [8, 'محیط دیجیتال'], [9, 'معماری زمان'], [0, 'بقیهٔ فصل‌ها']];
 // آزمایش‌های زبانهٔ «آزمایش» و فصلشان؛ هرچه اینجا نیست زیر «بقیه» است
-const LAB_CH = { reread: 3, myths: 4, baseline: 5, env: 7, digital: 8 };
+const LAB_CH = { reread: 3, myths: 4, baseline: 5, env: 7, digital: 8, time: 9 };
 const labOn = (view) => chOn(LAB_CH[view] ?? 0);
 const anyLab = () => chOn(0) || Object.values(LAB_CH).some((c) => chOn(c));
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
@@ -1169,7 +1169,7 @@ function viewToday() {
       <p>روز ${fa(mythDays() + 1)} از ۷. فقط یک افسانه، فقط برای امروز.</p>
       <button class="btn" data-act="new-myth">انتخاب قانون امروز</button>
     </section>` : ''],
-    [0, tp && !tp.done ? `
+    [9, tp && !tp.done ? `
     <section class="due">
       <h2>کار اول امروز</h2>
       <p class="goal-line">${esc(tp.task)}</p>
@@ -1290,7 +1290,7 @@ function viewToday() {
         </li>`).join('')}</ul>
     </section>` : ''}
 
-    ${R || chOn(5) ? `<section>
+    ${R || chOn(5) || chOn(9) ? `<section>
       <h2>خواب و انرژی</h2>
       ${d ? `<p class="count">${sleepHours(d) != null ? `${fa1(sleepHours(d))} ساعت خواب` : 'ساعت خواب ثبت نشده'}${d.quality ? `، کیفیت ${fa(d.quality)} از ۵` : ''}${[d.e1, d.e2, d.e3, d.e4].some(Boolean) ? `، انرژی ${[d.e1, d.e2, d.e3, d.e4].map((e, i) => (e ? `${SLOTS[i]} ${fa(e)}` : '')).filter(Boolean).join('، ')}` : ''}</p>` : '<p class="empty">سوختِ امروز را هم اندازه بگیر، نه فقط اراده را.</p>'}
       <button class="btn big" data-act="new-day">${d ? 'تکمیل ثبت امروز' : 'ثبت خواب و انرژی امروز'}</button>
@@ -1320,7 +1320,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []), C7 = chOn(7, a.ch || []), C8 = chOn(8, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []), C7 = chOn(7, a.ch || []), C8 = chOn(8, a.ch || []), C9 = chOn(9, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1344,8 +1344,10 @@ function viewSession() {
         <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: ۵ تمرین بدون نگاه به حل؛ ۴ تا درست"></label>
       <p class="hint" id="crit-hint" ${cHint ? '' : 'hidden'}>${cHint}</p>
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}` : ''}
-      <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short ? [a.short, ...LEAN_MIN] : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
+      <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short && !LEAN_MIN.includes(a.short) ? [a.short, ...LEAN_MIN].sort((x, y) => x - y) : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
         <small>دقیقه. تایمر که تمام شد، منبع را می‌بندی و از حفظ می‌نویسی.</small></div>
+      ${C9 ? `<div class="field"><span>بار ذهنی این کار</span>${seg('load', Object.entries(LOADS), a.load, 'بار ذهنی')}
+        <small>${loadHint}</small></div>` : ''}
       ${C8 ? `${has(rule?.place) ? `<p class="count">قاعدهٔ خودت: گوشی ${esc(rule.place)}${has(rule.people) ? `؛ فقط ${esc(rule.people)} فوری می‌رسند` : ''}${has(rule.next) ? `؛ چک بعدی ${esc(rule.next)}` : ''}.</p>` : ''}
       ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب، دفتر تمرین، مستندات پایتون', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}` : ''}
       ${C3 || C7 || C8 ? `<div class="field"><span>گوشی کجاست؟</span>
@@ -1578,7 +1580,7 @@ function viewSession() {
 
   if (a.step === 'feel') {
     return `
-      <header class="flow"><h1>${R ? 'قبل از آزمون، دو عدد و یک حدس' : C5 || C7 || C8 ? 'قبل از آزمون، چند عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
+      <header class="flow"><h1>${R ? 'قبل از آزمون، دو عدد و یک حدس' : C5 || C7 || C8 || C9 ? 'قبل از آزمون، چند عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
       ${R || !C5 ? '' : `<p>${fa(a.studied)} دقیقه پای کار بودی. همین حالا بنویس؛ حافظه تا شب وقفه‌ها را پاک می‌کند.</p>
       <div class="grid2">
         ${numField('دقیقهٔ واقعی', 'real', a.real, 'ذهنت واقعاً با مطلب درگیر بود.')}
@@ -1587,6 +1589,7 @@ function viewSession() {
       </div>
       <div class="field"><span>علت غالب وقفه‌ها</span>
         ${pick('data-bind', 'cause', Object.entries(CAUSES).map(([k, c]) => [k, c.label]), a.cause, 'علت وقفه', 'علت')}</div>`}
+      ${R || C5 || !C9 ? '' : numField('دقیقهٔ مؤثر', 'real', a.real, `از ${fa(a.studied)} دقیقه پای کار؛ فقط وقتی که واقعاً جلو رفتی.`)}
       ${R || !(C7 || C8) ? '' : `<div class="grid2">
         ${C7 ? numField('بلندشدن از جا', 'ups', a.ups, 'چند بار.') : ''}
         ${numField(C7 ? 'دست به گوشی یا وسیله' : 'برداشتن گوشی', 'reaches', a.reaches, 'چند بار.')}
@@ -2057,7 +2060,7 @@ function viewTrends() {
     ['شش عامل محیط، ممیزی و اصلاح شد', db.env ? 6 - auditLeft(db.env) : 0, 6, 7],
     ['پنج پایانِ جلسه با نقطهٔ فرودِ آماده', all.filter((s) => s.landed).length, 5, 7],
     ['هفت روز ثبت محیط دیجیتال', db.digital ? digDays(db.digital).filter((d) => d.n).length : 0, 7, 8],
-    ['ده روز اخیر: کار اول در پنجرهٔ خودش', ten.filter((p) => p.done === 'peak' || p.done === 'alt').length, 7],
+    ['ده روز اخیر: کار اول در پنجرهٔ خودش', ten.filter((p) => p.done === 'peak' || p.done === 'alt').length, 7, 9],
     ['چهارده روز اخیر: کارت روزانه با ثبت شبانه', db.tplans.filter((p) => p.reviewed && p.ts >= addDays(Date.now(), -13)).length, 10],
     ['دو جلسهٔ هفتگی با یک اصلاح', db.weeks.filter((x) => has(x.fix)).length, 2],
     ['سه جلسه با نقشهٔ توجه و مسئلهٔ نام‌دار', all.filter((s) => s.ping && s.issue).length, 3],
@@ -2637,11 +2640,11 @@ function viewTime() {
       <p class="goal-line">${esc(rv.task)}</p>
       <div class="field"><span>کار اول کجا انجام شد؟</span>
         ${seg(`tplans.${ri}.done`, [['peak', 'در اوج'], ['alt', 'جایگزین'], ['other', 'بیرون از پنجره'], ['no', 'نشد']], rv.done, 'نتیجهٔ کار اول', 'data-db')}</div>
-      ${!rv.done || rv.done === 'no' ? '' : `<div class="field"><span>چقدرش انجام شد؟</span>
+      ${!chOn(0) || !rv.done || rv.done === 'no' ? '' : `<div class="field"><span>چقدرش انجام شد؟</span>
         ${seg(`tplans.${ri}.state`, [['full', '✓ کامل'], ['part', '~ بخشی'], ['min', 'فقط حداقلی']], rv.state, 'مقدار انجام‌شده', 'data-db')}</div>`}
       ${rv.done === 'no' ? '' : dbNum('واقعاً چند دقیقه طول کشید؟', `tplans.${ri}.actual`, rv.actual, `برآورد قفل‌شده ${fa(rv.minutes)} دقیقه بود.`)}
-      ${dbText('مانع اصلی، یک کلمه', `tplans.${ri}.block`, rv.block, 'خواب، حجم، سخت بود، گوشی', 'فقط علامت و علت. «باز خراب کردم» ثبت نیست.')}
-      ${rv.done === 'no' || rv.state === 'part' ? `<div class="field"><span>جامانده را چه می‌کنم؟</span>
+      ${!chOn(0) ? '' : dbText('مانع اصلی، یک کلمه', `tplans.${ri}.block`, rv.block, 'خواب، حجم، سخت بود، گوشی', 'فقط علامت و علت. «باز خراب کردم» ثبت نیست.')}
+      ${chOn(0) && (rv.done === 'no' || rv.state === 'part') ? `<div class="field"><span>جامانده را چه می‌کنم؟</span>
         ${seg(`tplans.${ri}.carry`, [['move', 'فردا'], ['shrink', 'کوچک‌تر'], ['drop', 'حذف']], rv.carry, 'تصمیم دربارهٔ جامانده', 'data-db')}
         <small>خودبه‌خود به فردا سُر نمی‌خورد؛ یکی را آگاهانه بزن.</small></div>` : ''}
       ${dbText('کدام کار سبک وارد اوج شد؟', `tplans.${ri}.intruder`, rv.intruder, 'اگر نشد خالی بگذار')}
@@ -3178,13 +3181,13 @@ function viewFmt() {
 }
 
 function viewTplan() {
-  const a = A(), c = capacity(), m = energyMap(), est = estOf(a), k = coef(), wk = weekNow();
+  const a = A(), c = capacity(), m = energyMap(), est = estOf(a), k = coef(), X = chOn(0), wk = X ? weekNow() : null;
   const lastFix = [...db.tplans].reverse().find((p) => has(p.fix));
   return `
     <header class="flow"><button class="back" data-act="cancel">انصراف</button>
-      ${a.capAt ? `<div class="timer small" data-timer="${a.capAt}">${clock(a.capAt - Date.now())}</div>` : ''}
+      ${X && a.capAt ? `<div class="timer small" data-timer="${a.capAt}">${clock(a.capAt - Date.now())}</div>` : ''}
       <h1>کار اولِ ${a.tday === 'today' ? 'امروز' : 'فردا'}</h1></header>
-    <p>پنج دقیقه. کارتِ ناتمامِ قابل‌اجرا از کارتِ کاملِ اجرانشده بهتر است.</p>
+    <p>${X ? 'پنج دقیقه. کارتِ ناتمامِ قابل‌اجرا از کارتِ کاملِ اجرانشده بهتر است.' : 'سه تصمیم: کار اول، بهترین پنجرهٔ در دسترس، و نسخهٔ کوچکِ جایگزین.'}</p>
     ${wk?.outs.length ? `<div class="field"><span>از کدام خروجی هفته؟</span>
       ${pick('data-bind', 'out', wk.outs.map((o, i) => [String(i), `${esc(o.t)}: ${esc(o.min)}`]), a.out, 'خروجی هفته', 'هیچ‌کدام')}</div>` : ''}
     <div class="field"><span>برای کدام روز؟</span>${seg('tday', [['today', 'امروز'], ['tomorrow', 'فردا']], a.tday, 'روز برنامه')}</div>
@@ -3207,8 +3210,8 @@ function viewTplan() {
       </div></div>
     ${aiPart('tplan', 'نسخهٔ کوچک و نقطهٔ شروع از هوشواره')}
     ${textField('نسخهٔ کوچکِ همان کار', 'small', a.small, 'مثلاً: چهار مسئله به‌جای ده تا', 'چتر نجات روز بد: کوچک‌ترین کاری که روز را از صفر نجات می‌دهد.')}
-    ${textField('نقطهٔ شروع', 'first', a.first, 'مثلاً: فایل تمرین را باز می‌کنم و فقط سؤال اول را حل می‌کنم', 'اولین عملِ خیلی مشخص؛ فقط شروع را معلوم کن، نه دقیقه‌به‌دقیقهٔ روز را.')}
-    ${textField('نشانهٔ شروع، اگر ساعت‌هایت به‌هم می‌ریزد', 'cue', a.cue, 'مثلاً: بعد از ناهار / به‌محض برگشتن از کلاس', 'اختیاری. نشانهٔ رویدادی در زندگی نامنظم از ساعت پایدارتر است.')}
+    ${!X ? '' : `${textField('نقطهٔ شروع', 'first', a.first, 'مثلاً: فایل تمرین را باز می‌کنم و فقط سؤال اول را حل می‌کنم', 'اولین عملِ خیلی مشخص؛ فقط شروع را معلوم کن، نه دقیقه‌به‌دقیقهٔ روز را.')}
+    ${textField('نشانهٔ شروع، اگر ساعت‌هایت به‌هم می‌ریزد', 'cue', a.cue, 'مثلاً: بعد از ناهار / به‌محض برگشتن از کلاس', 'اختیاری. نشانهٔ رویدادی در زندگی نامنظم از ساعت پایدارتر است.')}`}
 
     <fieldset class="group"><legend>کار دوم، اختیاری</legend>
       <p class="fine">حداکثر دو تا، و فقط اگر وقت یا انرژی ماند. دستهٔ هر کار را بار ذهنی‌اش تعیین می‌کند.</p>
@@ -3371,8 +3374,8 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: 5, manual: 5, plans: 6, env: 7, digital: 8 };
-const guideOn = (group, key) => group === 'book' || group === 'settings' || chOn(GUIDE_CH[key] ?? 0);
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: [5, 9], manual: 5, plans: 6, env: 7, digital: 8, time: 9 };
+const guideOn = (group, key) => group === 'book' || group === 'settings' || [].concat(GUIDE_CH[key] ?? 0).some((c) => chOn(c));
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
 
@@ -4003,13 +4006,13 @@ const actions = {
     if (!(a.base > 0)) return toast('زمان را بنویس؛ از روی سابقه، نه خوش‌بینی.');
     if (!a.from) return toast('پنجرهٔ اوج از چه ساعتی شروع می‌شود؟');
     if (!a.altFrom || !has(a.small)) return toast('پنجرهٔ جایگزین و نسخهٔ کوچک را بنویس؛ بدون آن‌ها یک تأخیر کل روز را می‌ریزد.');
-    if (!has(a.first)) return toast('نقطهٔ شروع را بنویس: اولین عملِ خیلی مشخص.');
+    if (chOn(0) && !has(a.first)) return toast('نقطهٔ شروع را بنویس: اولین عملِ خیلی مشخص.');
     const ts = a.tday === 'today' ? startOfDay(Date.now()) : addDays(Date.now(), 1), day = dayKey(ts);
     db.tplans = db.tplans.filter((p) => p.id !== a.editId && !(p.day === day && !p.done));
     db.tplans.push({
       id: uid(), made: Date.now(), ts, day, task: a.task.trim(), hist: a.hist, base: a.base, minutes: estOf(a),
       from: a.from, to: a.to || '', altFrom: a.altFrom, altTo: a.altTo || '', small: a.small.trim(), tasks: a.tasks, done: null,
-      first: a.first.trim(), cue: (a.cue || '').trim(), out: a.out ?? '', week: weekNow()?.id || '',
+      first: (a.first || '').trim(), cue: (a.cue || '').trim(), out: a.out ?? '', week: weekNow()?.id || '',
       took: a.openedAt ? Math.round((Date.now() - a.openedAt) / 1000) : 0,
     });
     db.active = null; db.tab = 'lab'; db.lab = 'time'; render(); window.scrollTo(0, 0);
@@ -4017,7 +4020,7 @@ const actions = {
   },
   'tplan-go': (el) => {
     const p = db.tplans.find((x) => x.id === el.dataset.id);
-    open(newSession({ subject: p.task, minutes: blockFor(p.minutes), load: 'heavy', tplanId: p.id, ifThen: p.first || db.landing?.text || '', ifWhen: p.cue || '' }));
+    open(newSession({ subject: p.task, minutes: blockFor(p.minutes), short: blockFor(p.minutes), load: 'heavy', tplanId: p.id, ifThen: p.first || db.landing?.text || '', ifWhen: p.cue || '' }));
   },
   'tplan-small': (el) => {
     const p = db.tplans.find((x) => x.id === el.dataset.id);
@@ -4030,7 +4033,7 @@ const actions = {
   'tplan-review': (el) => {
     const p = db.tplans.find((x) => x.id === el.dataset.id);
     if (!p.done) return toast('بگو کار اول کجا انجام شد.');
-    if ((p.done === 'no' || p.state === 'part') && !p.carry) return toast('برای جامانده تصمیم بگیر: فردا، کوچک‌تر، یا حذف.');
+    if (chOn(0) && (p.done === 'no' || p.state === 'part') && !p.carry) return toast('برای جامانده تصمیم بگیر: فردا، کوچک‌تر، یا حذف.');
     p.reviewed = Date.now();
     if ((p.carry === 'move' || p.carry === 'shrink') && !planFor(tomorrowKey())) {
       open(tplanDraft({ tday: 'tomorrow', task: p.carry === 'shrink' ? p.small : p.task, first: p.first, cue: p.cue, out: p.out, from: p.from, to: p.to, altFrom: p.altFrom, altTo: p.altTo }));

@@ -3259,7 +3259,49 @@ function render() {
   $('#tabs').innerHTML = a ? '' : TABS.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${l}</button>`).join('');
   if (a && a.kind === 'book') bookMount();
   save();
+  histSync();
 }
+
+/* ---------- دکمهٔ برگشتِ گوشی ---------- */
+
+// هر قدم رو به جلو یک خانه در تاریخچهٔ مرورگر می‌گیرد تا «برگشت» همان یک قدم را برگرداند، نه اینکه اپ را ببندد.
+// عمق: امروز = ۰، زبانهٔ دیگر = ۱، یک آزمایشِ باز = ۲، و هر صفحهٔ بازشده (جلسه، راهنما، فصل کتاب) یکی بیشتر.
+const depth = () => {
+  let d = db.tab === 'today' ? 0 : db.tab === 'lab' && db.lab !== 'hub' ? 2 : 1;
+  for (let a = A(); a; a = a.parent) d++;
+  return d;
+};
+let hist = history.state?.d || 0, histHold = false;
+history.scrollRestoration = 'manual';
+
+function histSync() {
+  if (histHold) return;
+  const d = depth();
+  // خانه‌ای که بدون لمس کاربر ساخته شود را مرورگر موقع برگشت نادیده می‌گیرد؛ تا اولین لمس صبر می‌کنیم
+  if (d > hist && navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  while (hist < d) history.pushState({ d: ++hist }, '');
+  if (d < hist) { histHold = true; history.go(d - hist); }
+}
+
+// یک قدم به عقب، همان کاری که دکمهٔ برگشتِ خودِ صفحه می‌کند
+function backStep() {
+  if (A()) {
+    const b = $('#app .back:not(.help)');
+    return b ? b.click() : toast('از دکمه‌های همین صفحه ادامه بده.');
+  }
+  if (db.tab === 'lab' && db.lab !== 'hub') db.lab = 'hub'; else db.tab = 'today';
+  render(); window.scrollTo(0, 0);
+}
+
+window.addEventListener('popstate', (e) => {
+  hist = e.state?.d || 0;
+  // برگشتی که خود اپ خواسته بود (بعد از بستن یک صفحه با دکمه)
+  if (histHold) { histHold = false; return histSync(); }
+  histHold = true;
+  for (let d = depth(); d > hist; d = depth()) { backStep(); if (depth() >= d) break; }
+  histHold = false;
+  histSync();
+});
 
 function go(step) { A().step = step; render(); window.scrollTo(0, 0); }
 function open(active) { db.active = active; for (const k in folds) delete folds[k]; render(); window.scrollTo(0, 0); }
@@ -3907,6 +3949,7 @@ const validScore = (v) => v !== '' && v != null && +v >= 0 && +v <= 10;
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (el && actions[el.dataset.act]) actions[el.dataset.act](el);
+  histSync();
 });
 
 document.addEventListener('input', (e) => {

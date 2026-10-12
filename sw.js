@@ -1,4 +1,4 @@
-const CACHE = 'ketab-baste-v9';
+const CACHE = 'ketab-baste-v10';
 const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

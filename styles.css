@@ -498,3 +498,10 @@ ol.bk-list > li::before { content: counter(bk, persian); top: .28em; width: 1.7r
 .bk-fix .bk-list > li::before, .bk-wrong .bk-list > li::before { content: none; }
 /* پیکان متن در خط راست‌به‌چپ رو به ادامهٔ جمله می‌ایستد */
 .bk-arr { display: inline-block; transform: scaleX(-1); color: var(--green); }
+
+/* انتخاب فصل: یک ردیف که با انگشت ورق می‌خورد */
+.chips { display: flex; gap: .4rem; overflow-x: auto; margin: 1rem -1.25rem 0; padding: 0 1.25rem .25rem; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: none; padding: .4rem .8rem; border: 1.5px solid var(--rule); border-radius: 99px; background: transparent; color: var(--ink); font: 500 .9rem/1.4 var(--font); cursor: pointer; white-space: nowrap; }
+.chips button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); font-weight: 700; }
+.fine .btn.link { display: inline; width: auto; padding: 0; font-size: inherit; }

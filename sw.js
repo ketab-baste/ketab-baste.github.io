@@ -1,5 +1,5 @@
-const CACHE = 'ketab-baste-v15';
-const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'ketab-baste-v16';
+const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', ...Array.from({ length: 15 }, (_, k) => `book/${k + 1}.md`), 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 // cache: 'reload' تا نسخهٔ تازه از خودِ سرور بیاید، نه از حافظهٔ مرورگر
 self.addEventListener('install', (e) => {

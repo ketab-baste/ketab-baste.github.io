@@ -4,7 +4,7 @@
 
 // متن هر فصل همان فایل نویسنده است (book/N.md) و اینجا فقط نمایش داده می‌شود؛ هیچ کلمه‌ای بازنویسی نمی‌شود.
 // فصل تازه: فایل را بی‌تغییر در book/N.md بگذار، این عدد را بالا ببر و همان فایل را به SHELL در sw.js اضافه کن.
-const BOOK_COUNT = 3;
+const BOOK_COUNT = 15;
 const book = { chapters: {}, state: 'idle' };
 
 const bkInline = (s) => esc(s)
@@ -12,10 +12,32 @@ const bkInline = (s) => esc(s)
   .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a class="bk-src" href="$2" target="_blank" rel="noopener">$1</a>')
   .replace(/\n/g, '<br>');
-// «شرط → اقدام» در دو خط جدا دیده می‌شود
+// «شرط → اقدام» در دو خط جدا دیده می‌شود؛ پیکانِ داخل ** ** یا «» جزو خودِ جمله است و جدا نمی‌شود
+const bkParts = (s) => {
+  const parts = [''];
+  s.split(/(\*\*[^*]+\*\*|«[^»]*»)/).forEach((seg, k) => {
+    if (k % 2) { parts[parts.length - 1] += seg; return; }
+    seg.split(/ [→←] /).forEach((x, j) => { if (j) parts.push(x); else parts[parts.length - 1] += x; });
+  });
+  return parts;
+};
+const bkArrow = (s) => bkParts(s).length > 1;
 const bkRich = (s) => {
-  const [first, ...rest] = s.split(' → ');
+  const [first, ...rest] = bkParts(s);
   return rest.length ? `<span class="bk-if">${bkInline(first)}</span>${rest.map((p) => `<span class="bk-then"><b class="bk-arr">→</b> ${bkInline(p)}</span>`).join('')}` : bkInline(s);
+};
+
+// چند مورد شماره‌دار که در یک خط آمده‌اند («۱. … ۲. … ۳. …») جدا از هم نشان داده می‌شوند
+const bkSteps = (s) => {
+  const m = s.match(/^([۰-۹]{1,2})\.\s+/), out = [];
+  if (!m) return out;
+  let n = [...m[1]].reduce((a, c) => a * 10 + '۰۱۲۳۴۵۶۷۸۹'.indexOf(c), 0), rest = s.slice(m[0].length);
+  for (;;) {
+    const k = rest.indexOf(` ${fa(n + 1)}. `);
+    out.push([fa(n), k < 0 ? rest : rest.slice(0, k)]);
+    if (k < 0) return out;
+    rest = rest.slice(k + fa(++n).length + 3);
+  }
 };
 
 const BK_ITEM = /^\s{0,3}(?:-|(\d+)\.)\s+(.*)$/;
@@ -31,8 +53,14 @@ function bkBlocks(src) {
   while (i < lines.length) {
     const l = lines[i];
     if (blank(l)) { i++; continue; }
-    const h = l.match(/^(#{1,3})\s+(.*)$/);
+    const h = l.match(/^(#{1,4})\s+(.*)$/);
     if (h) { out.push({ t: 'h' + h[1].length, text: h[2].trim() }); i++; continue; }
+    if (l.startsWith('```')) {
+      const code = [];
+      for (i++; i < lines.length && !lines[i].startsWith('```'); i++) code.push(lines[i]);
+      out.push({ t: 'code', lines: code }); i++;
+      continue;
+    }
     if (l.startsWith('|')) {
       const rows = [];
       while (i < lines.length && lines[i].startsWith('|')) rows.push(lines[i++].trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
@@ -56,18 +84,48 @@ function bkBlocks(src) {
           let j = i;
           while (j < lines.length && blank(lines[j])) j++;
           const next = lines[j] || '', nm = next.match(BK_ITEM);
-          if (nm && (nm[1] !== undefined) === ordered || /^\s{2,}\S/.test(next)) { i = j; continue; }
+          if (nm && (nm[1] !== undefined) === ordered) { i = j; continue; }
+          if (/^\s{2,}\S/.test(next)) { items[items.length - 1].push(''); i = j; continue; }
         }
         break;
       }
-      out.push({ t: 'list', ordered, start: +it[1] || 1, items: items.map(join) });
+      out.push({ t: 'list', ordered, start: +it[1] || 1, items: items.map(bkItem) });
       continue;
     }
     const p = [];
-    while (i < lines.length && !blank(lines[i]) && !/^(#{1,3}\s|\||>)/.test(lines[i]) && !(p.length && BK_ITEM.test(lines[i]))) p.push(lines[i++]);
+    while (i < lines.length && !blank(lines[i]) && !/^(#{1,4}\s|\||>|```)/.test(lines[i]) && !(p.length && BK_ITEM.test(lines[i]))) p.push(lines[i++]);
     out.push({ t: 'p', text: join(p) });
   }
   return out;
+}
+
+// خط‌های تورفتهٔ زیر یک مورد (فهرست تودرتو، بند ادامه) خودشان بلوک‌اند و داخل همان مورد می‌آیند
+function bkItem(ls) {
+  const rest = ls.slice(1), pad = Math.min(...rest.filter((l) => l.trim()).map((l) => l.match(/^\s*/)[0].length));
+  const [first, ...sub] = bkBlocks([ls[0], ...rest.map((l) => l.slice(pad))].join('\n'));
+  return first && first.t === 'p' ? { text: first.text, sub } : { text: '', sub: first ? [first, ...sub] : [] };
+}
+
+// نمودار درختیِ متنی (├── شاخه ──► نتیجه) به شکل شاخه‌های تودرتو کشیده می‌شود
+function bkTree(lines) {
+  const root = { text: '', kids: [] }, stack = [];
+  let last = root;
+  for (const raw of lines) {
+    const m = raw.match(/^([\s│]*)[├└]─+\s*(.*)$/);
+    if (m) {
+      while (stack.length && stack[stack.length - 1][0] >= m[1].length) stack.pop();
+      const [label, ...to] = m[2].split(/\s*─+►\s*/);
+      last = { label, text: to.join(' '), kids: [] };
+      (stack.length ? stack[stack.length - 1][1] : root).kids.push(last);
+      stack.push([m[1].length, last]);
+    } else {
+      const t = raw.replace(/^[\s│]+/, '').trim();
+      if (t) last.text += (last.text ? ' ' : '') + t;
+    }
+  }
+  if (!root.kids.length) return `<pre class="bk-pre" dir="auto">${esc(lines.join('\n'))}</pre>`;
+  const draw = (n) => `${n.label ? `<b>${bkInline(n.label)}</b>` : ''}<span>${bkInline(n.text)}</span>${n.kids.length ? `<ul>${n.kids.map((k) => `<li${k.kids.length ? '' : ' class="leaf"'}>${draw(k)}</li>`).join('')}</ul>` : ''}`;
+  return `<div class="bk-tree">${draw(root)}</div>`;
 }
 
 function bkTable(b) {
@@ -79,8 +137,26 @@ function bkTable(b) {
   </table></div>`;
 }
 
+function bkBlock(b) {
+  if (b.t === 'h4') return `<h4>${bkInline(b.text)}</h4>`;
+  if (b.t[0] === 'h') return `<h3>${bkInline(b.text)}</h3>`;
+  if (b.t === 'table') return bkTable(b);
+  if (b.t === 'code') return bkTree(b.lines);
+  if (b.t === 'quote') return `<blockquote class="bk-quote">${bkInline(b.text)}</blockquote>`;
+  if (b.t === 'list') {
+    const tag = b.ordered ? 'ol' : 'ul';
+    return `<${tag} class="bk-list"${b.ordered && b.start > 1 ? ` start="${b.start}"` : ''}>${b.items.map((x) => `<li${bkArrow(x.text) ? ' class="bk-arrow"' : ''}>${bkRich(x.text)}${x.sub.map(bkBlock).join('')}</li>`).join('')}</${tag}>`;
+  }
+  const steps = bkSteps(b.text);
+  if (steps.length) return steps.map(([num, t]) => `<div class="bk-step"><i>${num}</i><p class="bk-lead">${bkInline(t)}</p></div>`).join('');
+  if (/^\*\*[^*]+\*\*$/.test(b.text)) return `<p class="bk-label">${bkInline(b.text)}</p>`;
+  return `<p class="${b.text.startsWith('**') ? 'bk-lead' : ''}${bkArrow(b.text) ? ' bk-arrow' : ''}">${bkRich(b.text)}</p>`;
+}
+
 function bkParse(n, src) {
   const blocks = bkBlocks(src);
+  // فصل ۶ تیتر بخش‌ها را هم بدون علامت # نوشته است («۱. مسئله»)
+  if (!blocks.some((b) => b.t === 'h2')) blocks.forEach((b) => { if (b.t === 'p' && /^[۰-۹]\.\s+[^\n.]{1,40}$/.test(b.text)) b.t = 'h2'; });
   // فصل ۱ عنوانش را بدون علامت # نوشته است
   const head = blocks[0].t === 'h1' || blocks[0].t === 'p' ? blocks.shift().text : '';
   const [label, ...rest] = head.split(' — ');
@@ -94,21 +170,7 @@ function bkParse(n, src) {
       toc.push([id, m[1], m[2]]);
       html += `${openSec ? '</section>' : ''}<section class="bk-sec bk-${kind}" id="${id}"><h2>${m[1] ? `<i>${m[1]}</i>` : ''}<span>${bkInline(m[2])}</span></h2>`;
       openSec = true;
-    } else if (b.t === 'h1' || b.t === 'h3') {
-      html += `<h3>${bkInline(b.text)}</h3>`;
-    } else if (b.t === 'table') {
-      html += bkTable(b);
-    } else if (b.t === 'quote') {
-      html += `<blockquote class="bk-quote">${bkInline(b.text)}</blockquote>`;
-    } else if (b.t === 'list') {
-      const tag = b.ordered ? 'ol' : 'ul';
-      html += `<${tag} class="bk-list"${b.ordered && b.start > 1 ? ` start="${b.start}"` : ''}>${b.items.map((x) => `<li${x.includes(' → ') ? ' class="bk-arrow"' : ''}>${bkRich(x)}</li>`).join('')}</${tag}>`;
-    } else {
-      const step = b.text.match(/^([۰-۹]{1,2})\.\s+([\s\S]*)$/);
-      if (step) html += `<div class="bk-step"><i>${step[1]}</i><p class="bk-lead">${bkInline(step[2])}</p></div>`;
-      else if (/^\*\*[^*]+\*\*$/.test(b.text)) html += `<p class="bk-label">${bkInline(b.text)}</p>`;
-      else html += `<p class="${b.text.startsWith('**') ? 'bk-lead' : ''}${b.text.includes(' → ') ? ' bk-arrow' : ''}">${bkRich(b.text)}</p>`;
-    }
+    } else html += bkBlock(b);
   }
   if (openSec) html += '</section>';
   return { n, label: label.trim(), title: rest.join(' — ').trim(), toc, html, mins: Math.max(1, Math.round(src.split(/\s+/).length / 180)) };

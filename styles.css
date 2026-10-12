@@ -415,6 +415,7 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .bk-sec > h2 { display: flex; align-items: center; gap: .8rem; margin: 0; padding-top: 1.1rem; border-top: 2.5px solid var(--ink); font-size: 1.4rem; font-weight: 900; line-height: 1.5; }
 .bk-sec > h2 i { flex: none; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: var(--r); background: var(--ink); color: var(--paper); font-style: normal; font-size: 1.25rem; }
 .bk-sec > h3 { margin: 2.2rem 0 0; padding-inline-start: .7rem; border-inline-start: 4px solid var(--red); font-size: 1.12rem; font-weight: 900; line-height: 1.7; }
+.bk-sec > h4 { margin: 1.8rem 0 0; font-size: 1.05rem; font-weight: 900; line-height: 1.7; color: var(--red); }
 .bk strong { font-weight: 800; }
 .bk code { font: 500 .9em/1 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: .15em .4em; unicode-bidi: isolate; }
 .bk-src { display: inline-block; margin-inline: .3rem; padding: 0 .55rem; border: 1px solid var(--rule); border-radius: 99px; font-size: .74rem; line-height: 1.9; color: var(--ink-soft); text-decoration: none; direction: ltr; vertical-align: middle; }
@@ -448,6 +449,19 @@ ol.bk-list > li::before { content: counter(bk, persian); top: .28em; width: 1.7r
 /* گام‌های شماره‌دار */
 .bk-step { display: grid; grid-template-columns: auto 1fr; gap: .9rem; padding: .9rem 1rem; background: var(--sheet); border: 1.5px solid var(--rule); border-radius: var(--r); }
 .bk-step > i { display: grid; place-items: center; width: 2rem; height: 2rem; margin-top: .25rem; border-radius: 50%; background: var(--red); color: var(--on-accent); font-style: normal; font-weight: 900; line-height: 1; }
+
+.bk-list > li > * + :is(p, ul, ol, div, blockquote) { margin-top: .6rem; }
+.bk-list .bk-list > li { background: none; border: 0; border-radius: 0; padding-block: 0; }
+.bk-list .bk-list > li.bk-arrow { padding-inline-start: 0; }
+.bk-list .bk-list .bk-list { padding-inline-start: .9rem; border-inline-start: 2px solid var(--rule); }
+
+.bk-tree { padding: 1rem; background: var(--sheet); border: 1.5px solid var(--ink); border-radius: var(--r); font-size: .95rem; line-height: 1.9; }
+.bk-tree span { display: block; font-weight: 800; }
+.bk-tree ul { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .7rem; }
+.bk-tree li { padding-inline-start: .9rem; border-inline-start: 3px solid var(--ink); }
+.bk-tree li.leaf { border-inline-start-color: var(--green); }
+.bk-tree b { display: inline-block; margin-bottom: .25rem; padding: 0 .65rem; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: .8rem; font-weight: 700; }
+.bk-pre { padding: 1rem; background: var(--sheet); border: 1.5px solid var(--rule); border-radius: var(--r); font: inherit; font-size: .9rem; white-space: pre-wrap; }
 
 /* نقل‌قول: همان برگهٔ خط‌دار */
 .bk-quote {

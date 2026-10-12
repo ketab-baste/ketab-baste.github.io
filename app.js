@@ -787,14 +787,21 @@ const THEMES = {
   blue: ['آبی و سرخ', '#16233f', ['#16233f', '#c2334d', '#f9fafb']],
   green: ['سبز و طلایی', '#14432f', ['#14432f', '#c9a227', '#ffffff']],
 };
-let theme = 'blue';
-try { theme = localStorage.getItem(THEME_KEY) || 'blue'; } catch (e) { /* پیش‌فرض */ }
+const MODE_KEY = 'ketab-baste-mode';
+const MODES = { auto: 'مثل گوشی', light: 'روشن', dark: 'تیره' };
+const sysDark = matchMedia('(prefers-color-scheme: dark)');
+let theme = 'blue', mode = 'auto';
+try { theme = localStorage.getItem(THEME_KEY) || 'blue'; mode = localStorage.getItem(MODE_KEY) || 'auto'; } catch (e) { /* پیش‌فرض */ }
 if (!THEMES[theme]) theme = 'blue';
+if (!MODES[mode]) mode = 'auto';
 function applyTheme() {
-  if (theme === 'blue') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme;
+  const root = document.documentElement.dataset;
+  if (theme === 'blue') delete root.theme; else root.theme = theme;
+  root.mode = mode === 'auto' ? (sysDark.matches ? 'dark' : 'light') : mode;
   document.querySelector('meta[name="theme-color"]').content = THEMES[theme][1];
 }
 applyTheme();
+sysDark.addEventListener('change', applyTheme);
 
 /* ---------- هوشواره ---------- */
 
@@ -3181,7 +3188,7 @@ const GUIDE = [
       'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.'],
   ]],
   ['settings', 'زبانهٔ تنظیمات', [
-    ['theme', 'رنگ‌بندی', 'ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی و سفید. هیچ چیز دیگری تغییر نمی‌کند.', 'روی هر کدام که دوست داری بزن؛ همان لحظه عوض می‌شود و روی همین گوشی می‌ماند.'],
+    ['theme', 'رنگ‌بندی', 'ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی و سفید؛ هر کدام روشن یا تیره. هیچ چیز دیگری تغییر نمی‌کند.', 'رنگ را از ردیف بالا و روشن یا تیره را از ردیف پایین انتخاب کن. «مثل گوشی» یعنی با حالت خودِ گوشی عوض شود. انتخابت روی همین گوشی می‌ماند.'],
     ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
     ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
       'کلید API را وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.'],
@@ -3210,6 +3217,8 @@ function viewSettings() {
       <h2>رنگ‌بندی</h2>
       <div class="themes">${Object.entries(THEMES).map(([k, [name, , sw]]) => `
         <button data-act="theme" data-theme="${k}" aria-pressed="${theme === k}"><i>${sw.map((c) => `<b style="background:${c}"></b>`).join('')}</i>${name}</button>`).join('')}</div>
+      <div class="themes three">${Object.entries(MODES).map(([k, name]) => `
+        <button data-act="mode" data-mode="${k}" aria-pressed="${mode === k}">${name}</button>`).join('')}</div>
     </section>
     <section>
       <h2>هشدار پایان تایمر</h2>
@@ -3953,6 +3962,7 @@ const actions = {
   },
   notif: () => Notification.requestPermission().then(render),
   theme: (el) => { theme = el.dataset.theme; try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* بدون ذخیره */ } applyTheme(); render(); },
+  mode: (el) => { mode = el.dataset.mode; try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* بدون ذخیره */ } applyTheme(); render(); },
   export: () => download('ketab-baste-backup.json', JSON.stringify(db, null, 2), 'application/json'),
   wipe: () => {
     if (!confirm(`همهٔ جلسه‌ها و ثبت‌ها ${acc.uid ? 'روی این دستگاه و در حسابت ' : ''}برای همیشه پاک می‌شود. پاک کنم؟`)) return;

@@ -6,7 +6,7 @@
   <title>کتاب‌بسته</title>
   <meta name="description" content="جلسهٔ مطالعه را با خروجی واقعی بسنج، نه با عدد تایمر.">
   <meta name="theme-color" content="#16233f">
-  <script>try { if (localStorage.getItem('ketab-baste-theme') === 'green') document.documentElement.dataset.theme = 'green'; } catch (e) {}</script>
+  <script>try { var d = document.documentElement.dataset, m = localStorage.getItem('ketab-baste-mode'); if (localStorage.getItem('ketab-baste-theme') === 'green') d.theme = 'green'; d.mode = m === 'light' || m === 'dark' ? m : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) {}</script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">

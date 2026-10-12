@@ -20,17 +20,16 @@
   --font: 'Vazirmatn', 'Vazir', 'Segoe UI', Tahoma, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0f1626;
-    --sheet: #172036;
-    --ink: #e6ebf3;
-    --ink-soft: #9aa6bd;
-    --rule: #2e3b58;
-    --red: #ef7389;
-    --green: #6cc7a2;
-    --cover: #070b15;
-  }
+/* حالت تیره: data-mode را اپ می‌گذارد، از انتخاب کاربر یا از حالت خودِ گوشی */
+:root[data-mode="dark"] {
+  --paper: #0f1626;
+  --sheet: #172036;
+  --ink: #e6ebf3;
+  --ink-soft: #9aa6bd;
+  --rule: #2e3b58;
+  --red: #ef7389;
+  --green: #6cc7a2;
+  --cover: #070b15;
 }
 
 /* تم دوم: کاغذ سفید، جوهر سبز، مداد طلایی */
@@ -52,18 +51,16 @@
   --exam-edge: #b8891a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="green"] {
-    --paper: #0c1f17;
-    --sheet: #12291f;
-    --ink: #f5f1e2;
-    --ink-soft: #a5b7a8;
-    --rule: #2b4a3a;
-    --red: #e3c067;
-    --green: #7fd0a4;
-    --cover: #06140e;
-    --on-accent: #0c1f17;
-  }
+:root[data-theme="green"][data-mode="dark"] {
+  --paper: #0c1f17;
+  --sheet: #12291f;
+  --ink: #f5f1e2;
+  --ink-soft: #a5b7a8;
+  --rule: #2b4a3a;
+  --red: #e3c067;
+  --green: #7fd0a4;
+  --cover: #06140e;
+  --on-accent: #0c1f17;
 }
 
 * { box-sizing: border-box; }
@@ -335,6 +332,7 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .themes button[aria-pressed="true"] { border-color: var(--ink); background: var(--sheet); font-weight: 700; }
 .themes i { display: flex; height: 2.25rem; border-radius: 3px; overflow: hidden; border: 1px solid var(--rule); }
 .themes i b { flex: 1; }
+.themes.three { grid-template-columns: repeat(3, 1fr); margin-top: .5rem; }
 
 .btn.ai { border-style: dashed; font-weight: 500; }
 .btn.ai::before { content: '✦'; margin-inline-end: .45rem; color: var(--green); }

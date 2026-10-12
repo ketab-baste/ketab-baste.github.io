@@ -276,9 +276,9 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [7, 'محیط مطالعه'], [8, 'محیط دیجیتال'], [9, 'معماری زمان'], [10, 'برنامه‌ریزی سبک'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [7, 'محیط مطالعه'], [8, 'محیط دیجیتال'], [9, 'معماری زمان'], [10, 'برنامه‌ریزی سبک'], [11, 'تمرکز چیست؟'], [0, 'بقیهٔ فصل‌ها']];
 // آزمایش‌های زبانهٔ «آزمایش» و فصلشان؛ هرچه اینجا نیست زیر «بقیه» است
-const LAB_CH = { reread: 3, myths: 4, baseline: 5, env: 7, digital: 8, time: [9, 10], loop: 10 };
+const LAB_CH = { reread: 3, myths: 4, baseline: 5, env: 7, digital: 8, time: [9, 10], loop: 10, attn: 11 };
 const labOn = (view) => chAny(LAB_CH[view] ?? 0);
 const anyLab = () => chOn(0) || Object.values(LAB_CH).some(chAny);
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
@@ -1066,6 +1066,21 @@ const parkSheet = (items) => `
 // برگهٔ پارک: نام‌گذاری پرش، پاسخ کوتاهِ همان شاخه، و برگشت با یک عمل
 const urgeBox = (a) => {
   // فصل ۲: فقط یک علامت و چند کلمه دربارهٔ لحظهٔ قبل از فرار؛ نسخهٔ کامل مال فصل‌های بعد است
+  if (!chOn(0, a.ch || db.chapters) && chOn(11, a.ch || db.chapters) && a.ping) {
+    return `
+  <div class="urge">
+    <label for="urge">ذهنت بیرون رفت؟ یک تیک، مقصدش در یکی دو کلمه، و برگرد. بدون داور.</label>
+    <div class="row">
+      <select data-bind="urgeCause" aria-label="مقصد پرش">
+        <option value="">کجا؟</option>
+        ${Object.entries(CAUSES).filter(([k]) => k !== 'real').map(([k, x]) => `<option value="${k}"${a.urgeCause === k ? ' selected' : ''}>${x.label}</option>`).join('')}
+      </select>
+      <input id="urge" type="text" data-bind="urgeDraft" value="${esc(a.urgeDraft || '')}" placeholder="مثلاً: نگرانی امتحان" enterkeyhint="done">
+      <button class="btn quiet" data-act="urge">ثبت</button>
+    </div>
+    ${urgeLog(a.urges)}
+  </div>`;
+  }
   if (!chOn(0, a.ch || db.chapters)) {
     return `
   <div class="urge">
@@ -1208,7 +1223,7 @@ function viewToday() {
       <p>عددها را کنار خط پایه ببین و نسخهٔ شخصی شروعت را بنویس.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="start">تحلیل روز هفتم</button>
     </section>` : ''],
-    [0, at && atN < 3 ? `
+    [11, at && atN < 3 ? `
     <section class="due">
       <h2>نقشهٔ توجه، جلسهٔ ${fa(atN + 1)} از ۳</h2>
       <p>همان درس این روزها، با زنگ هر پنج دقیقه. فقط ببین و نام بگذار.</p>
@@ -1322,7 +1337,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []), C7 = chOn(7, a.ch || []), C8 = chOn(8, a.ch || []), C9 = chOn(9, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []), C7 = chOn(7, a.ch || []), C8 = chOn(8, a.ch || []), C9 = chOn(9, a.ch || []), C11 = chOn(11, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1348,6 +1363,11 @@ function viewSession() {
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}` : ''}
       <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short && !LEAN_MIN.includes(a.short) ? [a.short, ...LEAN_MIN].sort((x, y) => x - y) : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
         <small>دقیقه. تایمر که تمام شد، منبع را می‌بندی و از حفظ می‌نویسی.</small></div>
+      ${C11 ? `<div class="field"><span>نقشهٔ توجه</span>
+        ${seg('ping', [[0, 'خاموش'], [5, 'هر ۵ دقیقه'], [2, 'هر ۲ دقیقه'], ['end', 'فقط پایان']], a.ping, 'زنگ نمونه‌گیری')}
+        <small>${a.ping === 'end' ? 'بدون زنگ میانی؛ برای وقتی که زنگ رشتهٔ حل مسئله را پاره می‌کند. سه عدد را آخر جلسه می‌نویسی.'
+          : a.ping ? `با هر لرزش، ده ثانیه: یکی از سه برچسب را بزن و برگرد. بلوک ۱۵ تا ۲۵ دقیقه کافی است${a.minutes > 25 ? '؛ این جلسه را طولانی‌تر نکن' : ''}.`
+          : 'زنگ بی‌صدا وسط جلسه می‌پرسد توجهت الان کجاست.'}</small></div>` : ''}
       ${C9 ? `<div class="field"><span>بار ذهنی این کار</span>${seg('load', Object.entries(LOADS), a.load, 'بار ذهنی')}
         <small>${loadHint}</small></div>` : ''}
       ${C8 ? `${has(rule?.place) ? `<p class="count">قاعدهٔ خودت: گوشی ${esc(rule.place)}${has(rule.people) ? `؛ فقط ${esc(rule.people)} فوری می‌رسند` : ''}${has(rule.next) ? `؛ چک بعدی ${esc(rule.next)}` : ''}.</p>` : ''}
@@ -1544,7 +1564,7 @@ function viewSession() {
         : F.bell !== 'cap' && !a.ext ? '<button class="btn big" data-act="extend">تا پایان همین واحد؛ یک بار، حداکثر پنج دقیقه</button>' : ''}
       ${over || !(R || C3 || C4) ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
       <button class="btn primary big" data-act="to-feel">${over ? 'برو به آزمون کتاب‌بسته' : 'جلسه را تمام کن'}</button>
-      ${R || C2 ? urgeBox(a) : ''}
+      ${R || C2 || (C11 && a.ping) ? urgeBox(a) : ''}
       <button class="btn link" data-act="halve">هدف برای این جلسه بزرگ است</button>
       ${C2 ? '<button class="btn link" data-act="stuck">گیر کرده‌ام و نمی‌توانم ادامه بدهم</button>' : ''}`;
   }
@@ -1582,7 +1602,7 @@ function viewSession() {
 
   if (a.step === 'feel') {
     return `
-      <header class="flow"><h1>${R ? 'قبل از آزمون، دو عدد و یک حدس' : C5 || C7 || C8 || C9 ? 'قبل از آزمون، چند عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
+      <header class="flow"><h1>${R ? 'قبل از آزمون، دو عدد و یک حدس' : C5 || C7 || C8 || C9 || (C11 && a.ping) ? 'قبل از آزمون، چند عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
       ${R || !C5 ? '' : `<p>${fa(a.studied)} دقیقه پای کار بودی. همین حالا بنویس؛ حافظه تا شب وقفه‌ها را پاک می‌کند.</p>
       <div class="grid2">
         ${numField('دقیقهٔ واقعی', 'real', a.real, 'ذهنت واقعاً با مطلب درگیر بود.')}
@@ -1591,7 +1611,10 @@ function viewSession() {
       </div>
       <div class="field"><span>علت غالب وقفه‌ها</span>
         ${pick('data-bind', 'cause', Object.entries(CAUSES).map(([k, c]) => [k, c.label]), a.cause, 'علت وقفه', 'علت')}</div>`}
-      ${R || C5 || !C9 ? '' : numField('دقیقهٔ مؤثر', 'real', a.real, `از ${fa(a.studied)} دقیقه پای کار؛ فقط وقتی که واقعاً جلو رفتی.`)}
+      ${R || C5 || !(C9 || (C11 && a.ping)) ? '' : numField(C11 && a.ping ? 'دقیقهٔ تمرکز کاری' : 'دقیقهٔ مؤثر', 'real', a.real, `از ${fa(a.studied)} دقیقه پای کار؛ فقط وقتی که واقعاً جلو رفتی.`)}
+      ${R || !(C11 && a.ping) ? '' : `${numField('دقیقهٔ شبه‌تمرکز', 'pseudo', a.pseudo, 'چشم روی متن، ذهن بدون پردازش.')}
+      ${a.pings?.length ? `<p class="count">از ${fa(a.pings.length)} نمونه: ${Object.entries(PING).map(([k, l]) => `${fa(a.pings.filter((p) => p.v === k).length)} ${l}`).join('، ')}. عددها از همین‌ها پر شده؛ صادقانه اصلاحشان کن.</p>` : ''}
+      <p class="fine">هرچه از ${fa(a.studied)} دقیقه بماند، حواس‌پرتی حساب می‌شود.</p>`}
       ${R || !(C7 || C8) ? '' : `<div class="grid2">
         ${C7 ? numField('بلندشدن از جا', 'ups', a.ups, 'چند بار.') : ''}
         ${numField(C7 ? 'دست به گوشی یا وسیله' : 'برداشتن گوشی', 'reaches', a.reaches, 'چند بار.')}
@@ -1672,6 +1695,8 @@ function viewSession() {
     const same = db.sessions.filter((x) => x.subject === s.subject).slice(-3);
     const sameType = db.sessions.filter((x) => x.fmt && x.wtype === s.wtype).slice(-3);
     const notes = !R ? [
+      C11 && s.ping && !twoLines(s) && realOf(s) * 2 > s.studied && 'نتوانستی دو خط از حافظه بنویسی، ولی بیشترِ جلسه را تمرکز حساب کرده‌ای. سهم شبه‌تمرکز را دست‌کم گرفته‌ای.',
+      C11 && s.ping && !s.urges.length && s.outcome === 'none' && ATTN_SNAGS.empty[1],
       C8 && countCause(s, 'notif') > 0 && CAUSES.notif.advice,
       C8 && !s.focusOn && countCause(s, 'phone') + countCause(s, 'tab') > 0 && 'حالت تمرکز خاموش بود. سیستم را از نو نچین؛ فقط همان دو دقیقهٔ قبل از جلسه را اجرا کن.',
       C7 && s.lag > 3 && `از نشستن تا خط اول ${fa(s.lag)} دقیقه شد. همین پایین نقطهٔ فرود جلسهٔ بعد را بچین تا فردا این فاصله نزدیک صفر شود.`,
@@ -2065,7 +2090,7 @@ function viewTrends() {
     ['ده روز اخیر: کار اول در پنجرهٔ خودش', ten.filter((p) => p.done === 'peak' || p.done === 'alt').length, 7, 9],
     ['چهارده روز اخیر: کارت روزانه با ثبت شبانه', db.tplans.filter((p) => p.reviewed && p.ts >= addDays(Date.now(), -13)).length, 10, 10],
     ['دو جلسهٔ هفتگی با یک اصلاح', db.weeks.filter((x) => has(x.fix)).length, 2, 10],
-    ['سه جلسه با نقشهٔ توجه و مسئلهٔ نام‌دار', all.filter((s) => s.ping && s.issue).length, 3],
+    ['سه جلسه با نقشهٔ توجه و مسئلهٔ نام‌دار', all.filter((s) => s.ping && s.issue).length, 3, 11],
     ['هفت روز اخیر: ورود واقعی روی درس', entryDays(addDays(Date.now(), -6)), 5],
     ['پنج پایانِ جلسه با «اگر، آنگاهِ» جلسهٔ بعد', all.filter((s) => has(s.nextFirst)).length, 5],
     ['چهار بلوک اخیر با رمپ: ورود موفق', all.filter((s) => s.ramp).slice(-4).filter((s) => rampOk(s, db.ramp?.base)).length, 3],
@@ -2825,8 +2850,8 @@ function viewAttn() {
       <p class="goal-line">${mapSentence(last)}</p>
       ${dest.length ? `<h2>مقصد پرش‌ها</h2>${bars(dest, CAUSES)}` : ''}
       ${issues.length ? `<h2>مسئلهٔ اصلی</h2>${bars(issues, ISSUES)}<p class="advice">${ISSUES[issues[0][0]].advice}</p>` : ''}
-      ${three && dest[0] && ['phone', 'notif', 'tab'].includes(dest[0][0]) ? '<button class="btn big" data-act="lab-view" data-view="digital">محیط دیجیتال</button>' : ''}
-      ${three && issues[0]?.[0] === 'outer' && dest[0] && ['up', 'noise'].includes(dest[0][0]) ? '<button class="btn big" data-act="lab-view" data-view="env">بازطراحی محیط</button>' : ''}
+      ${labOn('digital') && three && dest[0] && ['phone', 'notif', 'tab'].includes(dest[0][0]) ? '<button class="btn big" data-act="lab-view" data-view="digital">محیط دیجیتال</button>' : ''}
+      ${labOn('env') && three && issues[0]?.[0] === 'outer' && dest[0] && ['up', 'noise'].includes(dest[0][0]) ? '<button class="btn big" data-act="lab-view" data-view="env">بازطراحی محیط</button>' : ''}
     </section>` : ''}
 
     ${three ? `
@@ -3376,7 +3401,7 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: [5, 9], manual: 5, plans: 6, env: 7, digital: 8, time: [9, 10], loop: 10 };
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: [5, 9], manual: 5, plans: 6, env: 7, digital: 8, time: [9, 10], loop: 10, attn: 11 };
 const guideOn = (group, key) => group === 'book' || group === 'settings' || chAny(GUIDE_CH[key] ?? 0);
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
@@ -3531,7 +3556,7 @@ function newSession(over = {}) {
   if (!FMT[a.fmt].opts.includes(a.minutes)) applyFmt(a);
   a.ch = [...db.chapters];
   // فقط ابزار فصل ۱: جلسهٔ ساده، بدون تکه‌های فصل‌های دیگر
-  if (!chOn(0)) Object.assign(a, { fmt: '', entry: 0, ramp: 0, ping: 0, sheet: false, minutes: LEAN_MIN.includes(a.minutes) || a.minutes === a.short ? a.minutes : 25 });
+  if (!chOn(0)) Object.assign(a, { fmt: '', entry: 0, ramp: 0, ping: chOn(11) ? a.ping : 0, sheet: false, minutes: LEAN_MIN.includes(a.minutes) || a.minutes === a.short ? a.minutes : 25 });
   return a;
 }
 const fromLanding = () => (db.landing ? { ifThen: db.landing.text, ifWhen: db.landing.when || '', loadLast: db.landing.at || '' } : {});
@@ -3574,6 +3599,7 @@ const actions = {
       if (chOn(6, a.ch) && !has(a.criterion)) return toast('معیار را بنویس: از کجا می‌فهمی رسیده‌ای؟');
       db.plans = db.plans.filter((p) => p.id !== a.planId);
       Object.assign(a, { startedAt: Date.now(), endsAt: Date.now() + a.minutes * 6e4, rang: false, pings: [], entryState: '', rampState: '', anchor: '', signs: [], ext: 0, away: null });
+      a.pingDue = false; a.nextPingAt = a.ping > 0 ? a.startedAt + a.ping * 6e4 : 0;
       return go('study');
     }
     if (!has(a.criterion)) return toast('معیار را بنویس: از کجا می‌فهمی رسیده‌ای؟');
@@ -3671,7 +3697,7 @@ const actions = {
     const a = A();
     a.pings.push({ min: elapsedMin(a.startedAt), v: el.dataset.v });
     a.pingDue = false; a.nextPingAt = Date.now() + a.ping * 6e4; render();
-    toast(el.dataset.v === 'away' ? 'مقصدش را پایین در «وقفه» بزن و برگرد.' : 'ثبت شد. برگرد سر کار.');
+    toast(el.dataset.v === 'away' ? 'مقصدش را پایین بنویس و برگرد.' : 'ثبت شد. برگرد سر کار.');
   },
 
   'new-quick': () => open({ kind: 'quick', step: 'pick', more: 0, subject: db.landing?.subject || '' }),
@@ -3728,7 +3754,7 @@ const actions = {
       return toast(text || next ? 'یادداشت ماند. وقتی برگشتی اول همین را بخوان.' : 'برو. در اولین لحظهٔ امن بنویس کجا بودی.');
     }
     a.urges.push({ min: elapsedMin(a.startedAt), at: Date.now(), cause: c, before: text, long: !!a.urgeLong });
-    if (t === 'thought' && text) park(text, db.keep?.oneWord ? 'ده دقیقه بعد از آخرین جلسهٔ امروز' : (a.urgeWhen || '').trim() || 'بعد از این جلسه', (a.subject || a.task || '').trim());
+    if (chOn(0, a.ch || []) && t === 'thought' && text) park(text, db.keep?.oneWord ? 'ده دقیقه بعد از آخرین جلسهٔ امروز' : (a.urgeWhen || '').trim() || 'بعد از این جلسه', (a.subject || a.task || '').trim());
     clear(); render();
     toast(has(a.anchor) ? `ثبت شد. حالا یک عمل: ${a.anchor}` : 'ثبت شد. برگرد سر همان خط.');
   },
@@ -4077,7 +4103,7 @@ const actions = {
   },
 
   'attn-start': () => { db.attn = { start: Date.now() }; render(); window.scrollTo(0, 0); },
-  'attn-session': () => open(newSession({ ...fromLanding(), ping: db.attn?.snag === 'slow' ? 'end' : db.attn?.snag === 'all' || db.attn?.snag === 'empty' ? 2 : 5, minutes: db.attn?.snag === 'all' ? 10 : 25, entry: 0 })),
+  'attn-session': () => open(newSession({ ...fromLanding(), ping: db.attn?.snag === 'slow' ? 'end' : db.attn?.snag === 'all' || db.attn?.snag === 'empty' ? 2 : 5, minutes: db.attn?.snag === 'all' ? 10 : 25, short: db.attn?.snag === 'all' ? 10 : 0, entry: 0 })),
   'attn-reset': () => {
     if (!confirm('شمارش سه جلسه از نو شروع می‌شود. جلسه‌های ثبت‌شده می‌مانند. ادامه بدهم؟')) return;
     db.attn = null; render(); window.scrollTo(0, 0);

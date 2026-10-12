@@ -275,7 +275,7 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [0, 'بقیهٔ فصل‌ها']];
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
 try {
   db = Object.assign(blankDb(), JSON.parse(localStorage.getItem(KEY) || '{}'));
@@ -1045,6 +1045,18 @@ const parkSheet = (items) => `
     </li>`).join('')}</ul>`;
 // برگهٔ پارک: نام‌گذاری پرش، پاسخ کوتاهِ همان شاخه، و برگشت با یک عمل
 const urgeBox = (a) => {
+  // فصل ۲: فقط یک علامت و چند کلمه دربارهٔ لحظهٔ قبل از فرار؛ نسخهٔ کامل مال فصل‌های بعد است
+  if (!chOn(0, a.ch || db.chapters)) {
+    return `
+  <div class="urge">
+    <label for="urge">دلت خواست کار را رها کنی؟ با آن نجنگ. فقط بنویس درست قبلش چه شد و برگرد.</label>
+    <div class="row">
+      <input id="urge" type="text" data-bind="urgeDraft" value="${esc(a.urgeDraft || '')}" placeholder="${URGE_PH['']}" enterkeyhint="done">
+      <button class="btn quiet" data-act="urge">ثبت</button>
+    </div>
+    ${urgeLog(a.urges)}
+  </div>`;
+  }
   const c = a.urgeCause || '', t = jumpType(c), one = db.keep?.oneWord, three = threeRule(a);
   const mine = openParked().filter((p) => p.date >= a.startedAt);
   if (a.away) {
@@ -1233,8 +1245,8 @@ function viewToday() {
 
     <section class="start">
       <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>
-      ${R ? `<div class="row eq"><button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button><button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button></div>
-      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
+      ${R || chOn(2) ? `<div class="row eq">${R ? '<button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button>' : ''}${chOn(2) ? '<button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button>' : ''}</div>` : ''}
+      ${R ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
       ${has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
     </section>
 
@@ -1287,7 +1299,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1475,9 +1487,9 @@ function viewSession() {
         : F.bell !== 'cap' && !a.ext ? '<button class="btn big" data-act="extend">تا پایان همین واحد؛ یک بار، حداکثر پنج دقیقه</button>' : ''}
       ${over || !R ? '' : `<button class="btn big" data-act="chunk">به‌جای دور دوم؛ ببند و بنویس</button>`}
       <button class="btn primary big" data-act="to-feel">${over ? 'برو به آزمون کتاب‌بسته' : 'جلسه را تمام کن'}</button>
-      ${R ? urgeBox(a) : ''}
+      ${R || C2 ? urgeBox(a) : ''}
       <button class="btn link" data-act="halve">هدف برای این جلسه بزرگ است</button>
-      ${R ? '<button class="btn link" data-act="stuck">گیر کرده‌ام و نمی‌توانم ادامه بدهم</button>' : ''}`;
+      ${C2 ? '<button class="btn link" data-act="stuck">گیر کرده‌ام و نمی‌توانم ادامه بدهم</button>' : ''}`;
   }
 
   if (a.step === 'halve') {
@@ -1931,7 +1943,11 @@ function viewTrends() {
   const gaps = tally(all, (s) => (s.gap === 'none' ? null : s.gap));
   const obs = tally(db.obstacles, (o) => o.obstacle);
   const causes = tally(causesOf(all, db.logs), (c) => c);
-  const triggers = [...all.flatMap((s) => s.urges), ...db.obstacles.flatMap((o) => o.urges)].filter((u) => u.before).slice(-6).reverse();
+  // هم حسِ نوشته‌شده موقع انتخاب مانع، هم یادداشت‌های لحظهٔ فرار؛ تازه‌ترها اول
+  const triggers = [...all.flatMap((s) => s.urges.map((u) => [u.at, u.before])), ...db.obstacles.flatMap((o) => [[o.date, o.feeling], ...o.urges.map((u) => [u.at, u.before])])]
+    .filter(([, t]) => has(t)).sort((x, y) => y[0] - x[0]).slice(0, 6).map(([, t]) => t);
+  const doneSteps = [...new Set(db.obstacles.filter((o) => o.done === 'yes' && OBSTACLES[o.obstacle] && !OBSTACLES[o.obstacle].rest).reverse().map((o) => o.step))].slice(0, 3);
+  const fears = db.obstacles.filter((o) => o.obstacle === 'fear').length;
   const retrieved = all.filter((s) => s.retrieved);
   const chunks = all.reduce((n, s) => n + s.chunks.length, 0);
   const stepsDone = db.obstacles.filter((o) => o.done === 'yes').length;
@@ -1939,14 +1955,15 @@ function viewTrends() {
   const b = db.baseline;
   const setWeek = week.filter((s) => s.phonePlace), lagWeek = avg(setWeek.filter((s) => s.lag != null), (s) => s.lag);
   const ten = db.tplans.filter((p) => p.ts >= addDays(Date.now(), -9) && p.day <= today());
-  const R = chOn(0);
-  const goals = !R ? [['سه جلسه با هدف خروجی و آزمون کتاب‌بسته', all.length, 3]] : [
-    ['سه جلسه با هدف خروجی و آزمون کتاب‌بسته', all.length, 3],
+  const R = chOn(0), C2 = chOn(2);
+  // ستون چهارم: فصلِ هر نشانه؛ بدون آن یعنی «بقیه»
+  const goals = [
+    ['سه جلسه با هدف خروجی و آزمون کتاب‌بسته', all.length, 3, 1],
     ['سه جلسه که معیارش واقعاً اجرا شد', all.filter((s) => s.ran === 'yes').length, 3],
     ['چهار پایانِ آگاهانه: «حالا می‌توانم…»', all.filter((s) => has(s.can)).length, 4],
     ['سه بار «بخوان، ببند، بنویس» وسط جلسه', chunks, 3],
-    ['سه لحظهٔ مقاومت با مانع مشخص، نه «تنبلی»', db.obstacles.length, 3],
-    ['دو گام ورودی که واقعاً انجام شد', stepsDone, 2],
+    ['سه لحظهٔ مقاومت با مانع مشخص، نه «تنبلی»', db.obstacles.length, 3, 2],
+    ['دو گام ورودی که واقعاً انجام شد', stepsDone, 2, 2],
     ['دو بازیابی روز بعد', retrieved.length, 2],
     ['یک مبحث در دو روز جدا، نه یک نشست فشرده', spreadSubjects(0), 1],
     ['پروفایل نقطهٔ شروع از سه روز ثبت واقعی', b && !baseRunning(b) && baselineProfile(b).records ? 1 : 0, 1],
@@ -1964,9 +1981,9 @@ function viewTrends() {
     ['چهار بلوک اخیر با رمپ: ورود موفق', all.filter((s) => s.ramp).slice(-4).filter((s) => rampOk(s, db.ramp?.base)).length, 3],
     ['سه جلسهٔ اخیر با برگهٔ پارک: خروجی حفظ شد', all.filter((s) => s.sheet).slice(-3).filter((s) => has(s.can)).length, 3],
     ['شش جلسهٔ اخیر با قالب: بسته‌شدن در مرز', all.filter((s) => s.fmt).slice(-6).filter(inBounds).length, 4],
-  ];
+  ].filter((g) => chOn(g[3] ?? 0));
 
-  if (!all.length && (!R || (!db.obstacles.length && !db.logs.length))) {
+  if (!all.length && !(C2 && db.obstacles.length) && !(R && db.logs.length)) {
     return `<header class="top"><h1>روند</h1></header>
       <p class="empty">اینجا خروجی جلسه‌ها را می‌بینی، نه ساعت نشستن پای درس. بعد از اولین جلسه پر می‌شود.</p>
       <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>`;
@@ -2021,13 +2038,20 @@ function viewTrends() {
 
     ${gaps.length ? `<section><h2>شکاف‌های پرتکرار</h2>${bars(gaps, GAPS)}<p class="advice">${GAPS[gaps[0][0]].advice}</p></section>` : ''}
 
-    ${!R ? '' : `${causes.length ? `<section><h2>علت وقفه‌ها</h2>${bars(causes, CAUSES)}<p class="advice">${CAUSES[causes[0][0]].advice}</p></section>` : ''}
+    ${R && causes.length ? `<section><h2>علت وقفه‌ها</h2>${bars(causes, CAUSES)}<p class="advice">${CAUSES[causes[0][0]].advice}</p></section>` : ''}
+
+    ${!C2 ? '' : `
 
     ${obs.length ? `<section><h2>مانع‌های پرتکرار</h2>${bars(obs, OBSTACLES)}
-      ${tiredLately >= 4 ? '<p class="advice">در دو هفتهٔ اخیر بارها «خستگی» را انتخاب کرده‌ای. قبل از بیشترکردن فشار، خواب و حجم برنامه را بررسی کن. اگر این وضعیت در بیشتر کارهای زندگی‌ات هم هست و ادامه دارد، صحبت با پزشک یا مشاور قدم مسئولانه‌تری است.</p>' : ''}</section>` : ''}
+      ${tiredLately >= 4 ? '<p class="advice">در دو هفتهٔ اخیر بارها «خستگی» را انتخاب کرده‌ای. قبل از بیشترکردن فشار، خواب و حجم برنامه را بررسی کن. اگر این وضعیت در بیشتر کارهای زندگی‌ات هم هست و ادامه دارد، صحبت با پزشک یا مشاور قدم مسئولانه‌تری است.</p>' : ''}
+      ${fears >= 3 ? '<p class="advice">چند بار «ترس از اشتباه» را انتخاب کرده‌ای. پس مسئله فقط شروع‌کردن نیست؛ فصل‌های کمال‌گرایی و ترس از شکست را زودتر بخوان.</p>' : ''}</section>` : ''}
 
     ${triggers.length ? `<section><h2>درست قبل از فرار</h2>
-      <ul class="plain">${triggers.map((u) => `<li>${esc(u.before)}</li>`).join('')}</ul></section>` : ''}`}
+      <ul class="plain">${triggers.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></section>` : ''}
+
+    ${doneSteps.length ? `<section><h2>گام‌هایی که واقعاً برداشتی</h2>
+      <ul class="plain">${doneSteps.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      <p class="fine">دفعهٔ بعد که شروع سخت شد، از یکی از همین‌ها شروع کن.</p></section>` : ''}`}
 
     ${fold('t-goals', 'نشانه‌های جاافتادن', goalList(goals), false, `${fa(goals.filter(([, n, need]) => n >= need).length)} از ${fa(goals.length)}`)}
 
@@ -3233,7 +3257,7 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1 };
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2 };
 const guideOn = (group, key) => group === 'book' || group === 'settings' || chOn(GUIDE_CH[key] ?? 0);
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;

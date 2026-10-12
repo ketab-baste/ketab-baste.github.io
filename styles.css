@@ -10,6 +10,12 @@
   --cover: #121c33;
   --cover-ink: #e6ebf3;
   --cover-rule: #2b3a5c;
+  --cover-accent: #ef7389;
+  --on-accent: #fff;
+  --exam: #f9fafb;
+  --exam-rule: #c6cfdb;
+  --exam-ink: #16233f;
+  --exam-edge: #c2334d;
   --r: 6px;
   --font: 'Vazirmatn', 'Vazir', 'Segoe UI', Tahoma, system-ui, sans-serif;
 }
@@ -24,6 +30,39 @@
     --red: #ef7389;
     --green: #6cc7a2;
     --cover: #070b15;
+  }
+}
+
+/* تم دوم: کاغذ سفید، جوهر سبز، مداد طلایی */
+:root[data-theme="green"] {
+  --paper: #f9f8f1;
+  --sheet: #ffffff;
+  --ink: #14432f;
+  --ink-soft: #55705f;
+  --rule: #ddd2a8;
+  --red: #94690a;
+  --green: #1f7a4d;
+  --cover: #0f3626;
+  --cover-ink: #f7f3e3;
+  --cover-rule: #2a5a43;
+  --cover-accent: #e3c067;
+  --exam: #fffdf6;
+  --exam-rule: #ddd2a8;
+  --exam-ink: #14432f;
+  --exam-edge: #b8891a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="green"] {
+    --paper: #0c1f17;
+    --sheet: #12291f;
+    --ink: #f5f1e2;
+    --ink-soft: #a5b7a8;
+    --rule: #2b4a3a;
+    --red: #e3c067;
+    --green: #7fd0a4;
+    --cover: #06140e;
+    --on-accent: #0c1f17;
   }
 }
 
@@ -178,9 +217,9 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
   --lh: 2.25rem;
   line-height: var(--lh) !important; padding: 0 1rem !important;
   border: 0 !important; border-radius: 2px !important;
-  background: #f9fafb repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 1px), #c6cfdb calc(var(--lh) - 1px), #c6cfdb var(--lh)) local !important;
-  color: #16233f !important;
-  border-inline-start: 3px solid #c2334d !important;
+  background: var(--exam) repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 1px), var(--exam-rule) calc(var(--lh) - 1px), var(--exam-rule) var(--lh)) local !important;
+  color: var(--exam-ink) !important;
+  border-inline-start: 3px solid var(--exam-edge) !important;
   min-height: calc(var(--lh) * 8);
 }
 @keyframes shut { from { opacity: 0; transform: scaleY(.96); transform-origin: top; } }
@@ -290,6 +329,13 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .due > .check + .check { margin-top: .5rem; }
 
 /* هوشواره */
+/* انتخاب تم */
+.themes { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.themes button { display: grid; gap: .5rem; padding: .6rem; border: 1.5px solid var(--rule); border-radius: var(--r); background: transparent; color: var(--ink); font: 500 .95rem/1.4 var(--font); cursor: pointer; }
+.themes button[aria-pressed="true"] { border-color: var(--ink); background: var(--sheet); font-weight: 700; }
+.themes i { display: flex; height: 2.25rem; border-radius: 3px; overflow: hidden; border: 1px solid var(--rule); }
+.themes i b { flex: 1; }
+
 .btn.ai { border-style: dashed; font-weight: 500; }
 .btn.ai::before { content: '✦'; margin-inline-end: .45rem; color: var(--green); }
 .btn.ai:disabled { opacity: .55; cursor: progress; }
@@ -352,7 +398,7 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
   position: absolute; inset: -1.8rem auto auto .6rem; font-style: normal; font-size: 11rem; font-weight: 900; line-height: 1;
   color: transparent; -webkit-text-stroke: 1.5px var(--cover-rule); pointer-events: none;
 }
-.bk-hero small { position: relative; display: inline-block; font-size: .85rem; font-weight: 700; letter-spacing: .02em; color: #ef7389; }
+.bk-hero small { position: relative; display: inline-block; font-size: .85rem; font-weight: 700; letter-spacing: .02em; color: var(--cover-accent); }
 .bk-hero h1 { position: relative; margin-top: .4rem; font-size: 1.85rem; line-height: 1.55; }
 .bk-hero p { position: relative; margin-top: 1.4rem; font-size: .85rem; color: color-mix(in srgb, var(--cover-ink) 65%, transparent); }
 
@@ -403,7 +449,7 @@ ol.bk-list > li::before { content: counter(bk, persian); top: .28em; width: 1.7r
 
 /* گام‌های شماره‌دار */
 .bk-step { display: grid; grid-template-columns: auto 1fr; gap: .9rem; padding: .9rem 1rem; background: var(--sheet); border: 1.5px solid var(--rule); border-radius: var(--r); }
-.bk-step > i { display: grid; place-items: center; width: 2rem; height: 2rem; margin-top: .25rem; border-radius: 50%; background: var(--red); color: #fff; font-style: normal; font-weight: 900; line-height: 1; }
+.bk-step > i { display: grid; place-items: center; width: 2rem; height: 2rem; margin-top: .25rem; border-radius: 50%; background: var(--red); color: var(--on-accent); font-style: normal; font-weight: 900; line-height: 1; }
 
 /* نقل‌قول: همان برگهٔ خط‌دار */
 .bk-quote {

@@ -1,4 +1,4 @@
-const CACHE = 'ketab-baste-v11';
+const CACHE = 'ketab-baste-v12';
 const SHELL = ['./', 'index.html', 'styles.css', 'book.js', 'app.js', 'book/1.md', 'book/2.md', 'book/3.md', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 // cache: 'reload' تا نسخهٔ تازه از خودِ سرور بیاید، نه از حافظهٔ مرورگر

@@ -779,6 +779,23 @@ function weekSigns() {
   };
 }
 
+/* ---------- تم ---------- */
+
+// انتخاب ظاهر مال همین دستگاه است؛ جدا از داده‌ها می‌ماند. [نام، رنگ نوار مرورگر، سه رنگ نمونه]
+const THEME_KEY = 'ketab-baste-theme';
+const THEMES = {
+  blue: ['آبی و سرخ', '#16233f', ['#16233f', '#c2334d', '#f9fafb']],
+  green: ['سبز و طلایی', '#14432f', ['#14432f', '#c9a227', '#ffffff']],
+};
+let theme = 'blue';
+try { theme = localStorage.getItem(THEME_KEY) || 'blue'; } catch (e) { /* پیش‌فرض */ }
+if (!THEMES[theme]) theme = 'blue';
+function applyTheme() {
+  if (theme === 'blue') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]').content = THEMES[theme][1];
+}
+applyTheme();
+
 /* ---------- هوشواره ---------- */
 
 // کلید و تنظیمات جدا از داده‌ها می‌ماند تا وارد فایل پشتیبان نشود
@@ -3164,6 +3181,7 @@ const GUIDE = [
       'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.'],
   ]],
   ['settings', 'زبانهٔ تنظیمات', [
+    ['theme', 'رنگ‌بندی', 'ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی و سفید. هیچ چیز دیگری تغییر نمی‌کند.', 'روی هر کدام که دوست داری بزن؛ همان لحظه عوض می‌شود و روی همین گوشی می‌ماند.'],
     ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
     ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
       'کلید API را وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.'],
@@ -3188,6 +3206,11 @@ function viewSettings() {
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   return `
     <header class="top"><h1>تنظیمات</h1></header>
+    <section>
+      <h2>رنگ‌بندی</h2>
+      <div class="themes">${Object.entries(THEMES).map(([k, [name, , sw]]) => `
+        <button data-act="theme" data-theme="${k}" aria-pressed="${theme === k}"><i>${sw.map((c) => `<b style="background:${c}"></b>`).join('')}</i>${name}</button>`).join('')}</div>
+    </section>
     <section>
       <h2>هشدار پایان تایمر</h2>
       <p>${perm === 'granted' ? 'اعلان روشن است. وقتی اپ در پس‌زمینه باز باشد، پایان تایمر را خبر می‌دهد.'
@@ -3929,6 +3952,7 @@ const actions = {
     accLeave(); render(); toast('خارج شدی. داده‌های این دستگاه سر جایش است.');
   },
   notif: () => Notification.requestPermission().then(render),
+  theme: (el) => { theme = el.dataset.theme; try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* بدون ذخیره */ } applyTheme(); render(); },
   export: () => download('ketab-baste-backup.json', JSON.stringify(db, null, 2), 'application/json'),
   wipe: () => {
     if (!confirm(`همهٔ جلسه‌ها و ثبت‌ها ${acc.uid ? 'روی این دستگاه و در حسابت ' : ''}برای همیشه پاک می‌شود. پاک کنم؟`)) return;

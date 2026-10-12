@@ -275,7 +275,7 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'آزمون کتاب‌بسته'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [0, 'بقیهٔ فصل‌ها']];
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
 try {
   db = Object.assign(blankDb(), JSON.parse(localStorage.getItem(KEY) || '{}'));

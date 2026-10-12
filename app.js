@@ -276,9 +276,9 @@ let db = blankDb();
 
 // فیلتر فصل‌ها: db.chapters خالی یعنی همه. فیلتر فقط پنهان می‌کند و هیچ داده‌ای را پاک نمی‌کند.
 // هر ابزار به فصل خودش وصل است؛ تا وقتی فصلش مرور نشده، زیر «بقیه» (۰) می‌ماند.
-const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [0, 'بقیهٔ فصل‌ها']];
+const CHAPTERS = [[1, 'مطالعهٔ مؤثر'], [2, 'چرا سخت است؟'], [3, 'توجه و یادگیری'], [4, 'افسانه‌های مطالعه'], [5, 'نقطهٔ شروع'], [6, 'هدف خروجی‌محور'], [7, 'محیط مطالعه'], [0, 'بقیهٔ فصل‌ها']];
 // آزمایش‌های زبانهٔ «آزمایش» و فصلشان؛ هرچه اینجا نیست زیر «بقیه» است
-const LAB_CH = { reread: 3, myths: 4, baseline: 5 };
+const LAB_CH = { reread: 3, myths: 4, baseline: 5, env: 7 };
 const labOn = (view) => chOn(LAB_CH[view] ?? 0);
 const anyLab = () => chOn(0) || Object.values(LAB_CH).some((c) => chOn(c));
 const chOn = (ch, list = db.chapters) => !list.length || list.includes(ch);
@@ -1237,7 +1237,7 @@ function viewToday() {
         : has(dig.rule?.place) ? `گوشی: ${esc(dig.rule.place)}${has(dig.rule.next) ? `. چک بعدی: ${esc(dig.rule.next)}` : ''}` : 'این هفته چیزی به سیستم اضافه نکن؛ فقط اجرا و ثبت.'}</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="digital">${baseDayNo(dig) > 7 ? 'جمع‌بندی' : 'کاربرگ هفت روز'}</button>
     </section>` : ''],
-    [0, envLeft ? `
+    [7, envLeft ? `
     <section class="due">
       <h2>بازطراحی محیط، ${fa(envLeft)} عامل مانده</h2>
       <p>با همین وسایلی که داری. اگر کش آمده، با همین وضعیت یک جلسهٔ کوتاه بخوان.</p>
@@ -1267,8 +1267,8 @@ function viewToday() {
     <section class="start">
       <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>
       ${R || chOn(2) ? `<div class="row eq">${R ? '<button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button>' : ''}${chOn(2) ? '<button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button>' : ''}</div>` : ''}
-      ${R ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
-      ${has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
+      ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
+      ${R && has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
     </section>
 
     ${R && openParked().length ? `
@@ -1320,7 +1320,7 @@ const sessionRow = (s) => `
 function viewSession() {
   const a = A();
   // تکه‌های جلسه هم به فصل خودشان وصل‌اند؛ انتخاب فصل‌ها موقع شروع جلسه ثابت می‌شود
-  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []);
+  const R = chOn(0, a.ch || []), C2 = chOn(2, a.ch || []), C3 = chOn(3, a.ch || []), C4 = chOn(4, a.ch || []), C5 = chOn(5, a.ch || []), C6 = chOn(6, a.ch || []), C7 = chOn(7, a.ch || []);
   if (a.step === 'setup') {
     const hint = goalHint((a.goal || '').trim()), cHint = criterionHint(a.criterion);
     const em = energyMap(), slot = slotOf(Date.now()), rule = db.digital?.rule;
@@ -1346,9 +1346,13 @@ function viewSession() {
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}` : ''}
       <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short ? [a.short, ...LEAN_MIN] : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
         <small>دقیقه. تایمر که تمام شد، منبع را می‌بندی و از حفظ می‌نویسی.</small></div>
-      ${C3 ? `<div class="field"><span>گوشی کجاست؟</span>
+      ${C3 || C7 ? `<div class="field"><span>گوشی کجاست؟</span>
         ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
         <small>${phoneHint}</small></div>` : ''}
+      ${C7 ? `<div class="field"><span>کجا نشسته‌ام؟</span>
+        ${seg('place', [['fixed', 'جای همیشگی مطالعه'], ['other', 'جای دیگر']], a.place, 'جای مطالعه')}</div>
+      <label class="check"><input type="checkbox" data-bind="deskClear" ${a.deskClear ? 'checked' : ''}>
+        <span>روی میز فقط وسایل همین جلسه است.</span></label>` : ''}
       <button class="btn primary big" data-act="start-study">شروع مطالعه</button>
       ${C6 ? `${fold('s-goal', 'مرز، لحظهٔ شروع و نوع جلسه', `
       <div class="field"><span>این جلسه چه جور جلسه‌ای است؟</span>
@@ -1569,7 +1573,7 @@ function viewSession() {
 
   if (a.step === 'feel') {
     return `
-      <header class="flow"><h1>${R || C5 ? 'قبل از آزمون، دو عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
+      <header class="flow"><h1>${R ? 'قبل از آزمون، دو عدد و یک حدس' : C5 || C7 ? 'قبل از آزمون، چند عدد و یک حدس' : 'قبل از آزمون، یک حدس'}</h1></header>
       ${R || !C5 ? '' : `<p>${fa(a.studied)} دقیقه پای کار بودی. همین حالا بنویس؛ حافظه تا شب وقفه‌ها را پاک می‌کند.</p>
       <div class="grid2">
         ${numField('دقیقهٔ واقعی', 'real', a.real, 'ذهنت واقعاً با مطلب درگیر بود.')}
@@ -1578,6 +1582,11 @@ function viewSession() {
       </div>
       <div class="field"><span>علت غالب وقفه‌ها</span>
         ${pick('data-bind', 'cause', Object.entries(CAUSES).map(([k, c]) => [k, c.label]), a.cause, 'علت وقفه', 'علت')}</div>`}
+      ${R || !C7 ? '' : `<div class="grid2">
+        ${numField('بلندشدن از جا', 'ups', a.ups, 'چند بار.')}
+        ${numField('دست به گوشی یا وسیله', 'reaches', a.reaches, 'چند بار.')}
+        ${numField('دقیقه تا خط اول', 'lag', a.lag, 'از نشستن تا شروع واقعی.')}
+      </div>`}
       ${!R ? '' : `<p>${fa(a.studied)} دقیقه پای کار بودی. همین حالا بنویس؛ حافظه تا شب وقفه‌ها را پاک می‌کند.</p>
       <div class="grid2">
         ${numField('دقیقهٔ واقعی', 'real', a.real, 'ذهنت واقعاً با مطلب درگیر بود.')}
@@ -1650,6 +1659,8 @@ function viewSession() {
     const same = db.sessions.filter((x) => x.subject === s.subject).slice(-3);
     const sameType = db.sessions.filter((x) => x.fmt && x.wtype === s.wtype).slice(-3);
     const notes = !R ? [
+      C7 && s.lag > 3 && `از نشستن تا خط اول ${fa(s.lag)} دقیقه شد. همین پایین نقطهٔ فرود جلسهٔ بعد را بچین تا فردا این فاصله نزدیک صفر شود.`,
+      C7 && s.place === 'other' && db.sessions.slice(-4).filter((x) => x.place === 'other').length >= 3 && 'چند جلسهٔ اخیر هر بار جای تازه‌ای بوده. اگر جای ثابت نداری، یک کیف مطالعهٔ ثابت با همان چیدمان بساز.',
       C6 && s.ran === 'no' && 'معیار اجرا نشد؛ پس این نتیجه هنوز حس است، نه سنجش. دفعهٔ بعد جلسه را با اجرای معیار ببند، نه با تمام‌شدن زمان.',
       C6 && s.ran !== 'no' && s.outcome === 'full' && s.feel <= 3 && 'به معیار رسیدی ولی حس یادگیری نداری. احتمالاً معیار با شناختن جواب پر شده. آن را به تولید بدون راهنما عوض کن: حل، نوشتن یا توضیح از حفظ.',
       C6 && !has(s.can) && 'نتوانستی بگویی چه چیزی اضافه شد. این هم داده است: یا هدف مبهم بود یا روش. جلسهٔ بعد خروجی را کوچک‌تر بنویس.',
@@ -1690,6 +1701,11 @@ function viewSession() {
         <span>قدم بعدی برای «${GAPS[s.gap].label}»</span>
         <p>${GAPS[s.gap].advice}</p>
       </div>
+      ${R || !C7 ? '' : `<fieldset class="group"><legend>نقطهٔ فرود، دو دقیقه</legend>
+        ${textField('اولین کار جلسهٔ بعد', 'nextFirst', a.nextFirst, 'مثلاً: سؤال ۵ صفحهٔ ۴۱، فقط نوشتن داده‌ها')}
+        <label class="check"><input type="checkbox" data-bind="landed" ${a.landed ? 'checked' : ''}>
+          <span>کتاب روی همان صفحه باز مانده، خودکار کنارش است و بقیهٔ وسایل برگشته سر جایش.</span></label>
+      </fieldset>`}
       ${!R ? '' : `${unsettled.length ? `
       <fieldset class="group"><legend>برگهٔ پارک را خالی کن</legend>
         <p class="fine">هر خط: انجامش بده، زمان دقیق بده، یا حذفش کن. برگه‌ای که خالی نشود، ذهن دیگر به آن اعتماد نمی‌کند.</p>
@@ -2028,8 +2044,8 @@ function viewTrends() {
     ['پروفایل نقطهٔ شروع از سه روز ثبت واقعی', b && !baseRunning(b) && baselineProfile(b).records ? 1 : 0, 1, 5],
     ['هفت روز «افسانه یا داده؟»', mythDays(), 7, 4],
     ['آزمایش دوباره‌خوانی در برابر بازیابی', db.experiment?.later ? 1 : 0, 1, 3],
-    ['شش عامل محیط، ممیزی و اصلاح شد', db.env ? 6 - auditLeft(db.env) : 0, 6],
-    ['پنج پایانِ جلسه با نقطهٔ فرودِ آماده', all.filter((s) => s.landed).length, 5],
+    ['شش عامل محیط، ممیزی و اصلاح شد', db.env ? 6 - auditLeft(db.env) : 0, 6, 7],
+    ['پنج پایانِ جلسه با نقطهٔ فرودِ آماده', all.filter((s) => s.landed).length, 5, 7],
     ['هفت روز ثبت محیط دیجیتال', db.digital ? digDays(db.digital).filter((d) => d.n).length : 0, 7],
     ['ده روز اخیر: کار اول در پنجرهٔ خودش', ten.filter((p) => p.done === 'peak' || p.done === 'alt').length, 7],
     ['چهارده روز اخیر: کارت روزانه با ثبت شبانه', db.tplans.filter((p) => p.reviewed && p.ts >= addDays(Date.now(), -13)).length, 10],
@@ -2076,18 +2092,19 @@ function viewTrends() {
     ${aiCfg.key ? `<section><h2>نگاه هوشواره به این هفته</h2>
       ${aiPart('trend', 'تحلیل هفته')}
       <p class="fine">فقط عددهای همین صفحه فرستاده می‌شود، نه نوشته‌هایت. تا عددها عوض نشود، درخواست تازه‌ای نمی‌رود.</p></section>` : ''}
+`}
 
-    ${setWeek.length ? `
+    ${(R || chOn(7)) && setWeek.length ? `
     <section>
       <h2>محیط و شروع</h2>
-      <div class="verdict three">
+      <div class="verdict${R ? ' three' : ''}">
         <div><span>دقیقه تا خط اول</span><b>${lagWeek != null ? fa1(lagWeek) : '·'}</b></div>
-        <div><span>دقیقه تا اولین قطع</span><b>${fa(Math.round(avg(setWeek, firstBreakOf)))}</b></div>
+        ${R ? `<div><span>دقیقه تا اولین قطع</span><b>${fa(Math.round(avg(setWeek, firstBreakOf)))}</b></div>` : ''}
         <div><span>جای ثابت، از ${fa(setWeek.length)} جلسه</span><b>${fa(setWeek.filter((s) => s.place === 'fixed').length)}</b></div>
       </div>
       <p class="fine">ساعتِ پای میز این‌ها را نشان نمی‌دهد: شروع چقدر طول کشید و جلسه چقدر دوام آورد.</p>
       ${lagWeek > 3 ? '<p class="advice">شروع هنوز پرهزینه است. آخر هر جلسه نقطهٔ فرود را بچین: کتاب باز، خودکار کنارش، یک خط برای اولین کار.</p>' : ''}
-    </section>` : ''}`}
+    </section>` : ''}
 
     ${all.length ? `
     <section>
@@ -2412,6 +2429,7 @@ function viewEnv() {
         </fieldset>`;
       }).join('')}
       <p class="fine">میز چند روز بعد دوباره شلوغ می‌شود. نگه‌داشتنش با «نقطهٔ فرود» در پایان هر جلسه است، نه با یک پاک‌سازی دیگر.</p>
+      <p class="fine">اگر درد بدنیِ مکرر داری که با تنظیم صندلی و نور رفع نمی‌شود، تحملش نکن؛ از یک متخصص کمک بگیر.</p>
     </section>
 
     <section>
@@ -2424,7 +2442,7 @@ function viewEnv() {
           <tr><th>${fa(st.n)} جلسهٔ بعد</th><td>${cell(st.up)}</td><td>${cell(st.reach)}</td><td>${cell(st.lag, ' دقیقه')}</td></tr>
         </tbody>
       </table>
-      <p class="fine">میانگین هر جلسه. بلندشدن و گوشی را وسط جلسه با «وقفه» ثبت کن تا این جدول پر شود.</p>` : '<p class="empty">بعد از ممیزی، سه جلسه با همین اپ بگیر تا مقایسه ساخته شود.</p>'}
+      <p class="fine">میانگین هر جلسه. ${chOn(0) ? 'بلندشدن و گوشی را وسط جلسه با «وقفه» ثبت کن تا این جدول پر شود.' : 'این سه عدد را آخر هر جلسه، قبل از آزمون، می‌نویسی.'}</p>` : '<p class="empty">بعد از ممیزی، سه جلسه با همین اپ بگیر تا مقایسه ساخته شود.</p>'}
       ${goalList([
         ['از نشستن تا خط اول، سه دقیقه یا کمتر', lagOk ? 1 : 0, 1],
         ['وقفهٔ فیزیکی کمتر از خط پایه', fewer ? 1 : 0, 1],
@@ -2432,8 +2450,8 @@ function viewEnv() {
       ])}
       ${st.n >= 5 && Date.now() - e.start >= 7 * DAY ? (lagOk || fewer
         ? '<p>محیط حالا کمکت می‌کند، نه این‌که هر جلسه با آن بجنگی. همین را نگه دار؛ کامل‌ترش نکن.</p>'
-        : '<p class="advice">بعد از یک هفته اجرای کامل، نه شروع سریع‌تر شد و نه وقفه کمتر. گلوگاه اصلی‌ات محیط فیزیکی نیست؛ به پروفایل نقطهٔ شروع برگرد.</p><button class="btn big" data-act="lab-view" data-view="baseline">پروفایل نقطهٔ شروع</button>') : ''}
-      ${route && st.n >= 3 ? `<p class="advice">${route}</p>${CAUSES[top] && ['phone', 'notif', 'tab'].includes(top) ? '<button class="btn big" data-act="lab-view" data-view="digital">محیط دیجیتال</button>' : ''}` : ''}
+        : '<p class="advice">بعد از یک هفته اجرای کامل، نه شروع سریع‌تر شد و نه وقفه کمتر. گلوگاه اصلی‌ات محیط فیزیکی نیست؛ به پروفایل نقطهٔ شروع برگرد.</p>' + (labOn('baseline') ? '<button class="btn big" data-act="lab-view" data-view="baseline">پروفایل نقطهٔ شروع</button>' : '')) : ''}
+      ${route && st.n >= 3 ? `<p class="advice">${route}</p>${labOn('digital') && ['phone', 'notif', 'tab'].includes(top) ? '<button class="btn big" data-act="lab-view" data-view="digital">محیط دیجیتال</button>' : ''}` : ''}
       ${post.length >= 3 && db.obstacles.filter((o) => o.date > e.start).length > post.length ? '<p class="advice">محیط آماده است و باز شروع نمی‌کنی. مانع احتمالاً ابهام کار یا ترس است، نه میز.</p>' : ''}
     </section>
     <button class="btn link" data-act="env-reset">ممیزی تازه از صفر</button>`;
@@ -3343,7 +3361,7 @@ const GUIDE = [
 ];
 const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
 // هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: 5, manual: 5, plans: 6 };
+const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: 5, manual: 5, plans: 6, env: 7 };
 const guideOn = (group, key) => group === 'book' || group === 'settings' || chOn(GUIDE_CH[key] ?? 0);
 const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
 const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
@@ -3536,8 +3554,8 @@ const actions = {
     const R = chOn(0, a.ch || []);
     if (!has(a.subject) || !has(a.goal)) return toast('موضوع و خروجی جلسه را بنویس.');
     if (!R) {
-      if (chOn(3, a.ch) && !a.phonePlace) return toast('بگو گوشی الان کجاست.');
-      if (chOn(3, a.ch) && a.phonePlace === 'desk') return toast('اول گوشی را از روی میز بردار؛ کشو، کیف یا بیرون اتاق.');
+      if ((chOn(3, a.ch) || chOn(7, a.ch)) && !a.phonePlace) return toast('بگو گوشی الان کجاست.');
+      if ((chOn(3, a.ch) || chOn(7, a.ch)) && a.phonePlace === 'desk') return toast('اول گوشی را از روی میز بردار؛ کشو، کیف یا بیرون اتاق.');
       if (chOn(6, a.ch) && !has(a.criterion)) return toast('معیار را بنویس: از کجا می‌فهمی رسیده‌ای؟');
       db.plans = db.plans.filter((p) => p.id !== a.planId);
       Object.assign(a, { startedAt: Date.now(), endsAt: Date.now() + a.minutes * 6e4, rang: false, pings: [], entryState: '', rampState: '', anchor: '', signs: [], ext: 0, away: null });
@@ -3732,6 +3750,8 @@ const actions = {
     const inside = rampOk(a, db.ramp?.base);
     if (a.ramp && !inside && !a.rampFail) return toast('ورود نشد؛ یک علت مشخص انتخاب کن. همین داده است.');
     const real = clamp(a.real, 0, a.studied);
+    // جلسهٔ سادهٔ فصل ۷: دو شمارش پایان جلسه مثل وقفه‌های ثبت‌شده حساب می‌شوند
+    if (!R) [['up', a.ups], ['phone', a.reaches]].forEach(([cause, n]) => { for (let i = clamp(n, 0, 30); i > 0; i--) a.urges.push({ cause, at: Date.now() }); });
     const s = {
       mood: a.mood || '', entry: a.entry || 0, entryMore: a.entryMore || 0, entryAfter: a.entryAfter || '', firstKind: a.firstKind || '',
       ping: a.ping || 0, pings: a.pings || [], pseudo: clamp(a.pseudo, 0, a.studied - real), issue: a.ping ? a.issue || '' : '',

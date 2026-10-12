@@ -1492,7 +1492,7 @@ function viewSession() {
       <p class="timer-note">${over ? bell : R || C3 ? 'هر بخش سه یا چهار ایده دارد. بخش را که خواندی، ببند و بنویس.' : 'فقط چیزی را علامت بزن که به همین خروجی مربوط است، و کنارش بنویس چرا: تعریف، مثال، مرحلهٔ حل.'}</p>
       ${a.rampState === 'lock' ? `<p class="count">قفل: تا پایان بلوک جابه‌جایی اختیاری نداری. گیر کردی؟ حدود هفت دقیقه روی همان گره بمان و روی کاغذ راه امتحان کن${has(a.fallback) ? `؛ بعد: ${esc(a.fallback)}` : ''}.</p>` : ''}
       ${has(a.guard) ? `<p class="count">اگر ${esc(a.guard)}، آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم.</p>` : ''}
-      ${a.chunks.length ? `<p class="count">${fa(a.chunks.length)} بخش را بسته و بازسازی کرده‌ای.</p>` : ''}
+      ${a.chunks.length ? `<p class="count">${fa(a.chunks.length)} بخش را بسته و بازسازی کرده‌ای${a.chunks.some((c) => has(c.title)) ? `: ${a.chunks.map((c) => esc(c.title)).filter(Boolean).join('، ')}` : ''}.</p>` : ''}
       ${a.pings?.length ? `<p class="count">نقشهٔ توجه: ${fa(a.pings.length)} نمونه. هر پرش را پایین با علتش بزن.</p>` : ''}
       ${!over || !F ? '' : stretchy(a) ? (total + 10 <= 40 ? '<button class="btn big" data-act="stretch">ده دقیقهٔ دیگر می‌توانم</button>' : '')
         : F.bell !== 'cap' && !a.ext ? '<button class="btn big" data-act="extend">تا پایان همین واحد؛ یک بار، حداکثر پنج دقیقه</button>' : ''}
@@ -1529,6 +1529,7 @@ function viewSession() {
       <blockquote class="mine">${esc(a.chunkDraft) || 'چیزی ننوشتی.'}</blockquote>
       <div class="field"><span>چند جای خالی یا اشتباه بود؟</span>
         <div class="stepper"><button class="btn" data-act="gaps-" aria-label="کمتر">−</button><output>${fa(a.chunkGaps)}</output><button class="btn" data-act="gaps+" aria-label="بیشتر">+</button></div></div>
+      ${textField('عنوان این بخش با کلمات خودم', 'chunkTitle', a.chunkTitle, 'کوتاه؛ مثلاً: چرا توجه دروازهٔ باریک است')}
       ${textField('این به چه چیزی که از قبل می‌دانم وصل می‌شود؟', 'chunkHook', a.chunkHook, 'شبیهِ… است، چون…')}
       <button class="btn primary big" data-act="chunk-done">بخش بعدی</button>`;
   }
@@ -3608,13 +3609,13 @@ const actions = {
     open(newSession({ ...p, planId: id }));
   },
   'plan-drop': (el) => { db.plans = db.plans.filter((p) => p.id !== el.dataset.id); render(); },
-  chunk: () => { const a = A(); a.chunkDraft = ''; a.chunkGaps = 0; a.chunkHook = ''; go('chunk'); },
+  chunk: () => { const a = A(); a.chunkDraft = ''; a.chunkGaps = 0; a.chunkHook = ''; a.chunkTitle = ''; go('chunk'); },
   'chunk-check': () => go('chunk-check'),
   'gaps+': () => { A().chunkGaps++; render(); },
   'gaps-': () => { const a = A(); a.chunkGaps = Math.max(0, a.chunkGaps - 1); render(); },
   'chunk-done': () => {
     const a = A();
-    a.chunks.push({ text: a.chunkDraft || '', gaps: a.chunkGaps, hook: a.chunkHook || '' });
+    a.chunks.push({ text: a.chunkDraft || '', gaps: a.chunkGaps, hook: a.chunkHook || '', title: (a.chunkTitle || '').trim() });
     go('study');
   },
   urge: () => {

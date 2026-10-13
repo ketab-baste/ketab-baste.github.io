@@ -362,6 +362,8 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .lab-row .tag { color: var(--green); }
 
 /* کتاب: قفسهٔ فصل‌ها */
+.bk-ask { display: grid; gap: .6rem; margin-bottom: 1.2rem; }
+.bk-ask .ai-box .next { margin-top: .6rem; }
 .bk-shelf { list-style: none; padding: 0; display: grid; gap: .9rem; }
 .bk-ch {
   position: relative; display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; width: 100%;

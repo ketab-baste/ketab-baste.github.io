@@ -153,6 +153,12 @@ function bkBlock(b) {
   return `<p class="${b.text.startsWith('**') ? 'bk-lead' : ''}${bkArrow(b.text) ? ' bk-arrow' : ''}">${bkRich(b.text)}</p>`;
 }
 
+// متن سادهٔ یک بلوک، برای فهرستی که هوشواره از روی آن فصل پیشنهاد می‌دهد
+const bkPlain = (b) => (b.t === 'table' ? [b.head, ...b.rows].map((r) => r.join(' | ')).join('\n')
+  : b.t === 'code' ? b.lines.join('\n')
+  : b.t === 'list' ? b.items.map((x) => ['- ' + x.text, ...x.sub.map(bkPlain)].join('\n')).join('\n')
+  : b.text).replace(/\*\*/g, '');
+
 function bkParse(n, src) {
   const blocks = bkBlocks(src);
   // فصل ۶ تیتر بخش‌ها را هم بدون علامت # نوشته است («۱. مسئله»)
@@ -160,10 +166,12 @@ function bkParse(n, src) {
   // فصل ۱ عنوانش را بدون علامت # نوشته است
   const head = blocks[0].t === 'h1' || blocks[0].t === 'p' ? blocks.shift().text : '';
   const [label, ...rest] = head.split(' — ');
-  const toc = [];
+  const toc = [], secs = [];
   let html = '', openSec = false;
   for (const b of blocks) {
+    if (b.t !== 'h2' && secs.length) secs[secs.length - 1].push(bkPlain(b));
     if (b.t === 'h2') {
+      secs.push([b.text]);
       const m = b.text.match(/^([۰-۹0-9]+)\.\s*(.*)$/) || [0, '', b.text];
       const kind = (BK_KINDS.find(([re]) => re.test(m[2])) || [0, 'plain'])[1];
       const id = 'bk-s' + (toc.length + 1);
@@ -173,7 +181,10 @@ function bkParse(n, src) {
     } else html += bkBlock(b);
   }
   if (openSec) html += '</section>';
-  return { n, label: label.trim(), title: rest.join(' — ').trim(), toc, html, mins: Math.max(1, Math.round(src.split(/\s+/).length / 180)) };
+  // «مسئله» و «تشخیص» می‌گویند فصل برای چه مشکلی است؛ فصل تازه خودبه‌خود وارد همین فهرست می‌شود
+  const about = secs.filter((x) => /مسئله|تشخیص/.test(x[0]));
+  const brief = `### ${head}\n${(about.length ? about : secs.slice(0, 2)).map((x) => x.slice(1).join('\n')).join('\n')}`;
+  return { n, brief, label: label.trim(), title: rest.join(' — ').trim(), toc, html, mins: Math.max(1, Math.round(src.split(/\s+/).length / 180)) };
 }
 
 function bookLoad() {
@@ -190,12 +201,23 @@ const bkWait = () => (book.state === 'failed'
   : '<p class="count">در حال بازکردن کتاب…</p>');
 const bkPct = (n) => { const s = db.book[n]; return !s ? 0 : s.done ? 100 : Math.round((s.max || 0) * 100); };
 
+// «کدام فصل؟»: خواننده مشکلش را می‌نویسد و هوشواره از روی خودِ فصل‌ها پیشنهاد می‌دهد
+function bookAsk() {
+  if (!aiCfg.key) return '';
+  return `<div class="bk-ask">
+    <label class="field"><span>مشکلت در مطالعه چیست؟</span>
+      <textarea rows="2" data-db="ai.ask" placeholder="مثلاً: می‌نشینم سر درس ولی هر چند دقیقه گوشی را برمی‌دارم">${esc(db.ai.ask || '')}</textarea></label>
+    ${aiPart('pick', 'کدام فصل را بخوانم؟')}
+  </div>`;
+}
+
 function viewBookTab() {
   bookLoad();
   const last = db.book.last && !db.book[db.book.last]?.done ? book.chapters[db.book.last] : null;
   return `
     <header class="top"><h1>کتاب مطالعه مؤثر</h1><p>متن کامل فصل‌ها، همان‌طور که نوشته شده‌اند.</p></header>
     ${book.state !== 'ready' ? bkWait() : `
+    ${bookAsk()}
     ${last && bkPct(last.n) > 0 ? `<button class="btn big primary" data-act="book-open" data-ch="${last.n}">ادامهٔ ${last.label}</button>` : ''}
     <ul class="bk-shelf">${Object.values(book.chapters).map((c) => {
       const pct = bkPct(c.n);

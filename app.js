@@ -938,6 +938,26 @@ const AI_TASKS = {
     props: { seen: str, change: str },
     show: (r) => `<p class="pre">${esc(r.seen)}</p><div class="next"><span>فقط یک تغییر برای این هفته</span><p>${esc(r.change)}</p></div>`,
   },
+  pick: {
+    global: true,
+    ask: () => 'The learner describes a study problem. Below is, for every chapter of the book, its own «مسئله» and «تشخیص» text. '
+      + 'Pick the one chapter whose problem and diagnosis match the learner\'s description best; add a second only when it covers a clearly different part of the problem. Never more than two, best first. '
+      + 'Judge by each chapter\'s diagnosis and by what it says the problem is NOT, not by surface keywords. why: one sentence tying the learner\'s own words to what that chapter diagnoses. '
+      + 'If no chapter really fits, or the text is not a study problem, return an empty picks list and say so in note; otherwise note is an empty string.\n\n'
+      + Object.values(book.chapters).map((c) => c.brief).join('\n\n'),
+    input: () => (book.state !== 'ready' ? 'کتاب هنوز باز نشده. چند لحظه بعد دوباره بزن.'
+      : !has(db.ai.ask) || db.ai.ask.trim().length < 10 ? 'مشکلت را در یکی دو جمله بنویس.'
+      : { problem: db.ai.ask.trim().slice(0, 600), chapters: BOOK_COUNT }),
+    props: { picks: { type: 'array', items: { type: 'object', properties: { chapter: { type: 'integer' }, why: str }, required: ['chapter', 'why'], additionalProperties: false } }, note: str },
+    show: (r) => {
+      const picks = (r.picks || []).filter((p) => book.chapters[p.chapter]).slice(0, 2);
+      return (picks.length ? '' : `<p>${esc(r.note || 'فصلی که به این مشکل بخورد پیدا نشد.')}</p>`) + picks.map((p) => {
+        const c = book.chapters[p.chapter];
+        return `<div class="next"><span>${c.label}: ${esc(c.title)}</span><p>${esc(p.why)}</p></div>
+          <button class="btn" data-act="book-open" data-ch="${c.n}">بازکردن ${c.label}</button>`;
+      }).join('');
+    },
+  },
 };
 
 const hashOf = (t) => { let h = 5381; for (let i = 0; i < t.length; i++) h = (h * 33 ^ t.charCodeAt(i)) >>> 0; return h.toString(36); };
@@ -3388,6 +3408,8 @@ const GUIDE = [
   ['book', 'زبانهٔ کتاب', [
     ['read', 'خواندن فصل‌ها', 'متن کامل فصل‌های کتاب، بی‌هیچ تغییری، برای وقتی که می‌خواهی خودِ فصل را بخوانی نه اینکه تمرینش را اجرا کنی.',
       'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.'],
+    ['pick', 'کدام فصل را بخوانم؟', 'مشکلت را می‌نویسی و هوشواره از روی «مسئله» و «تشخیصِ» خودِ فصل‌ها می‌گوید کدام فصل برای همین مشکل است.',
+      'بالای فهرست فصل‌ها مشکلت را در یکی دو جمله بنویس و دکمه را بزن. فقط وقتی دیده می‌شود که کلید هوشواره را در تنظیمات گذاشته باشی.'],
   ]],
   ['settings', 'زبانهٔ تنظیمات', [
     ['theme', 'رنگ‌بندی', 'ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی و سفید؛ هر کدام روشن یا تیره. هیچ چیز دیگری تغییر نمی‌کند.', 'رنگ را از ردیف بالا و روشن یا تیره را از ردیف پایین انتخاب کن. «مثل گوشی» یعنی با حالت خودِ گوشی عوض شود. انتخابت روی همین گوشی می‌ماند.'],

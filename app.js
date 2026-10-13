@@ -1853,7 +1853,7 @@ function viewSession() {
       <button class="btn big" data-act="ics" data-id="${s.id}">یادآور فردا را به تقویم اضافه کن</button>`}
       ${!R ? '' : `<button class="btn big" data-act="rest" data-id="${s.id}">استراحت با مرز و نوبت بعد</button>`}
       ${R || C8 ? '<button class="btn big" data-act="phone-window">پنجرهٔ گوشی، ده دقیقه</button>' : ''}
-      <button class="btn primary big" data-act="close">برگشت به امروز</button>`;
+      <button class="btn primary big" data-act="close" data-back>برگشت به امروز</button>`;
   }
   return '';
 }
@@ -1948,7 +1948,7 @@ function viewWeek() {
     : st.cards - st.logged >= 3 ? 'ثبت شبانه را سبک کن: فقط علامت، بلافاصله بعد از بستن کتاب.'
     : st.part >= 3 ? 'کار دوم را از کارت روزانه بیرون ببر.' : '';
   return `
-    <header class="flow"><button class="back" data-act="cancel">برگشت</button>${timer}<h1>برنامهٔ هفته، روی یک برگه</h1></header>
+    <header class="flow"><button class="back" data-act="prev">برگشت</button>${timer}<h1>برنامهٔ هفته، روی یک برگه</h1></header>
     <div class="field"><span>این هفته چطور است؟</span>
       ${seg('mode', [['week', 'هفتهٔ عادی'], ['pool', 'هفته‌پذیر نیست']], a.mode, 'نوع هفته')}
       <small>${pool ? 'مخزن اولویت: خروجی‌ها بدون روز. هر شب یکی را برمی‌داری و برایش نشانه و نقطهٔ شروع می‌نویسی.' : 'اول زندگی واقعی را ببین، بعد برای مطالعه جا پیدا کن.'}</small></div>
@@ -2039,7 +2039,7 @@ function viewRetrieval() {
       <p>بدون بازکردن منبع یا یادداشت‌ها، هرچه از آن جلسه مانده بنویس. مکث و کندی طبیعی است.</p>
       <textarea class="sheet" rows="10" data-bind="text" placeholder="از حافظه…" autofocus>${esc(a.text || '')}</textarea>
       <button class="btn primary big" data-act="retr-compare">نوشتم؛ مقایسه کن</button>
-      <button class="btn link" data-act="cancel">بعداً</button>`);
+      <button class="btn link" data-act="cancel" data-back>بعداً</button>`);
   }
   return `
     <header class="flow"><h1>چه چیزی ماند؟</h1></header>
@@ -2139,7 +2139,7 @@ function viewMyth() {
     </div>
     ${textField('واقعاً چه شد؟', 'happened', a.happened, 'مثلاً: بی‌حوصله شروع کردم و بعد از پنج دقیقه راه افتادم')}
     <button class="btn primary big" data-act="myth-done">ثبت</button>
-    <button class="btn link" data-act="myth-later">بعداً</button>`;
+    <button class="btn link" data-act="myth-later" data-back>بعداً</button>`;
 }
 
 function viewTrends() {
@@ -3358,7 +3358,7 @@ function viewWindow() {
     <p>پیام‌ها و شبکه‌ها همین حالا، نه وسط فهمِ پاراگراف بعدی.</p>
     <div class="timer" data-timer="${a.endsAt}">${clock(a.endsAt - Date.now())}</div>
     <p class="timer-note">${over ? 'پنجره بسته شد. گوشی برگردد سر جای خودش.' : 'کوتاه و مشخص. بعدش تا جلسهٔ بعد بسته می‌ماند.'}</p>
-    <button class="btn primary big" data-act="close">${over ? 'برگشت به امروز' : 'زودتر بستم'}</button>`;
+    <button class="btn primary big" data-act="close" data-back>${over ? 'برگشت به امروز' : 'زودتر بستم'}</button>`;
 }
 
 function viewReread() {
@@ -3934,6 +3934,12 @@ function render() {
   const html = view();
   app.innerHTML = html;
   if (a && a.kind !== 'book') groupFields(app);
+  // هیچ صفحهٔ گام‌به‌گامی بدون «برگشت» نمی‌ماند
+  if (a && !$('#app :is(.flow, .bk-bar) > .back')) {
+    const head = $('#app > .flow'), box = $('#app > .cover');
+    if (head) head.insertAdjacentHTML('afterbegin', '<button class="back" data-act="prev">برگشت</button>');
+    else if (box && !$('[data-back]', box)) box.insertAdjacentHTML('beforeend', '<button class="btn link" data-act="prev">برگشت</button>');
+  }
   helpMarks();
   paintTimer();
   document.body.classList.toggle('in-flow', !!a);
@@ -3947,10 +3953,10 @@ function render() {
 /* ---------- دکمهٔ برگشتِ گوشی ---------- */
 
 // هر قدم رو به جلو یک خانه در تاریخچهٔ مرورگر می‌گیرد تا «برگشت» همان یک قدم را برگرداند، نه اینکه اپ را ببندد.
-// عمق: امروز = ۰، زبانهٔ دیگر = ۱، یک آزمایشِ باز = ۲، و هر صفحهٔ بازشده (جلسه، فصل کتاب) و برگهٔ آموزش یکی بیشتر.
+// عمق: امروز = ۰، زبانهٔ دیگر = ۱، یک آزمایشِ باز = ۲، و هر صفحهٔ بازشده (جلسه، فصل کتاب)، هر قدمِ داخلش و برگهٔ آموزش یکی بیشتر.
 const depth = () => {
   let d = db.tab === 'today' ? 0 : db.tab === 'lab' && db.lab !== 'hub' ? 2 : 1;
-  for (let a = A(); a; a = a.parent) d++;
+  for (let a = A(); a; a = a.parent) d += 1 + (a.trail?.length || 0);
   return helpKey ? d + 1 : d;
 };
 let hist = history.state?.d || 0, histHold = false;
@@ -3965,12 +3971,15 @@ function histSync() {
   if (d < hist) { histHold = true; history.go(d - hist); }
 }
 
+// اگر اپ وسط یک صفحه باز شده باشد، با اولین لمس خانه‌های تاریخچه ساخته می‌شود
+addEventListener('pointerup', () => setTimeout(histSync), true);
+
 // یک قدم به عقب، همان کاری که دکمهٔ برگشتِ خودِ صفحه می‌کند
 function backStep() {
   if (helpKey) return closeHelp();
   if (A()) {
-    const b = $('#app .back');
-    return b ? b.click() : toast('از دکمه‌های همین صفحه ادامه بده.');
+    const b = $('#app :is(.flow, .bk-bar) > .back');
+    return b ? b.click() : actions.prev();
   }
   if (db.tab === 'lab' && db.lab !== 'hub') db.lab = 'hub'; else db.tab = 'today';
   render(); window.scrollTo(0, 0);
@@ -3986,7 +3995,13 @@ window.addEventListener('popstate', (e) => {
   histSync();
 });
 
-function go(step) { A().step = step; render(); window.scrollTo(0, 0); }
+// هر صفحهٔ گام‌به‌گام مسیرِ قدم‌هایش را نگه می‌دارد تا «برگشت» همیشه یک قدم عقب برود.
+// fresh: قدمی که راهِ برگشت ندارد (تایمر راه افتاده یا جلسه ثبت شده).
+function go(step, fresh) {
+  const a = A(), t = a.trail ||= [], i = t.indexOf(step);
+  if (fresh) t.length = 0; else if (i >= 0) t.length = i; else if (a.step && a.step !== step) t.push(a.step);
+  a.step = step; render(); window.scrollTo(0, 0);
+}
 function open(active) { db.active = active; for (const k in folds) delete folds[k]; render(); window.scrollTo(0, 0); }
 
 function newSession(over = {}) {
@@ -4031,6 +4046,12 @@ const actions = {
 
   'guide-skip': () => { db.guideSeen = true; render(); },
   'new-session': () => open(newSession(fromLanding())),
+  // یک قدم عقب: قدم قبلیِ همین صفحه، وگرنه دکمهٔ خروجِ خودش، وگرنه بستنِ صفحه
+  prev: () => {
+    const t = A().trail || [], out = $('#app [data-back]');
+    if (t.length) return go(t[t.length - 1]);
+    out ? out.click() : actions.cancel();
+  },
   'start-study': () => {
     const a = A();
     const R = chOn(0, a.ch || []);
@@ -4042,7 +4063,7 @@ const actions = {
       db.plans = db.plans.filter((p) => p.id !== a.planId);
       Object.assign(a, { startedAt: Date.now(), endsAt: Date.now() + a.minutes * 6e4, rang: false, pings: [], entryState: '', rampState: '', anchor: '', signs: [], ext: 0, away: null });
       a.pingDue = false; a.nextPingAt = a.ping > 0 ? a.startedAt + a.ping * 6e4 : 0;
-      return go('study');
+      return go('study', true);
     }
     if (!has(a.criterion)) return toast('معیار را بنویس: از کجا می‌فهمی رسیده‌ای؟');
     if (!a.phonePlace) return toast('بگو گوشی الان کجاست.');
@@ -4059,7 +4080,7 @@ const actions = {
     Object.assign(a, { anchor: a.ifThen || '', signs: [], ext: 0, away: null, rampState: '', mid: '', midDue: false, signDue: false, signStop: false });
     a.nextSignAt = a.fmt === 'flex' ? a.startedAt + 20 * 6e4 : 0;
     if (!a.entry) toLoad(a);
-    go('study');
+    go('study', true);
   },
   'entry-go': () => {
     const a = A();
@@ -4256,7 +4277,7 @@ const actions = {
     if (tp) Object.assign(tp, { done: winOf(tp, a.startedAt), actual: s.studied, sessionId: s.id, state: a.viaSmall ? 'min' : s.outcome === 'full' ? 'full' : 'part' });
     const m = mythToday();
     if (chOn(4, a.ch || []) && m && !m.done) return open({ kind: 'myth', step: 'close', entryId: m.id, did: 'yes', can: s.can, after: s.id, ch: a.ch });
-    a.savedId = s.id; go('done');
+    a.savedId = s.id; go('done', true);
   },
   ics: (el) => calendarReminder(db.sessions.find((s) => s.id === el.dataset.id)),
   close: () => { saveLanding(); db.active = null; db.tab = 'today'; render(); window.scrollTo(0, 0); },
@@ -4299,10 +4320,10 @@ const actions = {
       render(); window.scrollTo(0, 0);
       toast(a.parent ? 'برگشتی به جلسه.' : 'ثبت شد. حالا یک جلسهٔ کامل را شروع کن.');
     } else if (a.next === 'shrink') {
-      Object.assign(a, { step: 'entry', urges: [], minutes: 2, stepText: 'فقط فایل یا کتاب را باز می‌کنم و صورت اولین مسئله را می‌خوانم.', output: '' });
+      Object.assign(a, { step: 'entry', trail: ['pick'], urges: [], minutes: 2, stepText: 'فقط فایل یا کتاب را باز می‌کنم و صورت اولین مسئله را می‌خوانم.', output: '' });
       render(); window.scrollTo(0, 0);
     } else {
-      Object.assign(a, { step: 'pick', urges: [] });
+      Object.assign(a, { step: 'pick', trail: [], urges: [] });
       render(); window.scrollTo(0, 0);
     }
   },
@@ -4796,4 +4817,6 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+// بازشدنِ تازهٔ اپ همیشه از «امروز» است، تا «برگشتِ» گوشی از هر زبانه اول به همین‌جا برسد
+if (!history.state && !db.active) { db.tab = 'today'; db.lab = 'hub'; }
 render();

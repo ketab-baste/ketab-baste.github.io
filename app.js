@@ -1350,7 +1350,7 @@ function viewSession() {
     const phoneHint = { out: 'بهترین حالت.', drawer: 'خوب است، به شرطی که برای برداشتنش باید بلند شوی.',
       tool: 'برنامهٔ درس را تمام‌صفحه باز کن و اگر می‌شود خروج را قفل کن.', desk: 'رو به پایین هم کافی نیست؛ هنوز یک حرکت فاصله دارد.' }[a.phonePlace] || 'بی‌صدا و رو به پایین روی میز حساب نیست.';
     return `
-      <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>خروجی این جلسه</h1></header>
+      <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>خروجی این جلسه</h1></header>
       ${tip('session')}
       ${R ? '' : `
       ${textField('موضوع', 'subject', a.subject, 'مثلاً: مشتق زنجیره‌ای، تمرین‌های صفحهٔ ۸۴', C6 ? 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.' : 'آن‌قدر کوچک که در همین جلسه تمام شود.')}
@@ -1810,7 +1810,7 @@ function viewQuick() {
   if (a.step === 'stop') return stopForm(a);
   if (a.step === 'pick') {
     return `
-      <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>شروع ۶۰ ثانیه‌ای</h1></header>
+      <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>شروع ۶۰ ثانیه‌ای</h1></header>
       <p>برای روزی که هیچ‌چیز آماده نیست. اولین کار عقب‌افتاده‌ای که منبعش دمِ دست است؛ سی ثانیه برای انتخاب، بدون بازبینی.</p>
       ${textField('الان کدام درس؟', 'subject', a.subject, 'مثلاً: آمار، تمرین‌های فصل ۲')}
       <div class="field"><span>حال الان</span>${seg('mood', Object.entries(MOODS), a.mood, 'حال قبل از شروع')}</div>
@@ -1835,7 +1835,7 @@ function viewWeek() {
   const timer = `<div class="timer small" data-timer="${a.capAt}">${clock(a.capAt - Date.now())}</div>`;
   if (a.step === 'review') {
     return `
-      <header class="flow"><button class="back" data-act="cancel">انصراف</button>${timer}<h1>اول بررسی، بعد برنامه</h1></header>
+      <header class="flow"><button class="back" data-act="cancel">برگشت</button>${timer}<h1>اول بررسی، بعد برنامه</h1></header>
       <p>فقط داده جمع کن. اینجا جای محاکمه نیست؛ هفتهٔ بد بیشترین داده را دارد.</p>
       ${facts([
         ['کارت روزانه', `${fa(st.cards)} روز از ۷`],
@@ -1857,7 +1857,7 @@ function viewWeek() {
     : st.cards - st.logged >= 3 ? 'ثبت شبانه را سبک کن: فقط علامت، بلافاصله بعد از بستن کتاب.'
     : st.part >= 3 ? 'کار دوم را از کارت روزانه بیرون ببر.' : '';
   return `
-    <header class="flow"><button class="back" data-act="cancel">انصراف</button>${timer}<h1>برنامهٔ هفته، روی یک برگه</h1></header>
+    <header class="flow"><button class="back" data-act="cancel">برگشت</button>${timer}<h1>برنامهٔ هفته، روی یک برگه</h1></header>
     <div class="field"><span>این هفته چطور است؟</span>
       ${seg('mode', [['week', 'هفتهٔ عادی'], ['pool', 'هفته‌پذیر نیست']], a.mode, 'نوع هفته')}
       <small>${pool ? 'مخزن اولویت: خروجی‌ها بدون روز. هر شب یکی را برمی‌داری و برایش نشانه و نقطهٔ شروع می‌نویسی.' : 'اول زندگی واقعی را ببین، بعد برای مطالعه جا پیدا کن.'}</small></div>
@@ -1884,7 +1884,7 @@ function viewObstacle() {
   const a = A();
   if (a.step === 'pick') {
     return `
-      <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>الان از کار فاصله گرفته‌ام</h1></header>
+      <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>الان از کار فاصله گرفته‌ام</h1></header>
       <p>این سرزنش نیست؛ فقط می‌خواهیم مانع همین جلسه را پیدا کنیم.</p>
       ${textField('کاری که قرار بود انجام بدهم', 'task', a.task, 'مثلاً: تمرین‌های حلقهٔ for')}
       <div class="field"><span>کدام یکی الان پررنگ‌تر است؟ اگر دو تا درست است، آن که زودتر آمد.</span>
@@ -1967,7 +1967,7 @@ function viewRetrieval() {
 function viewDay() {
   const a = A();
   return `
-    <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>خواب و انرژی امروز</h1></header>
+    <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>خواب و انرژی امروز</h1></header>
     <p>هرچه را تا این ساعت می‌دانی پر کن؛ بقیه را بعداً کامل می‌کنی.</p>
     <div class="grid2">
       <label class="field"><span>دیشب خوابیدم</span><input type="time" data-bind="bed" value="${esc(a.bed || '')}"></label>
@@ -1982,7 +1982,7 @@ function viewDay() {
 function viewManual() {
   const a = A();
   return `
-    <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>ثبت جلسه‌ای که گذشت</h1></header>
+    <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>ثبت جلسه‌ای که گذشت</h1></header>
     <p>تا چند دقیقه بعد از جلسه بنویس، نه آخر شب از روی حافظه.</p>
     ${textField('چه خواندم؟', 'subject', a.subject, 'مثلاً: زیست، فصل دو')}
     <div class="grid2">
@@ -2006,7 +2006,7 @@ function viewPattern() {
       ${textField('درست قبل از رهاکردن چه شد؟', 'b' + n, a['b' + n], 'مثلاً: یک روز عقب افتادم')}
     </fieldset>`;
   return `
-    <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>الگوی شکست‌های قبلی</h1></header>
+    <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>الگوی شکست‌های قبلی</h1></header>
     <p>دنبال تکرار بگرد، نه جزئیات هر بار. دو تلاش جدی کافی است.</p>
     ${attempt(1, 'تلاش اول')}${attempt(2, 'تلاش دوم')}${attempt(3, 'تلاش سوم، اختیاری')}
     <label class="field"><span>الگوی غالب در یک جمله</span>
@@ -2020,7 +2020,7 @@ function viewMyth() {
   const a = A();
   if (a.step === 'pick') {
     return `
-      <header class="flow"><button class="back" data-act="cancel">انصراف</button><h1>قانون امروز</h1></header>
+      <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>قانون امروز</h1></header>
       <p>هر روز فقط یک افسانه. همه را با هم عوض نکن.</p>
       ${textField('اگر امروز مطالعه‌ام خوب پیش نرود، به خودم می‌گویم…', 'hidden', a.hidden, 'جملهٔ واقعی‌ای که در سرت تکرار می‌شود')}
       <div class="field"><span>این جمله به کدام باور نزدیک‌تر است؟</span>
@@ -3211,7 +3211,7 @@ function viewTplan() {
   const a = A(), c = capacity(), m = energyMap(), est = estOf(a), k = coef(), X = chOn(10), wk = X ? weekNow() : null;
   const lastFix = [...db.tplans].reverse().find((p) => has(p.fix));
   return `
-    <header class="flow"><button class="back" data-act="cancel">انصراف</button>
+    <header class="flow"><button class="back" data-act="cancel">برگشت</button>
       ${X && a.capAt ? `<div class="timer small" data-timer="${a.capAt}">${clock(a.capAt - Date.now())}</div>` : ''}
       <h1>کار اولِ ${a.tday === 'today' ? 'امروز' : 'فردا'}</h1></header>
     <p>${X ? 'پنج دقیقه. کارتِ ناتمامِ قابل‌اجرا از کارتِ کاملِ اجرانشده بهتر است.' : 'سه تصمیم: کار اول، بهترین پنجرهٔ در دسترس، و نسخهٔ کوچکِ جایگزین.'}</p>

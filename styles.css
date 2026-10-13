@@ -378,6 +378,8 @@ input[type=time] { direction: ltr; text-align: center; min-height: 3.2rem; }
 .plain li:first-child { border-top: 0; }
 .plain li.line { display: flex; justify-content: space-between; gap: .75rem; align-items: baseline; }
 .plain li.line .back { flex: none; }
+.plain li.line small { display: block; color: var(--ink-soft); font-size: .82rem; }
+.log li > .back { display: block; margin-inline-start: auto; }
 .row .mini { flex: none; width: 6rem; }
 .group .fine { margin-top: 0; }
 .grid2 input[type=time] { min-width: 0; }

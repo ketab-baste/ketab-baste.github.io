@@ -1193,6 +1193,7 @@ function viewToday() {
   const exp = db.experiment;
   const expDue = exp && !exp.later && Date.now() - exp.day1 >= 20 * 36e5;
   const b = db.baseline, m = mythToday(), d = db.days[today()];
+  const others = recList(['logs', 'starts', 'abandoned', 'obstacles'], (x) => dayKey(x.date) === today());
   const mythWeek = !m && !db.mythWrap && db.myths.some((x) => Date.now() - x.date < 7 * DAY);
   const env = db.env, dig = db.digital, tp = planFor(today()), rv = reviewDue();
   const envLeft = env && Date.now() - env.start < 7 * DAY ? auditLeft(env) : 0;
@@ -1324,7 +1325,7 @@ function viewToday() {
       <h1>اگر همین الان منبع را ببندی، چه چیزی در ذهنت می‌ماند؟</h1>
       <div class="with-q"><button class="btn primary big" data-act="new-session">${ic('play')}شروع جلسهٔ مطالعه</button>${q('start')}</div>
       ${R || chOn(2) ? `<div class="row eq">${R ? `<button class="btn" data-act="new-quick">${ic('bolt')}فقط ۶۰ ثانیه</button>` : ''}${chOn(2) ? `<button class="btn" data-act="new-obstacle">${ic('wall')}شروع نمی‌کنم</button>` : ''}</div>` : ''}
-      ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
+      ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)} ${delBtn('landing', 'landing')}</p>` : ''}
       ${R && has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
     </section>
 
@@ -1364,12 +1365,14 @@ function viewToday() {
       <h2>خواب و انرژی</h2>
       ${d ? `<p class="count">${sleepHours(d) != null ? `${fa1(sleepHours(d))} ساعت خواب` : 'ساعت خواب ثبت نشده'}${d.quality ? `، کیفیت ${fa(d.quality)} از ۵` : ''}${[d.e1, d.e2, d.e3, d.e4].some(Boolean) ? `، انرژی ${[d.e1, d.e2, d.e3, d.e4].map((e, i) => (e ? `${SLOTS[i]} ${fa(e)}` : '')).filter(Boolean).join('، ')}` : ''}</p>` : ''}
       <button class="btn big quiet" data-act="new-day">${ic('moon')}${d ? 'تکمیل ثبت امروز' : 'ثبت خواب و انرژی امروز'}</button>
+      ${d ? delBtn('days', today()) : ''}
     </section>` : ''}
 
     <section>
       <h2>جلسه‌های امروز</h2>
       ${todays.length ? `<ul class="log">${todays.map(sessionRow).join('')}</ul>` : `<p class="empty">هنوز جلسه‌ای ثبت نشده.</p>`}
       ${R || chOn(5) ? `<button class="btn big quiet" data-act="new-manual">${ic('pencil')}بدون اپ درس خواندم</button>` : ''}
+      ${others ? fold('today-rec', 'ثبت‌های دیگرِ امروز', others) : ''}
     </section>`;
 }
 
@@ -1386,12 +1389,41 @@ const chChips = () => {
   </details>`;
 };
 
+// هر چیزی که ثبت می‌شود اینجا یک ردیف دارد تا بشود جدا پاکش کرد: [عنوان، متن ردیف]
+const RECORDS = {
+  sessions: ['جلسه‌ها', (s) => `${s.subject}: ${s.goal}`],
+  logs: ['جلسه‌های بدون اپ', (l) => `${l.subject}، ${fa(l.presence)} دقیقه`],
+  starts: ['ورودها', (x) => (x.after === 'miss' ? `شروع نشد: ${HURDLES[x.block]?.[0] || ''}` : `${x.subject || 'ورود'}${x.quick ? '، ۶۰ ثانیه' : ''}`)],
+  abandoned: ['جلسه‌های رهاشده', (x) => `${fa(x.studied)} دقیقه از ${fa(x.minutes)}`],
+  obstacles: ['مانع‌های شروع', (o) => `${o.task}: ${OBSTACLES[o.obstacle]?.label || ''}`],
+  plans: ['هدف‌های نوشته‌شده', (p) => `${p.subject}: ${p.goal}`],
+  myths: ['قانون‌های «افسانه یا داده؟»', (m) => `اگر ${m.ifText}، آنگاه ${m.thenText}`],
+  tplans: ['کارت‌های روزانه', (p) => p.task],
+  weeks: ['جلسه‌های هفتگی', (w) => w.outs.map((o) => o.t).join('، ')],
+  days: ['خواب و انرژی', (d) => [sleepHours(d) != null ? `${fa1(sleepHours(d))} ساعت خواب` : '', [d.e1, d.e2, d.e3, d.e4].some(Boolean) ? 'انرژی' : ''].filter(Boolean).join('، ') || 'ثبت روز'],
+  parked: ['برگهٔ پارک', (p) => p.text],
+  landing: ['نقطهٔ ورود بعدی', (l) => l.text],
+  pattern: ['الگوی شکست‌های قبلی', (p) => p.sentence],
+};
+// کلید هر ثبت id است و اگر نداشت، تاریخش. «روزها» با کلید روز و تک‌ثبت‌ها با نام خودشان می‌آیند.
+const recKey = (x) => x.id || String(x.date);
+const recDate = (x) => x.date || x.ts || x.made || x.created;
+const recItems = (st) => (st === 'days' ? Object.entries(db.days).map(([k, d]) => ({ ...d, id: k, date: new Date(Math.floor(k / 1e4), Math.floor(k / 100) % 100 - 1, k % 100).getTime() }))
+  : Array.isArray(db[st]) ? db[st] : db[st] ? [{ ...db[st], id: st }] : []);
+const delBtn = (st, key) => `<button class="back" data-act="del" data-store="${st}" data-id="${esc(key)}">حذف</button>`;
+const recList = (stores, keep = () => true) => stores.map((st) => {
+  const rows = recItems(st).filter(keep).sort((x, y) => recDate(y) - recDate(x)).slice(0, 40);
+  return rows.length ? `<p class="count">${RECORDS[st][0]}</p>
+    <ul class="plain">${rows.map((x) => `<li class="line"><span>${esc(RECORDS[st][1](x))}<small>${dateFa(recDate(x))}</small></span>${delBtn(st, recKey(x))}</li>`).join('')}</ul>` : '';
+}).join('');
+
 const sessionRow = (s) => `
   <li>
     <div class="log-head"><b>${esc(s.subject)}</b><span class="tag ${s.outcome}">${OUTCOME[s.outcome]}</span></div>
     <p>${esc(s.goal)}</p>
     ${has(s.can) ? `<p class="count">حالا می‌توانم: ${esc(s.can)}</p>` : ''}
     <small>${s.real != null ? `${fa(s.real)} دقیقهٔ واقعی از ${fa(s.studied)}` : `${fa(s.studied)} دقیقه`}${s.load ? `، کار ${LOADS[s.load]}` : ''}، شکاف: ${GAPS[s.gap].label}${s.ran === 'no' ? '، معیار اجرا نشد' : ''}${s.retrieved ? '، بازیابی شد' : ''}</small>
+    ${delBtn('sessions', s.id)}
   </li>`;
 
 function viewSession() {
@@ -2296,6 +2328,7 @@ function viewBaseline() {
       <h2>الگوی شکست‌های قبلی</h2>
       ${pt?.sentence ? `<p class="goal-line">${esc(pt.sentence)}</p>` : '<p class="empty">دو یا سه تلاش قبلی را کنار هم بگذار تا ببینی کجا شبیه هم تمام شده‌اند.</p>'}
       <button class="btn big" data-act="new-pattern">${pt ? 'ویرایش الگو' : 'تحلیل تلاش‌های قبلی'}</button>
+      ${pt ? delBtn('pattern', 'pattern') : ''}
     </section>`;
 
   if (!b) {
@@ -2439,6 +2472,7 @@ function viewMyths() {
           ${has(x.output) ? `<p class="count">خروجی: ${esc(x.output)}</p>` : ''}
           ${has(x.can) ? `<p class="count">بدون کتاب: ${esc(x.can)}</p>` : ''}
           <small>${weekdayFa(x.date)}${has(x.predict) ? `، پیش‌بینی: ${esc(x.predict)}` : ''}${has(x.happened) ? `، واقعیت: ${esc(x.happened)}` : ''}</small>
+          ${delBtn('myths', x.id)}
         </li>`).join('')}</ul>
     </section>` : ''}
 
@@ -2746,7 +2780,8 @@ function viewTime() {
         ${cur.tasks.length ? `<ul class="plain">${cur.tasks.map((t) => `<li>${esc(t.name)}، ${LOADS[t.load]} در ${WINS[t.win]}، ${fa(t.min)} دقیقه</li>`).join('')}</ul>` : ''}
         ${planChecks(cur, c.cap).map((x) => `<p class="advice">${x}</p>`).join('')}
         ${cur.done ? `<p class="count">${{ peak: 'در پنجرهٔ اوج انجام شد.', alt: 'در پنجرهٔ جایگزین انجام شد.', other: 'انجام شد، بیرون از هر دو پنجره.', no: 'انجام نشد. این داده است، نه شکست.' }[cur.done]}</p>` : `<button class="btn big" data-act="tplan-edit" data-id="${cur.id}">ویرایش</button>`}
-        ${cur.day === today() && !planFor(tomorrowKey()) ? '<button class="btn primary big" data-act="new-tplan">طراحی فردا</button>' : ''}`
+        ${cur.day === today() && !planFor(tomorrowKey()) ? '<button class="btn primary big" data-act="new-tplan">طراحی فردا</button>' : ''}
+        ${delBtn('tplans', cur.id)}`
       : `<p class="empty">هر شب فقط سه تصمیم: کار اول فردا، بهترین پنجرهٔ در دسترس، و نسخهٔ کوچکِ جایگزین.</p>
         ${has(lastFix?.fix) ? `<p class="count">اصلاح قبلی‌ات: ${esc(lastFix.fix)}</p>` : ''}
         <button class="btn primary big" data-act="new-tplan">طراحی کار اول</button>`}
@@ -2827,7 +2862,8 @@ function viewLoop() {
       ${wk ? `
         ${facts(wk.outs.map((o, i) => [`${esc(o.t)}${has(o.days) ? `، ${esc(o.days)}` : ''}`, `${esc(o.min)}${(() => { const n = db.tplans.filter((p) => p.week === wk.id && p.out !== '' && +p.out === i && p.done && p.done !== 'no').length; return n ? `، ${fa(n)} روز` : ''; })()}`]))}
         ${has(wk.fix) ? `<p class="goal-line">تنها اصلاح این هفته: ${esc(wk.fix)}</p>` : ''}
-        ${wk.mode === 'pool' ? '<p class="fine">هفتهٔ مخزنی: هر شب یکی از این‌ها را بردار. سه چهار روز که اجرا شد، برنامهٔ هفتگی را برگردان.</p>' : ''}`
+        ${wk.mode === 'pool' ? '<p class="fine">هفتهٔ مخزنی: هر شب یکی از این‌ها را بردار. سه چهار روز که اجرا شد، برنامهٔ هفتگی را برگردان.</p>' : ''}
+        ${delBtn('weeks', wk.id)}`
       : `<p class="empty">جلسهٔ هفتگی این هفته برگزار نشده. همیشه با بررسی شروع می‌شود، نه با آرزوی تازه.</p>
         <button class="btn primary big" data-act="new-week">جلسهٔ هفتگی، بیست دقیقه</button>`}
     </section>
@@ -2982,7 +3018,7 @@ function viewStart() {
 
     <section>
       <h2>امروز</h2>
-      ${db.landing ? `<p class="goal-line">${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : '<p class="empty">حرکت اول هنوز نوشته نشده. در صفحهٔ جلسه، «آنگاه» همان است.</p>'}
+      ${db.landing ? `<p class="goal-line">${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>${delBtn('landing', 'landing')}` : '<p class="empty">حرکت اول هنوز نوشته نشده. در صفحهٔ جلسه، «آنگاه» همان است.</p>'}
       <button class="btn primary big" data-act="new-session">جلسه با ورود پنج‌دقیقه‌ای</button>
       <button class="btn big" data-act="new-quick">شروع ۶۰ ثانیه‌ای</button>
       <div class="field"><span>شروع نشد؟ فقط یک مانع</span>
@@ -3732,7 +3768,7 @@ const HELP = {
     how: 'کلید API را در تنظیمات وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.' },
   account: { t: 'حساب', at: ['حساب'], p: 'داده‌هایت را روی اینترنت هم نگه می‌دارد تا با عوض‌شدن گوشی یا پاک‌شدن مرورگر از بین نرود. هر کس حساب و دادهٔ جدای خودش را دارد.',
     how: 'یک‌بار با ایمیل و رمز حساب بساز. از آن به بعد خودش همگام می‌شود؛ روی گوشی دیگر فقط «ورود» را بزن.' },
-  data: { t: 'داده‌ها', at: ['داده‌ها'], p: 'بدون حساب، همه‌چیز فقط روی همین گوشی و همین مرورگر ذخیره می‌شود.', how: 'اگر حساب نداری، هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.' },
+  data: { t: 'داده‌ها', at: ['داده‌ها'], p: 'بدون حساب، همه‌چیز فقط روی همین گوشی و همین مرورگر ذخیره می‌شود.', how: 'اگر حساب نداری، هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند. ثبتِ اشتباه یا آزمایشی، مثل جلسهٔ «ریاضی، تخفیفِ صفحهٔ ۴۱» که فقط برای امتحانِ اپ زدی، با «حذف» کنار خودش یا از «پاک‌کردن تک‌تک» پاک می‌شود.' },
 };
 const HELP_AT = {};
 for (const [k, h] of Object.entries(HELP)) for (const label of h.at || []) HELP_AT[label] = k;
@@ -3861,6 +3897,7 @@ function viewSettings() {
       <p class="count">${acc.uid ? 'روی این دستگاه و در حسابت. بدون اینترنت هم کار می‌کند.' : 'همه‌چیز فقط روی همین دستگاه ذخیره می‌شود.'}</p>
       <button class="btn big" data-act="export">گرفتن فایل پشتیبان</button>
       <label class="btn big file">بازگرداندن از فایل پشتیبان<input type="file" accept="application/json" data-import hidden></label>
+      ${fold('rec-all', 'پاک‌کردن تک‌تک', recList(Object.keys(RECORDS)) || '<p class="empty">هنوز چیزی ثبت نشده.</p>')}
       <button class="btn big danger" data-act="wipe">پاک‌کردن همهٔ داده‌ها</button>
     </section>`;
 }
@@ -4609,6 +4646,16 @@ const actions = {
   theme: (el) => { theme = el.dataset.theme; try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* بدون ذخیره */ } applyTheme(); render(); },
   mode: (el) => { mode = el.dataset.mode; try { localStorage.setItem(MODE_KEY, mode); } catch (e) { /* بدون ذخیره */ } applyTheme(); render(); },
   export: () => download('ketab-baste-backup.json', JSON.stringify(db, null, 2), 'application/json'),
+  del: (el) => {
+    const { store, id } = el.dataset;
+    if (!confirm('این ثبت برای همیشه پاک می‌شود. پاک کنم؟')) return;
+    if (store === 'days') delete db.days[id];
+    else if (Array.isArray(db[store])) db[store] = db[store].filter((x) => recKey(x) !== id);
+    else db[store] = null;
+    // کارت روزانه‌ای که با این جلسه بسته شده بود دوباره باز می‌شود
+    if (store === 'sessions') db.tplans.forEach((p) => { if (p.sessionId === id) Object.assign(p, { done: null, actual: 0, sessionId: '', state: '', reviewed: 0 }); });
+    render(); toast('پاک شد.');
+  },
   wipe: () => {
     if (!confirm(`همهٔ جلسه‌ها و ثبت‌ها ${acc.uid ? 'روی این دستگاه و در حسابت ' : ''}برای همیشه پاک می‌شود. پاک کنم؟`)) return;
     db = blankDb(); db.tab = 'settings'; render(); toast('همه‌چیز پاک شد.');

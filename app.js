@@ -1067,8 +1067,8 @@ const bars = (rows, names) => {
 const urgeLog = (urges) => (urges.length ? `
   <ul class="urges">${urges.map((u) => `<li><span>دقیقهٔ ${fa(u.min)}</span>${esc([CAUSES[u.cause]?.label, u.before, u.long && 'بیش از پنج دقیقه'].filter(Boolean).join('، ') || 'بدون توضیح')}</li>`).join('')}</ul>` : '');
 const URGE_PH = {
-  '': 'مثلاً: به واژهٔ ناآشنا رسیدم', thought: 'یک خط: جواب پیام خانه', check: 'چه چیزی را می‌خواستی ببینی؟ مثلاً: گروه',
-  outer: 'درست قبلش چه شد؟', real: 'کجا بودم: سؤال ۶، نیروها رسم شد', look: 'سؤال دقیق: معنی «آنتالپی»',
+  '': 'مثلاً: به مسئلهٔ ۳ رسیدم و گیر کردم', thought: 'یک خط: جواب پیام خانه', check: 'چه چیزی را می‌خواستی ببینی؟ مثلاً: گروه کلاس',
+  outer: 'درست قبلش چه شد؟', real: 'کجا بودم: مسئلهٔ ۳، مقدار تخفیف حساب شد', look: 'سؤال دقیق: «درصد تغییر» یعنی چه؟',
 };
 const URGE_TIP = {
   thought: 'تحلیلش نکن و با خودت بحث نکن. اگر مهم است، زمانش را نوشته‌ای.',
@@ -1089,13 +1089,13 @@ const urgeBox = (a) => {
   if (!chOn(0, a.ch || db.chapters) && chOn(11, a.ch || db.chapters) && a.ping) {
     return `
   <div class="urge">
-    <label for="urge">ذهنت بیرون رفت؟ یک تیک، مقصدش در یکی دو کلمه، و برگرد. بدون داور.</label>
+    <label for="urge">ذهنت بیرون رفت؟ یک تیک، مقصدش در یکی دو کلمه، و برگرد. بدون داور.${q('urge')}</label>
     <div class="row">
       <select data-bind="urgeCause" aria-label="مقصد پرش">
         <option value="">کجا؟</option>
         ${Object.entries(CAUSES).filter(([k]) => k !== 'real').map(([k, x]) => `<option value="${k}"${a.urgeCause === k ? ' selected' : ''}>${x.label}</option>`).join('')}
       </select>
-      <input id="urge" type="text" data-bind="urgeDraft" value="${esc(a.urgeDraft || '')}" placeholder="مثلاً: نگرانی امتحان" enterkeyhint="done">
+      <input id="urge" type="text" data-bind="urgeDraft" value="${esc(a.urgeDraft || '')}" placeholder="مثلاً: نگرانی آزمون ریاضی" enterkeyhint="done">
       <button class="btn quiet" data-act="urge">ثبت</button>
     </div>
     ${urgeLog(a.urges)}
@@ -1104,7 +1104,7 @@ const urgeBox = (a) => {
   if (!chOn(0, a.ch || db.chapters)) {
     return `
   <div class="urge">
-    <label for="urge">دلت خواست کار را رها کنی؟ با آن نجنگ. فقط بنویس درست قبلش چه شد و برگرد.</label>
+    <label for="urge">دلت خواست کار را رها کنی؟ با آن نجنگ. فقط بنویس درست قبلش چه شد و برگرد.${q('urge')}</label>
     <div class="row">
       <input id="urge" type="text" data-bind="urgeDraft" value="${esc(a.urgeDraft || '')}" placeholder="${URGE_PH['']}" enterkeyhint="done">
       <button class="btn quiet" data-act="urge">ثبت</button>
@@ -1125,7 +1125,7 @@ const urgeBox = (a) => {
   }
   return `
   <div class="urge">
-    <label for="urge">جدا شدی؟ در یک کلمه نامش را بگو، همان‌جا قطعش کن و با یک عمل برگرد. با آن نجنگ.</label>
+    <label for="urge">جدا شدی؟ در یک کلمه نامش را بگو، همان‌جا قطعش کن و با یک عمل برگرد. با آن نجنگ.${q('urge')}</label>
     <div class="row">
       <select data-bind="urgeCause" aria-label="علت وقفه">
         <option value="">علت</option>
@@ -1135,7 +1135,7 @@ const urgeBox = (a) => {
       <button class="btn quiet" data-act="urge">${t === 'real' ? 'می‌روم' : 'ثبت'}</button>
     </div>
     ${t === 'thought' && !one ? `<input type="text" data-bind="urgeWhen" value="${esc(a.urgeWhen || '')}" placeholder="کِی به آن می‌رسم؟ پیش‌فرض: بعد از این جلسه" aria-label="زمان رسیدگی">` : ''}
-    ${t === 'real' ? `<input type="text" data-bind="urgeNext" value="${esc(a.urgeNext || '')}" placeholder="قدم بعدی: معادلهٔ محور افقی" aria-label="قدم بعدی">` : ''}
+    ${t === 'real' ? `<input type="text" data-bind="urgeNext" value="${esc(a.urgeNext || '')}" placeholder="قدم بعدی: قیمت نهاییِ مسئلهٔ ۳" aria-label="قدم بعدی">` : ''}
     ${t && t !== 'real' ? `<label class="check"><input type="checkbox" data-bind="urgeLong" ${a.urgeLong ? 'checked' : ''}><span>بیش از پنج دقیقه رفته بودم.</span></label>` : ''}
     ${URGE_TIP[t] ? `<p class="fine">${URGE_TIP[t]}</p>` : ''}
     ${three ? `<p class="advice">${three}</p>` : ''}
@@ -1293,16 +1293,16 @@ function viewToday() {
 
     ${db.guideSeen ? '' : `
     <section class="due">
-      <h2>راهنمای یک‌دقیقه‌ای</h2>
-      <p>هر بخش اپ برای چیست و از کجا شروع کنی. بعداً هم از دکمهٔ «راهنما» بالای هر صفحه باز می‌شود.</p>
-      <div class="row acts"><button class="btn" data-act="guide" data-focus="start">دیدن راهنما</button><button class="btn quiet" data-act="guide-skip">بعداً</button></div>
+      <h2>هر جا این علامت را دیدی، بزن${q('first')}</h2>
+      <p>کنار هر بخشی که توضیح می‌خواهد همین علامت هست. همان تکه را کوتاه و با یک نمونهٔ پرشده توضیح می‌دهد.</p>
+      <div class="row acts"><button class="btn" data-help="first">ویر در سه قدم</button><button class="btn quiet" data-act="guide-skip">فهمیدم</button></div>
     </section>`}
 
     ${dueStack(dues)}
     ${hiddenDues ? `<p class="fine">${fa(hiddenDues)} کار امروز مال فصل‌هایی است که الان انتخاب نکرده‌ای. <button class="btn link" data-act="ch" data-ch="all">همه را نشان بده</button></p>` : ''}
 
     <section class="start">
-      <button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>
+      <div class="with-q"><button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>${q('start')}</div>
       ${R || chOn(2) ? `<div class="row eq">${R ? '<button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button>' : ''}${chOn(2) ? '<button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button>' : ''}</div>` : ''}
       ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
       ${R && has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
@@ -1342,7 +1342,7 @@ function viewToday() {
 
 const chChips = () => `
   <div class="chips" role="group" aria-label="ابزارهای کدام فصل؟">
-    <button data-act="ch" data-ch="all" aria-pressed="${!db.chapters.length}">همه</button>${CHAPTERS.map(([n, t]) => `
+    ${q('chapters')}<button data-act="ch" data-ch="all" aria-pressed="${!db.chapters.length}">همه</button>${CHAPTERS.map(([n, t]) => `
     <button data-act="ch" data-ch="${n}" aria-pressed="${db.chapters.includes(n)}">${n ? `فصل ${fa(n)} · ` : ''}${t}</button>`).join('')}
   </div>`;
 
@@ -1371,14 +1371,13 @@ function viewSession() {
       tool: 'برنامهٔ درس را تمام‌صفحه باز کن و اگر می‌شود خروج را قفل کن.', desk: 'رو به پایین هم کافی نیست؛ هنوز یک حرکت فاصله دارد.' }[a.phonePlace] || 'بی‌صدا و رو به پایین روی میز حساب نیست.';
     return `
       <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>خروجی این جلسه</h1></header>
-      ${tip('session')}
       ${R ? '' : `
-      ${textField('موضوع', 'subject', a.subject, 'مثلاً: مشتق زنجیره‌ای، تمرین‌های صفحهٔ ۸۴', C6 ? 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.' : 'آن‌قدر کوچک که در همین جلسه تمام شود.')}
+      ${textField('موضوع', 'subject', a.subject, 'مثلاً: درصد؛ مسئله‌های تخفیفِ صفحهٔ ۴۱', C6 ? 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.' : 'آن‌قدر کوچک که در همین جلسه تمام شود.')}
       <label class="field"><span>تا پایان این جلسه باید بتوانم…</span>
-        <textarea rows="3" data-bind="goal" data-live placeholder="تفاوت list و tuple را با دو مثال توضیح بدهم">${esc(a.goal || '')}</textarea></label>
+        <textarea rows="3" data-bind="goal" data-live placeholder="مثلاً: پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم">${esc(a.goal || '')}</textarea></label>
       <p class="hint" id="goal-hint" ${hint ? '' : 'hidden'}>${hint}</p>
       ${C6 ? `<label class="field"><span>از کجا می‌فهمم رسیده‌ام؟ بدون نگاه به منبع</span>
-        <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: ۵ تمرین بدون نگاه به حل؛ ۴ تا درست"></label>
+        <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: از همان ۵ مسئله، دست‌کم ۴ تا درست"></label>
       <p class="hint" id="crit-hint" ${cHint ? '' : 'hidden'}>${cHint}</p>
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}` : ''}
       <div class="field"><span>مدت مطالعه</span>${seg('minutes', (a.short && !LEAN_MIN.includes(a.short) ? [a.short, ...LEAN_MIN].sort((x, y) => x - y) : LEAN_MIN).map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
@@ -1391,7 +1390,7 @@ function viewSession() {
       ${C9 ? `<div class="field"><span>بار ذهنی این کار</span>${seg('load', Object.entries(LOADS), a.load, 'بار ذهنی')}
         <small>${loadHint}</small></div>` : ''}
       ${C8 ? `${has(rule?.place) ? `<p class="count">قاعدهٔ خودت: گوشی ${esc(rule.place)}${has(rule.people) ? `؛ فقط ${esc(rule.people)} فوری می‌رسند` : ''}${has(rule.next) ? `؛ چک بعدی ${esc(rule.next)}` : ''}.</p>` : ''}
-      ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب، دفتر تمرین، مستندات پایتون', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}` : ''}
+      ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب ریاضی، دفتر تمرین، مداد', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}` : ''}
       ${C3 || C7 || C8 ? `<div class="field"><span>گوشی کجاست؟</span>
         ${seg('phonePlace', [['out', 'بیرون اتاق'], ['drawer', 'کشو یا کیف'], ['tool', 'ابزار درس'], ['desk', 'روی میز']], a.phonePlace, 'جای گوشی')}
         <small>${phoneHint}</small></div>` : ''}
@@ -1409,23 +1408,23 @@ function viewSession() {
         <small>${a.mode === 'scan' ? 'اول عنوان‌ها، خلاصه و سؤال‌های آخر فصل را نگاه کن. هدف این جلسه شناختن ساختار است، نه حل‌کردن.'
           : a.mode === 'min' ? 'هدف مینیمم: یک کار کوچک که حتماً تمام می‌شود. زنجیره قطع نشود، همین کافی است.'
           : 'یک هدف اصلی. اگر وقت ماند، هدف دوم.'}</small></div>
-      ${textField('امروز جزو هدف نیست', 'out', a.out, 'مثلاً: مسائل ترکیبی')}
+      ${textField('امروز جزو هدف نیست', 'out', a.out, 'مثلاً: مسئله‌های سود بانکی')}
       <div class="field"><span>لحظهٔ شروع</span>
         <div class="ifthen">
-          <label><i>اگر</i><input type="text" data-bind="ifWhen" value="${esc(a.ifWhen || '')}" placeholder="ساعت ۵ شد و پشت میز نشستم"></label>
-          <label><i>آنگاه</i><input type="text" data-bind="ifThen" value="${esc(a.ifThen || '')}" placeholder="دفتر تمرین را باز می‌کنم و مسئلهٔ اول را می‌خوانم"></label>
+          <label><i>اگر</i><input type="text" data-bind="ifWhen" value="${esc(a.ifWhen || '')}" placeholder="مثلاً: ساعت ۵ شد و پشت میز نشستم"></label>
+          <label><i>آنگاه</i><input type="text" data-bind="ifThen" value="${esc(a.ifThen || '')}" placeholder="مثلاً: کتاب را صفحهٔ ۴۱ باز می‌کنم و صورت مسئلهٔ ۱ را می‌خوانم"></label>
         </div>
         <small>«آنگاه» اولین اقدام است: آن‌قدر کوچک که تقریباً اراده نخواهد.</small></div>
       <p class="hint" id="first-hint" ${firstHint(a) ? '' : 'hidden'}>${firstHint(a)}</p>
       ${textField('چرا این؟', 'why', a.why, 'دلیل واقعی، نه شعار')}`, a.mode !== 'normal', 'اختیاری')}
       <button class="btn big" data-act="plan-save">هدف را نگه دار برای همان لحظه</button>` : ''}`}
       ${!R ? '' : `
-      ${textField('موضوع باریک', 'subject', a.subject, 'مثلاً: مشتق زنجیره‌ای، تمرین‌های صفحهٔ ۸۴', 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.')}
+      ${textField('موضوع باریک', 'subject', a.subject, 'مثلاً: درصد؛ مسئله‌های تخفیفِ صفحهٔ ۴۱', 'اگر در یک جلسه تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.')}
       <label class="field"><span>تا پایان این جلسه باید بتوانم…</span>
-        <textarea rows="3" data-bind="goal" data-live placeholder="${a.mode === 'min' ? 'تعریف را از حفظ بنویسم و یک مثال بزنم' : 'مسائل سقوط آزاد صفحهٔ ۶۲ را بدون حل‌المسائل حل کنم'}">${esc(a.goal || '')}</textarea></label>
+        <textarea rows="3" data-bind="goal" data-live placeholder="${a.mode === 'min' ? 'مثلاً: فقط مسئلهٔ ۱ صفحهٔ ۴۱ را بدون نگاه به حل، حل کنم' : 'مثلاً: پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم'}">${esc(a.goal || '')}</textarea></label>
       <p class="hint" id="goal-hint" ${hint ? '' : 'hidden'}>${hint}</p>
       <label class="field"><span>از کجا می‌فهمم رسیده‌ام؟ بدون نگاه به منبع</span>
-        <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: ۵ تمرین بدون نگاه به حل؛ ۴ تا درست"></label>
+        <input type="text" data-bind="criterion" data-live value="${esc(a.criterion || '')}" placeholder="مثلاً: از همان ۵ مسئله، دست‌کم ۴ تا درست"></label>
       <p class="hint" id="crit-hint" ${cHint ? '' : 'hidden'}>${cHint}</p>
       ${aiPart('goal', 'هدف و معیار را با هوشواره تیز کن')}
       <div class="field"><span>${a.fmt === 'flex' ? 'سقف قطعی' : 'مدت کار'}</span>${seg('minutes', F.opts.map((n) => [n, fa(n)]), a.minutes, 'مدت به دقیقه')}
@@ -1441,11 +1440,11 @@ function viewSession() {
         <small>${a.mode === 'scan' ? 'اول عنوان‌ها، خلاصه و سؤال‌های آخر فصل را نگاه کن. هدف این جلسه شناختن ساختار است، نه حل‌کردن.'
           : a.mode === 'min' ? 'هدف مینیمم: یک کار کوچک که حتماً تمام می‌شود. زنجیره قطع نشود، همین کافی است.'
           : 'یک هدف اصلی. اگر وقت ماند، هدف دوم.'}</small></div>
-      ${textField('امروز جزو هدف نیست', 'out', a.out, 'اختیاری؛ مثلاً: مسائل ترکیبی')}
+      ${textField('امروز جزو هدف نیست', 'out', a.out, 'اختیاری؛ مثلاً: مسئله‌های سود بانکی')}
       <div class="field"><span>لحظهٔ شروع</span>
         <div class="ifthen">
-          <label><i>اگر</i><input type="text" data-bind="ifWhen" value="${esc(a.ifWhen || '')}" placeholder="ساعت ۵ شد و پشت میز نشستم"></label>
-          <label><i>آنگاه</i><input type="text" data-bind="ifThen" value="${esc(a.ifThen || '')}" placeholder="دفتر تمرین را باز می‌کنم و مسئلهٔ اول را می‌خوانم"></label>
+          <label><i>اگر</i><input type="text" data-bind="ifWhen" value="${esc(a.ifWhen || '')}" placeholder="مثلاً: ساعت ۵ شد و پشت میز نشستم"></label>
+          <label><i>آنگاه</i><input type="text" data-bind="ifThen" value="${esc(a.ifThen || '')}" placeholder="مثلاً: کتاب را صفحهٔ ۴۱ باز می‌کنم و صورت مسئلهٔ ۱ را می‌خوانم"></label>
         </div>
         <small>«آنگاه» حرکت اول است: روی خودِ درس، دقیق، حدود دو دقیقه، و فقط یکی. نشانه یک رخداد بیرونی باشد.</small></div>
       <p class="hint" id="first-hint" ${firstHint(a) ? '' : 'hidden'}>${firstHint(a)}</p>
@@ -1459,7 +1458,7 @@ function viewSession() {
         <small>${loadHint}</small></div>`, a.entry > 0 || a.mode !== 'normal')}
       ${fold('s-fmt', 'قالب این جلسه', `
         <label class="field"><span>نوع کار</span>
-          <input type="text" data-bind="wtype" list="wtypes" value="${esc(a.wtype || '')}" placeholder="مثلاً: حل تمرین فیزیک، مرور واژگان">
+          <input type="text" data-bind="wtype" list="wtypes" value="${esc(a.wtype || '')}" placeholder="مثلاً: حل مسئلهٔ ریاضی">
           <datalist id="wtypes">${wtypes().map((w) => `<option value="${esc(w)}">`).join('')}</datalist>
           <small>${FMT[db.formats[(a.wtype || '').trim()]] ? `پیش‌فرض خودت برای این نوع کار: ${FMT[db.formats[a.wtype.trim()]].label}.` : 'قالب مالِ نوع کار است، نه کل درس.'}</small></label>
         <div class="field"><span>اگر وسط این کار پنج دقیقه قطع شوم…</span>
@@ -1480,15 +1479,15 @@ function viewSession() {
         ${a.ramp ? `
         <div class="field"><span>پارک، حداکثر دو دقیقه</span>
           <div class="ifthen">
-            <label><i>ذهنم</i><input type="text" data-bind="park" value="${esc(a.park || '')}" placeholder="بلندترین چیزی که الان ذهنم را می‌کشد"></label>
-            <label><i>کِی</i><input type="text" data-bind="parkWhen" value="${esc(a.parkWhen || '')}" placeholder="بلافاصله بعد از این بلوک"></label>
+            <label><i>ذهنم</i><input type="text" data-bind="park" value="${esc(a.park || '')}" placeholder="مثلاً: جواب پیام گروه کلاس"></label>
+            <label><i>کِی</i><input type="text" data-bind="parkWhen" value="${esc(a.parkWhen || '')}" placeholder="مثلاً: بلافاصله بعد از همین جلسه"></label>
           </div>
           <small>فقط بلندترینش. فهرست کارها را اینجا باز نکن.</small></div>
-        ${textField('اگر گیر کردم، اولین قدم جایگزینم', 'fallback', a.fallback, 'مثلاً: برمی‌گردم به مثال حل‌شدهٔ صفحهٔ ۶۲', 'واحد کار همان خروجی بالاست: فعل، محدوده، خروجی. باید بشود به آن جواب غلط داد.')}` : ''}
-        ${textField('محتمل‌ترین حواس‌پرتی این جلسه: اگر…', 'guard', a.guard, 'خواستم گروه کلاس را چک کنم', 'آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم. یک جملهٔ خوب را جلسه‌ها تکرار کن.')}`, !!a.ramp)}
+        ${textField('اگر گیر کردم، اولین قدم جایگزینم', 'fallback', a.fallback, 'مثلاً: برمی‌گردم به مثال حل‌شدهٔ صفحهٔ ۴۰', 'واحد کار همان خروجی بالاست: فعل، محدوده، خروجی. باید بشود به آن جواب غلط داد.')}` : ''}
+        ${textField('محتمل‌ترین حواس‌پرتی این جلسه: اگر…', 'guard', a.guard, 'مثلاً: خواستم گروه کلاس را چک کنم', 'آنگاه روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم. یک جملهٔ خوب را جلسه‌ها تکرار کن.')}`, !!a.ramp)}
       ${fold('s-mode', 'حالت مطالعه', `
         ${has(rule?.place) ? `<p class="count">قاعدهٔ خودت: گوشی ${esc(rule.place)}${has(rule.people) ? `؛ فقط ${esc(rule.people)} فوری می‌رسند` : ''}${has(rule.next) ? `؛ چک بعدی ${esc(rule.next)}` : ''}.</p>` : ''}
-        ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب، دفتر تمرین، مستندات پایتون', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}
+        ${textField('برای این جلسه فقط به این‌ها نیاز دارم', 'needs', a.needs, 'مثلاً: کتاب ریاضی، دفتر تمرین، مداد', 'هرچه در این فهرست نیست تا پایان جلسه بسته می‌ماند.')}
         <label class="check"><input type="checkbox" data-bind="deskClear" ${a.deskClear ? 'checked' : ''}>
           <span>روی میز فقط وسایل همین جلسه است.</span></label>
         <label class="check"><input type="checkbox" data-bind="focusOn" ${a.focusOn ? 'checked' : ''}>
@@ -1527,8 +1526,8 @@ function viewSession() {
       <p class="goal-line">${esc(a.goal)}</p>
       <div class="timer" data-timer="${a.loadEndsAt}" aria-live="off">${clock(a.loadEndsAt - Date.now())}</div>
       <p class="timer-note">${over ? 'زنگ خورد و تمدید ندارد. حس آمادگی شرط ورود نیست.' : 'لبهٔ آسانِ همین کار. نه کار دیگر، نه سخت‌ترین نقطه، نه تب تازه.'}</p>
-      ${textField('دفعهٔ قبل کجا رها کردم؟', 'loadLast', a.loadLast, 'یا: از این تعریف یا این مثال شروع می‌کنم')}
-      ${textField('سؤال این واحد چیست؟', 'loadQ', a.loadQ, 'یک جمله')}
+      ${textField('دفعهٔ قبل کجا رها کردم؟', 'loadLast', a.loadLast, 'مثلاً: مسئلهٔ ۳، مقدار تخفیف حساب شد')}
+      ${textField('سؤال این واحد چیست؟', 'loadQ', a.loadQ, 'مثلاً: قیمت بعد از ۲۰ درصد تخفیف چقدر می‌شود؟')}
       <p class="count">یک تماس سبک: در مسئله، فقط داده‌ها و خواسته را بنویس. در متن، تیترها را ببین و دو سؤال بنویس. در نوشتن، چند جملهٔ آزاد و بی‌قضاوت.</p>
       <button class="btn primary big" data-act="lock">${over ? 'شروع قفل' : 'داخل مسئله‌ام؛ قفل'}</button>
       <p class="fine">تازه از شبکه‌های اجتماعی آمده‌ای؟ این چند دقیقه را روی کاغذ و بدون صفحه‌نمایش بگذران.</p>`;
@@ -1573,7 +1572,7 @@ function viewSession() {
       <p class="goal-line">${esc(a.goal)}</p>
       <p class="count"${R || C6 || (C8 && has(a.needs)) ? '' : ' hidden'}>${[(R || C6) && `معیار: ${esc(a.criterion)}`, has(a.out) && `امروز نه: ${esc(a.out)}`, has(a.needs) && `فقط با: ${esc(a.needs)}`].filter(Boolean).join('<br>')}</p>
       ${R ? `<label class="field"><span>لنگر: قدم بعدی</span>
-        <input type="text" data-bind="anchor" value="${esc(a.anchor || '')}" placeholder="کوچک‌ترین عملِ مانده: خط بعدیِ راه‌حل، سؤال بعدی"></label>` : ''}
+        <input type="text" data-bind="anchor" value="${esc(a.anchor || '')}" placeholder="مثلاً: مقدار تخفیفِ مسئلهٔ ۲ را حساب می‌کنم"></label>` : ''}
       <div class="timer" data-timer="${a.endsAt}" aria-live="off">${clock(a.endsAt - Date.now())}</div>
       <p class="timer-note">${over ? bell : R || C3 ? 'هر بخش سه یا چهار ایده دارد. بخش را که خواندی، ببند و بنویس.' : 'فقط چیزی را علامت بزن که به همین خروجی مربوط است، و کنارش بنویس چرا: تعریف، مثال، مرحلهٔ حل.'}</p>
       ${a.rampState === 'lock' ? `<p class="count">قفل: تا پایان بلوک جابه‌جایی اختیاری نداری. گیر کردی؟ حدود هفت دقیقه روی همان گره بمان و روی کاغذ راه امتحان کن${has(a.fallback) ? `؛ بعد: ${esc(a.fallback)}` : ''}.</p>` : ''}
@@ -1615,8 +1614,8 @@ function viewSession() {
       <blockquote class="mine">${esc(a.chunkDraft) || 'چیزی ننوشتی.'}</blockquote>
       <div class="field"><span>چند جای خالی یا اشتباه بود؟</span>
         <div class="stepper"><button class="btn" data-act="gaps-" aria-label="کمتر">−</button><output>${fa(a.chunkGaps)}</output><button class="btn" data-act="gaps+" aria-label="بیشتر">+</button></div></div>
-      ${textField('عنوان این بخش با کلمات خودم', 'chunkTitle', a.chunkTitle, 'کوتاه؛ مثلاً: چرا توجه دروازهٔ باریک است')}
-      ${textField('این به چه چیزی که از قبل می‌دانم وصل می‌شود؟', 'chunkHook', a.chunkHook, 'شبیهِ… است، چون…')}
+      ${textField('عنوان این بخش با کلمات خودم', 'chunkTitle', a.chunkTitle, 'مثلاً: درصد یعنی «از هر صد تا، چند تا»')}
+      ${textField('این به چه چیزی که از قبل می‌دانم وصل می‌شود؟', 'chunkHook', a.chunkHook, 'مثلاً: همان کسر است، با مخرج ۱۰۰')}
       <button class="btn primary big" data-act="chunk-done">بخش بعدی</button>`;
   }
 
@@ -1654,7 +1653,7 @@ function viewSession() {
       ${a.ping ? `<p class="fine">هرچه از ${fa(a.studied)} دقیقه بماند، حواس‌پرتی حساب می‌شود.</p>` : ''}
       <div class="field"><span>اولین کاری که کردم</span>
         ${seg('firstKind', [['content', 'روی خودِ درس'], ['prep', 'آماده‌سازی']], a.firstKind, 'جنس شروع')}</div>`}
-      <p>حس می‌کنی چقدر به خروجی این جلسه رسیده‌ای؟ بعداً این حس را با نتیجهٔ واقعی مقایسه می‌کنیم.</p>
+      <p>حس می‌کنی چقدر به خروجی این جلسه رسیده‌ای؟ بعداً این حس را با نتیجهٔ واقعی مقایسه می‌کنیم.${q('feel')}</p>
       <p class="goal-line">${esc(a.goal)}</p>
       <div class="scale">
         <input type="range" min="0" max="10" step="1" value="${a.feel}" data-bind="feel" data-num data-live aria-label="حس یادگیری از ده">
@@ -1689,10 +1688,10 @@ function viewSession() {
         ${choice('outcome', 'full', 'رسیدم', a.outcome)}${choice('outcome', 'partial', 'تا حدی', a.outcome)}${choice('outcome', 'none', 'نرسیدم', a.outcome)}</div>
       <div class="field"><span>شکاف دقیقاً چیست؟ «بلد نیستم» جواب نیست.</span>
         ${Object.entries(GAPS).map(([k, g]) => choice('gap', k, g.label, a.gap)).join('')}</div>
-      ${textField('کجا دقیقاً؟ یک جمله', 'gapNote', a.gapNote, 'مثلاً: ترتیب مراحل حل از دستم رفت')}
+      ${textField('کجا دقیقاً؟ یک جمله', 'gapNote', a.gapNote, 'مثلاً: درصد را از قیمت تازه حساب کردم، نه از قیمت اول')}
       ${a.ping ? `<div class="field"><span>مسئلهٔ اصلی توجه در این جلسه؛ فقط یکی</span>
         ${Object.entries(ISSUES).map(([k, x]) => choice('issue', k, x.label, a.issue)).join('')}</div>` : ''}
-      ${R || C5 || C6 ? textField('الان چه کاری می‌توانم بکنم که قبل از این جلسه نمی‌توانستم؟', 'can', a.can, 'یک جمله، بدون نگاه به منبع', 'اگر چیزی به ذهنت نمی‌رسد خالی بگذار؛ همین هم داده است.') : ''}
+      ${R || C5 || C6 ? textField('الان چه کاری می‌توانم بکنم که قبل از این جلسه نمی‌توانستم؟', 'can', a.can, 'مثلاً: قیمت بعد از تخفیف را بدون نگاه به حل حساب می‌کنم', 'اگر چیزی به ذهنت نمی‌رسد خالی بگذار؛ همین هم داده است.') : ''}
       ${R && (a.ramp || a.fmt) ? `
       <fieldset class="group"><legend>ورود و قالب</legend>
         ${a.ramp ? `
@@ -1704,7 +1703,7 @@ function viewSession() {
         ${a.fmt ? `
         <div class="field"><span>زمان‌بندی کجا مزاحم شد؟</span>
           ${Object.entries(FMT_CUTS).map(([k, l]) => choice('fmtSnag', k, l, a.fmtSnag)).join('')}</div>
-        ${textField('برای جلسهٔ بعد فقط یک چیز را عوض می‌کنم', 'fmtNext', a.fmtNext, 'اختیاری؛ مثلاً: هر دوره یک مسئله')}` : ''}
+        ${textField('برای جلسهٔ بعد فقط یک چیز را عوض می‌کنم', 'fmtNext', a.fmtNext, 'اختیاری؛ مثلاً: در هر دوره فقط یک مسئله')}` : ''}
       </fieldset>` : ''}
       <button class="btn primary big" data-act="finish-session">ثبت جلسه</button>`;
   }
@@ -1762,7 +1761,7 @@ function viewSession() {
         <p>${GAPS[s.gap].advice}</p>
       </div>
       ${R || !C7 ? '' : `<fieldset class="group"><legend>نقطهٔ فرود، دو دقیقه</legend>
-        ${textField('اولین کار جلسهٔ بعد', 'nextFirst', a.nextFirst, 'مثلاً: سؤال ۵ صفحهٔ ۴۱، فقط نوشتن داده‌ها')}
+        ${textField('اولین کار جلسهٔ بعد', 'nextFirst', a.nextFirst, 'مثلاً: مسئلهٔ ۴ صفحهٔ ۴۱، فقط نوشتن داده‌ها')}
         <label class="check"><input type="checkbox" data-bind="landed" ${a.landed ? 'checked' : ''}>
           <span>کتاب روی همان صفحه باز مانده، خودکار کنارش است و بقیهٔ وسایل برگشته سر جایش.</span></label>
       </fieldset>`}
@@ -1772,9 +1771,9 @@ function viewSession() {
         ${parkSheet(unsettled)}
       </fieldset>` : ''}
       <fieldset class="group"><legend>خروج تمیز، یک دقیقه</legend>
-        ${textField('کجا متوقف شدم', 'stopAt', a.stopAt, 'مثلاً: سؤال ۶، معادلهٔ افقی نوشته شد')}
-        ${textField('حرکت اول جلسهٔ بعد', 'nextFirst', a.nextFirst, 'مثلاً: سؤال ۵ صفحهٔ ۴۱، فقط نوشتن داده‌ها')}
-        ${textField('اگر چه شد؟', 'nextWhen', a.nextWhen, 'مثلاً: ساعت ۱۸ شد / ظرف ناهار را شستم', 'الان که ذهنت هنوز وسط درس است، شروعِ فردا را بساز؛ روزهای خوب هم.')}
+        ${textField('کجا متوقف شدم', 'stopAt', a.stopAt, 'مثلاً: مسئلهٔ ۳، مقدار تخفیف حساب شد')}
+        ${textField('حرکت اول جلسهٔ بعد', 'nextFirst', a.nextFirst, 'مثلاً: مسئلهٔ ۴ صفحهٔ ۴۱، فقط نوشتن داده‌ها')}
+        ${textField('اگر چه شد؟', 'nextWhen', a.nextWhen, 'مثلاً: فردا ساعت ۵ شد و پشت میز نشستم', 'الان که ذهنت هنوز وسط درس است، شروعِ فردا را بساز؛ روزهای خوب هم.')}
         <label class="check"><input type="checkbox" data-bind="landed" ${a.landed ? 'checked' : ''}>
           <span>کتاب روی همان صفحه باز مانده، خودکار کنارش است و بقیهٔ وسایل برگشته سر جایش.</span></label>
       </fieldset>`}
@@ -1795,7 +1794,7 @@ function viewRest() {
       <p>«کمی استراحت» مرز نیست. مدت، ساعت بازگشت و نقطهٔ شروع را ببند.</p>
       <div class="field"><span>مدت</span>${seg('minutes', [3, 5, 10, 15].map((n) => [n, fa(n)]), a.minutes, 'مدت استراحت')}
         <small>دقیقه؛ یعنی تا ${hhmm(Date.now() + a.minutes * 6e4)}.</small></div>
-      ${textField('شروع از', 'next', a.next, 'مثلاً: علامت مرحلهٔ سوم راه‌حل را بررسی می‌کنم', '«ادامهٔ ریاضی» نقطهٔ بازگشت نیست.')}
+      ${textField('شروع از', 'next', a.next, 'مثلاً: مسئلهٔ ۴ صفحهٔ ۴۱، فقط نوشتن داده‌ها', '«ادامهٔ ریاضی» نقطهٔ بازگشت نیست.')}
       <button class="btn primary big" data-act="rest-run">شروع استراحت</button>
       <p class="fine">کاری که تمام‌کردنش آسان است: چند قدم راه، آب، نگاه به بیرون. گوشی و ویدئوی کوتاه از این جنس نیستند.</p>`;
   }
@@ -1818,7 +1817,7 @@ const stopForm = (a) => `
     ${Object.entries(STOPS).map(([k, v]) => choice('reason', k, v[0], a.reason, a.reason === k ? v[1] : '')).join('')}</div>
   ${a.reason === 'none' && (a.entryMore ?? a.more ?? 0) < 2 ? '<button class="btn big" data-act="stop-more">یک پنج‌دقیقهٔ دیگر</button>' : ''}
   ${textField('نقطهٔ ورود بعدی', 'nextFirst', a.nextFirst, 'مثلاً: مثال حل‌شدهٔ صفحهٔ ۴۰ را رونویسی می‌کنم')}
-  ${textField('اگر چه شد؟', 'nextWhen', a.nextWhen, 'مثلاً: فردا ساعت ۱۷ شد')}
+  ${textField('اگر چه شد؟', 'nextWhen', a.nextWhen, 'مثلاً: فردا ساعت ۵ شد و پشت میز نشستم')}
   <div class="grid2">
     ${numField('دقیقه تا خط اول', 'lag', a.lag, 'از نشانه تا اولین کار روی درس.')}
     <div class="field"><span>اولین کارم</span>${seg('firstKind', [['content', 'درس'], ['prep', 'آماده‌سازی']], a.firstKind, 'جنس شروع')}</div>
@@ -1832,7 +1831,7 @@ function viewQuick() {
     return `
       <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>شروع ۶۰ ثانیه‌ای</h1></header>
       <p>برای روزی که هیچ‌چیز آماده نیست. اولین کار عقب‌افتاده‌ای که منبعش دمِ دست است؛ سی ثانیه برای انتخاب، بدون بازبینی.</p>
-      ${textField('الان کدام درس؟', 'subject', a.subject, 'مثلاً: آمار، تمرین‌های فصل ۲')}
+      ${textField('الان کدام درس؟', 'subject', a.subject, 'مثلاً: ریاضی، مسئله‌های درصدِ صفحهٔ ۴۱')}
       <div class="field"><span>حال الان</span>${seg('mood', Object.entries(MOODS), a.mood, 'حال قبل از شروع')}</div>
       <button class="btn primary big" data-act="quick-run">شروع ۶۰ ثانیه</button>
       <p class="fine">این فقط «صفر مطلق» را می‌شکند. روش اصلی همان حرکت اولِ ازپیش‌نوشته است.</p>`;
@@ -1884,8 +1883,8 @@ function viewWeek() {
     ${textField('تعهدهای ثابت این هفته', 'fixed', a.fixed, 'کلاس، کار، رفت‌وآمد، قرار خانوادگی')}
     ${[1, 2, 3].map((i) => `
       <fieldset class="group"><legend>خروجی ${fa(i)}${i > 1 ? '، اختیاری' : ''}</legend>
-        ${textField('نتیجهٔ مشخص، نه اسم درس', 'o' + i, a['o' + i], i === 1 ? 'مثلاً: آماده‌شدن برای آزمون فیزیک' : '')}
-        ${textField('حداقل پیشرفت قابل قبول', 'm' + i, a['m' + i], i === 1 ? 'مثلاً: حل ۸ مسئلهٔ منتخب و ثبت دو خطای پرتکرار' : '')}
+        ${textField('نتیجهٔ مشخص، نه اسم درس', 'o' + i, a['o' + i], i === 1 ? 'مثلاً: مسئله‌های درصد را برای آزمون ریاضی بلد باشم' : '')}
+        ${textField('حداقل پیشرفت قابل قبول', 'm' + i, a['m' + i], i === 1 ? 'مثلاً: ۸ مسئلهٔ درصد حل شود و دو خطای پرتکرارم نوشته شود' : '')}
         ${pool ? '' : textField('روزهای اجرا', 'd' + i, a['d' + i], i === 1 ? 'مثلاً: شنبه و دوشنبه' : '')}
       </fieldset>`).join('')}
     <p class="fine">سه تا، نه بیشتر. بقیه در فهرست پشتیبان می‌ماند.</p>
@@ -1906,7 +1905,7 @@ function viewObstacle() {
     return `
       <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>الان از کار فاصله گرفته‌ام</h1></header>
       <p>این سرزنش نیست؛ فقط می‌خواهیم مانع همین جلسه را پیدا کنیم.</p>
-      ${textField('کاری که قرار بود انجام بدهم', 'task', a.task, 'مثلاً: تمرین‌های حلقهٔ for')}
+      ${textField('کاری که قرار بود انجام بدهم', 'task', a.task, 'مثلاً: مسئله‌های درصدِ صفحهٔ ۴۱')}
       <div class="field"><span>کدام یکی الان پررنگ‌تر است؟ اگر دو تا درست است، آن که زودتر آمد.</span>
         ${Object.entries(OBSTACLES).map(([k, o]) => choice('obstacle', k, o.label, a.obstacle, o.ask)).join('')}</div>
       ${textField('درست قبل از فرار چه حس یا فکری داشتم؟', 'feeling', a.feeling, 'اختیاری')}
@@ -1920,7 +1919,7 @@ function viewObstacle() {
       <p class="goal-line">${o.label}</p>
       <label class="field"><span>${o.rest ? 'برنامهٔ استراحت' : 'دقیقاً چه می‌کنم؟ کوچک، روشن و مربوط به همان درس'}</span>
         <textarea rows="3" data-bind="stepText">${esc(a.stepText || '')}</textarea></label>
-      ${o.rest ? '' : textField('تا پایان این بازه، خروجی من این است…', 'output', a.output, 'مثلاً: یک تعریف با کلمات خودم', '«تمرکز عالی» خروجی نیست؛ چیزی بنویس که بتوانی ببینی انجام شده.')}
+      ${o.rest ? '' : textField('تا پایان این بازه، خروجی من این است…', 'output', a.output, 'مثلاً: داده‌های مسئلهٔ ۱ روی کاغذ نوشته شده', '«تمرکز عالی» خروجی نیست؛ چیزی بنویس که بتوانی ببینی انجام شده.')}
       ${o.rest ? '' : aiPart('step', 'گام را هوشواره برای همین کار بنویسد')}
       <div class="field"><span>مدت بازه</span>${minutesPicker('minutes', o.rest ? [10, 15] : [2, 5, 10, 15], a.minutes)}</div>
       <button class="btn primary big" data-act="start-run">${o.rest ? 'شروع استراحت' : 'شروع بازه'}</button>`;
@@ -1963,7 +1962,7 @@ function viewRetrieval() {
   if (a.step === 'write') {
     return cover(`
       <div class="timer small" data-timer="${a.endsAt}">${clock(a.endsAt - Date.now())}</div>
-      <h1>بازیابی ${esc(s.subject)}</h1>
+      <h1>بازیابی ${esc(s.subject)}${q('retrieval')}</h1>
       <p class="goal-line">${esc(s.goal)}</p>
       <p>بدون بازکردن منبع یا یادداشت‌ها، هرچه از آن جلسه مانده بنویس. مکث و کندی طبیعی است.</p>
       <textarea class="sheet" rows="10" data-bind="text" placeholder="از حافظه…" autofocus>${esc(a.text || '')}</textarea>
@@ -2004,7 +2003,7 @@ function viewManual() {
   return `
     <header class="flow"><button class="back" data-act="cancel">برگشت</button><h1>ثبت جلسه‌ای که گذشت</h1></header>
     <p>تا چند دقیقه بعد از جلسه بنویس، نه آخر شب از روی حافظه.</p>
-    ${textField('چه خواندم؟', 'subject', a.subject, 'مثلاً: زیست، فصل دو')}
+    ${textField('چه خواندم؟', 'subject', a.subject, 'مثلاً: ریاضی، مسئله‌های درصدِ صفحهٔ ۴۱')}
     <div class="grid2">
       ${numField('دقیقهٔ حضور', 'presence', a.presence, 'از نشستن تا بلندشدن.')}
       ${numField('دقیقهٔ واقعی', 'real', a.real, 'ذهن واقعاً درگیر مطلب.')}
@@ -2013,7 +2012,7 @@ function viewManual() {
     </div>
     <div class="field"><span>علت غالب وقفه‌ها</span>
       ${pick('data-bind', 'cause', Object.entries(CAUSES).map(([k, c]) => [k, c.label]), a.cause, 'علت وقفه', 'علت')}</div>
-    ${textField('یک نشانهٔ یادگیری', 'sign', a.sign, 'مثلاً: سه مسئله را حل کردم', '«فیزیک خواندم» نشانه نیست. اگر چیزی نداری خالی بگذار.')}
+    ${textField('یک نشانهٔ یادگیری', 'sign', a.sign, 'مثلاً: سه مسئلهٔ تخفیف را بدون نگاه به حل، حل کردم', '«ریاضی خواندم» نشانه نیست. اگر چیزی نداری خالی بگذار.')}
     <button class="btn primary big" data-act="manual-save">ثبت</button>`;
 }
 
@@ -2051,8 +2050,8 @@ function viewMyth() {
           <label><i>آنگاه</i><input type="text" data-bind="thenText" value="${esc(a.thenText || '')}"></label>
         </div>
         <small>رفتار بنویس، نه شعار. «باید منظم باشم» اجراشدنی نیست.</small></div>
-      ${textField('کار مشخص امروز', 'task', a.task, 'مثلاً: سه مسئلهٔ صفحهٔ ۴۱', 'جلسهٔ آزمایشی امروز روی همین کار است.')}
-      ${textField('قانون قدیمی پیش‌بینی می‌کند که…', 'predict', a.predict, 'مثلاً: بدون حال خوب هیچ‌چیز یاد نمی‌گیرم')}
+      ${textField('کار مشخص امروز', 'task', a.task, 'مثلاً: سه مسئلهٔ درصدِ صفحهٔ ۴۱', 'جلسهٔ آزمایشی امروز روی همین کار است.')}
+      ${textField('قانون قدیمی پیش‌بینی می‌کند که…', 'predict', a.predict, 'مثلاً: بدون حال خوب حتی یک مسئله هم حل نمی‌شود')}
       <button class="btn primary big" data-act="myth-save">این قانونِ امروز من است</button>`;
   }
   const m = db.myths.find((x) => x.id === a.entryId);
@@ -2061,12 +2060,12 @@ function viewMyth() {
     <p class="goal-line">${ruleLine(m)}</p>
     <div class="field"><span>قانون را اجرا کردم؟</span>
       ${choice('did', 'yes', 'بله', a.did)}${choice('did', 'no', 'نه', a.did, 'یک روز بدون اجرا داده است، نه جرم.')}</div>
-    ${textField('خروجی قابل دیدن', 'output', a.output, 'مثلاً: سه مسئله حل شد')}
-    ${textField('بدون نگاه به کتاب چه چیزی توانستم بگویم یا حل کنم؟', 'can', a.can, 'مثلاً: تعریف مشتق را از حفظ نوشتم', 'ساعت را بعد از این بنویس، نه به‌جای این.')}
+    ${textField('خروجی قابل دیدن', 'output', a.output, 'مثلاً: هر سه مسئله حل شد، دو تا درست')}
+    ${textField('بدون نگاه به کتاب چه چیزی توانستم بگویم یا حل کنم؟', 'can', a.can, 'مثلاً: راه حساب‌کردنِ تخفیف را از حفظ نوشتم', 'ساعت را بعد از این بنویس، نه به‌جای این.')}
     <div class="pair">
       <div><span>قانون قدیمی پیش‌بینی کرده بود</span><p>${esc(m.predict) || 'چیزی ننوشته بودی.'}</p></div>
     </div>
-    ${textField('واقعاً چه شد؟', 'happened', a.happened, 'مثلاً: بعد از پنج دقیقه ادامه دادم')}
+    ${textField('واقعاً چه شد؟', 'happened', a.happened, 'مثلاً: بی‌حوصله شروع کردم و بعد از پنج دقیقه راه افتادم')}
     <button class="btn primary big" data-act="myth-done">ثبت</button>
     <button class="btn link" data-act="myth-later">بعداً</button>`;
 }
@@ -2878,7 +2877,7 @@ function viewAttn() {
     <section>
       <h2>بعد از جلسهٔ سوم</h2>
       ${dbText('فقط یک تغییر کوچک برای هفتهٔ بعد', 'attn.change', t.change, 'مثلاً: هدف را با شمارهٔ صفحه می‌نویسم')}
-      ${dbText('تفاوت تمرکز، شبه‌تمرکز و حواس‌پرتی، با مثالی از جلسهٔ خودم', 'attn.explain', t.explain, 'مثلاً: دقیقهٔ ده چشمم روی متن بود ولی…')}
+      ${dbText('تفاوت تمرکز، شبه‌تمرکز و حواس‌پرتی، با مثالی از جلسهٔ خودم', 'attn.explain', t.explain, 'مثلاً: دقیقهٔ ده چشمم روی مسئلهٔ ۲ بود ولی به آزمون فکر می‌کردم')}
     </section>` : ''}
 
     <section>
@@ -3177,7 +3176,7 @@ function viewFmt() {
   return `${head}
     <section>
       <h2>${three ? 'سه جلسه' : `جلسهٔ ${fa(all.length + 1)} از ۳`}</h2>
-      ${dbText('نوع کاری که زیاد تکرار می‌شود', 'fmtLab.type', L.type, 'مثلاً: حل تمرین فیزیک', 'فقط جلسه‌های همین نوع کار شمرده می‌شود. مقایسهٔ مرور واژه با حل مسئلهٔ تازه چیزی دربارهٔ قالب نمی‌گوید.')}
+      ${dbText('نوع کاری که زیاد تکرار می‌شود', 'fmtLab.type', L.type, 'مثلاً: حل مسئلهٔ ریاضی', 'فقط جلسه‌های همین نوع کار شمرده می‌شود. مقایسهٔ مرور واژه با حل مسئلهٔ تازه چیزی دربارهٔ قالب نمی‌گوید.')}
       ${FMT[db.formats[type]] ? `<p class="count">پیش‌فرض فعلی برای «${esc(type)}»: ${FMT[db.formats[type]].label}.</p>` : ''}
       <button class="btn ${three ? '' : 'primary '}big" data-act="fmt-session">جلسهٔ این نوع کار</button>
       <p class="fine">تصمیمِ قبل از جلسه نباید بیش از یک دقیقه طول بکشد. مرددی؟ کار تکه‌تکه با یک نوبت ۲۵ دقیقه‌ای؛ کار پیوسته با انعطاف‌پذیر و سقف چهل.</p>
@@ -3239,7 +3238,7 @@ function viewTplan() {
       ${pick('data-bind', 'out', wk.outs.map((o, i) => [String(i), `${esc(o.t)}: ${esc(o.min)}`]), a.out, 'خروجی هفته', 'هیچ‌کدام')}</div>` : ''}
     <div class="field"><span>برای کدام روز؟</span>${seg('tday', [['today', 'امروز'], ['tomorrow', 'فردا']], a.tday, 'روز برنامه')}</div>
     <p class="count">${c.cap ? `دقیقهٔ مؤثر: دیروز ${fa(c.y)}، امروز ${fa(c.t)}. سقف واقع‌بینانه: ${fa(c.cap)} دقیقه.` : 'هنوز دقیقهٔ مؤثری ثبت نشده؛ عدد را کوچک بگیر.'}${has(lastFix?.fix) ? `<br>اصلاح قبلی‌ات: ${esc(lastFix.fix)}` : ''}</p>
-    ${textField('فقط یک کار سنگین', 'task', a.task, 'مثلاً: ده مسئله از مبحث امروز فیزیک', 'همان که اگر فقط خودش درست انجام شود، روز باخته نیست.')}
+    ${textField('فقط یک کار سنگین', 'task', a.task, 'مثلاً: ده مسئلهٔ درصد از صفحهٔ ۴۱ و ۴۲', 'همان که اگر فقط خودش درست انجام شود، روز باخته نیست.')}
     <div class="field"><span>زمانش را از کجا می‌دانم؟</span>
       ${seg('hist', [['yes', 'آخرین‌بارِ کار مشابه'], ['no', 'حدس اول']], a.hist, 'مبنای برآورد')}</div>
     ${numField(a.hist === 'no' ? 'اولین عددی که به ذهنم می‌رسد' : 'آخرین‌بار چند دقیقه طول کشید؟', 'base', a.base, k ? `در ضریب خطای خودت، ${fa1(k)}، ضرب می‌شود.` : a.hist === 'no' ? 'سی درصد رویش می‌آید؛ ذهن همیشه بهترین سناریو را می‌بیند.' : 'بیست درصد رویش می‌آید، حتی اگر مطمئنی این بار سریع‌تر است.')}
@@ -3257,14 +3256,14 @@ function viewTplan() {
       </div></div>
     ${aiPart('tplan', 'نسخهٔ کوچک و نقطهٔ شروع از هوشواره')}
     ${textField('نسخهٔ کوچکِ همان کار', 'small', a.small, 'مثلاً: چهار مسئله به‌جای ده تا', 'چتر نجات روز بد: کوچک‌ترین کاری که روز را از صفر نجات می‌دهد.')}
-    ${!X ? '' : `${textField('نقطهٔ شروع', 'first', a.first, 'مثلاً: فایل تمرین را باز می‌کنم و فقط سؤال اول را حل می‌کنم', 'اولین عملِ خیلی مشخص؛ فقط شروع را معلوم کن، نه دقیقه‌به‌دقیقهٔ روز را.')}
+    ${!X ? '' : `${textField('نقطهٔ شروع', 'first', a.first, 'مثلاً: کتاب را صفحهٔ ۴۱ باز می‌کنم و فقط مسئلهٔ ۱ را حل می‌کنم', 'اولین عملِ خیلی مشخص؛ فقط شروع را معلوم کن، نه دقیقه‌به‌دقیقهٔ روز را.')}
     ${textField('نشانهٔ شروع، اگر ساعت‌هایت به‌هم می‌ریزد', 'cue', a.cue, 'مثلاً: بعد از ناهار / به‌محض برگشتن از کلاس', 'اختیاری. نشانهٔ رویدادی در زندگی نامنظم از ساعت پایدارتر است.')}`}
 
     <fieldset class="group"><legend>کار دوم، اختیاری</legend>
       <p class="fine">حداکثر دو تا، و فقط اگر وقت یا انرژی ماند. دستهٔ هر کار را بار ذهنی‌اش تعیین می‌کند.</p>
       ${a.tasks.length ? `<ul class="plain">${a.tasks.map((t, i) => `<li class="line"><span>${esc(t.name)}، ${LOADS[t.load]} در ${WINS[t.win]}، ${fa(t.min)} دقیقه</span><button class="back" data-act="tplan-del" data-i="${i}">حذف</button></li>`).join('')}</ul>` : ''}
       <div class="row">
-        <input type="text" data-bind="tName" value="${esc(a.tName || '')}" placeholder="مثلاً: مرور فلش‌کارت" aria-label="نام کار">
+        <input type="text" data-bind="tName" value="${esc(a.tName || '')}" placeholder="مثلاً: مرتب‌کردن جزوهٔ ریاضی" aria-label="نام کار">
         <input type="number" inputmode="numeric" min="1" class="mini" data-bind="tMin" data-num value="${a.tMin ?? ''}" placeholder="دقیقه" aria-label="دقیقه">
       </div>
       <div class="field"><span>بار ذهنی</span>${seg('tLoad', Object.entries(LOADS), a.tLoad, 'بار ذهنی کار')}</div>
@@ -3339,101 +3338,429 @@ function viewReread() {
     <button class="btn big" data-act="lab-reset">آزمایش تازه با دو متن دیگر</button>`;
 }
 
-/* ---------- راهنما ---------- */
+/* ---------- آموزش ---------- */
 
-// هر بخش تازه‌ای که به اپ اضافه می‌شود، یک ردیف هم اینجا می‌گیرد: [کلید، عنوان، برای چیست، چطور]
-const GUIDE = [
-  ['start', 'از کجا شروع کنم؟', [
-    ['first', 'سه قدم، همین', 'اپ یک کار می‌کند: جلسهٔ مطالعه را با چیزی که واقعاً یاد گرفته‌ای می‌سنجد، نه با ساعت.',
-      '۱. «شروع جلسهٔ مطالعه» را بزن و بنویس آخر جلسه باید چه کاری بتوانی. ۲. تایمر که تمام شد منبع را ببند و از حفظ بنویس. ۳. فردا اپ همان مطلب را دوباره از تو می‌پرسد. بقیهٔ بخش‌ها اختیاری‌اند و لازم نیست همه را بلد باشی.'],
-  ]],
-  ['today', 'زبانهٔ امروز', [
-    ['session', 'شروع جلسهٔ مطالعه', 'کار اصلی اپ. قبل از خواندن معلوم می‌کنی آخر جلسه باید چه کاری بتوانی، و بعد با کتابِ بسته خودت را می‌سنجی.',
-      'فقط موضوع، هدف، معیار، مدت و جای گوشی را پر کن و «شروع مطالعه» را بزن. بخش‌های تاشوی پایین فرم اختیاری‌اند.'],
-    ['quick', 'فقط ۶۰ ثانیه', 'برای وقتی که حوصلهٔ یک جلسهٔ کامل را نداری. فقط یک دقیقه روی اولین حرکت درس می‌مانی.',
-      'بزن، یک حرکت کوچک انتخاب کن و یک دقیقه انجامش بده. بعدش آزادی ادامه بدهی یا بایستی.'],
-    ['obstacle', 'شروع نمی‌کنم', 'برای وقتی که از درس فرار می‌کنی. به‌جای «تنبلی»، مانع واقعی را پیدا می‌کنی و یک قدم ورودی کوچک برمی‌داری.',
-      'مانع را از فهرست انتخاب کن؛ اپ برای همان مانع یک قدم کوچک پیشنهاد می‌دهد.'],
-    ['retrieval', 'بازیابی دیروز', 'مطلبی که دیروز خوانده‌ای را امروز از حافظه بیرون می‌کشی تا ماندگار شود.',
-      'خودش بالای صفحهٔ امروز ظاهر می‌شود. «بازیابی کن» را بزن و بدون نگاه به منبع بنویس.'],
-    ['cards', 'کارت‌های بالای صفحه', 'کارهایی که امروز نوبتشان است: بازیابی، آزمایشی که شروع کرده‌ای، کار اول روز.',
-      'دو کارت اول مهم‌ترند. اگر بیشتر باشد، زیر «کار دیگر برای امروز» جمع شده‌اند.'],
-    ['chapters', 'انتخاب فصل', 'اپ را خلوت می‌کند: فقط ابزارهای فصل‌هایی را می‌بینی که الان با آن‌ها کار داری.',
-      'از ردیف بالای صفحهٔ امروز یک یا چند فصل را بزن؛ «همه» همه‌چیز را برمی‌گرداند. چیزی پاک نمی‌شود: داده‌های فصل‌های پنهان سر جایشان می‌مانند و با انتخاب دوباره برمی‌گردند.'],
-    ['day', 'خواب و انرژی', 'خواب دیشب و انرژی‌ات در طول روز را ثبت می‌کنی تا ساعت اوج و فرودت پیدا شود.',
-      'روزی یک‌بار، چند ثانیه. بعد از چند روز اپ می‌گوید کار سنگین را کِی بگذاری.'],
-    ['manual', 'بدون اپ درس خواندم', 'جلسه‌ای را که بیرون از اپ خوانده‌ای ثبت می‌کنی تا آمارت کامل بماند.',
-      'لینک پایین صفحهٔ امروز. فقط مدت و موضوع را می‌خواهد.'],
-    ['plans', 'هدف‌های نوشته‌شده', 'هدف جلسه‌ای را که قرار است بعداً بخوانی از قبل می‌نویسی، با لحظهٔ شروعش.',
-      'در فرم جلسه «هدف را نگه دار برای همان لحظه» را بزن. وقتش که رسید، از صفحهٔ امروز «الان همان لحظه است» را بزن.'],
-    ['parked', 'برگهٔ پارک و هدف‌های نوشته‌شده', 'فکرهای مزاحمی که وسط جلسه کنار گذاشته‌ای و هدف‌هایی که برای بعد نگه داشته‌ای.',
-      'فقط وقتی چیزی در آن‌ها باشد دیده می‌شوند. هر خط را انجام بده، زمان بده یا حذف کن.'],
-  ]],
-  ['trends', 'زبانهٔ روند', [
-    ['week', 'عددهای هفته', 'نشان می‌دهد در هفت روز گذشته چند جلسه داشتی و در چندتا به هدف رسیدی.',
-      'اول به «به هدف رسید» نگاه کن، نه به دقیقه‌ها. جملهٔ کنار خط قرمز پیشنهاد اپ برای قدم بعدی است.'],
-    ['bars', 'شکاف‌ها، وقفه‌ها و مانع‌ها', 'پرتکرارترین دلیل‌های نرسیدن، حواس‌پرتی و شروع‌نکردن تو را می‌شمارد.',
-      'بلندترین میله را ببین؛ همان را اول درست کن.'],
-    ['signs', 'نشانه‌های جاافتادن', 'فهرست عادت‌هایی که اپ می‌خواهد در تو جا بیفتد، با پیشرفت هر کدام.',
-      'بسته است تا صفحه خلوت بماند. هر وقت خواستی بازش کن.'],
-  ]],
-  ['lab', 'زبانهٔ آزمایش', [
-    ['hub', 'آزمایش یعنی چه؟', 'هر آزمایش یک تمرین چندروزه برای حل یک مشکل مشخص است، مثل دیر شروع‌کردن یا حواس‌پرتی.',
-      'لازم نیست همه را انجام بدهی. یکی را که به مشکلت می‌خورد باز کن؛ هم‌زمان یکی کافی است. بالای هر آزمایش «این بخش برای چیست؟» را هم داری.'],
-    ['baseline', 'سه روز ثبت واقعی', 'قبل از هر تغییری می‌بینی الان واقعاً چقدر و چطور درس می‌خوانی.',
-      'سه روز فقط ثبت کن و چیزی را عوض نکن. آخرش یک پروفایل از نقطهٔ شروعت می‌گیری.'],
-    ['env', 'بازطراحی محیط مطالعه', 'میز، نور، صدا و جای گوشی را یک‌بار درست می‌چینی.',
-      'شش عامل را یکی‌یکی بررسی و اصلاح کن، با همین وسایلی که داری.'],
-    ['digital', 'هفت روز محیط دیجیتال', 'اعلان‌ها و دسترسی به گوشی را طوری می‌چینی که وسط درس مزاحم نشوند.',
-      'روز اول تنظیم کن؛ شش روز بعد فقط اجرا و هر روز یک ثبت کوتاه.'],
-    ['time', 'معماری زمان', 'هر شب کار اول فردا را با ساعت مشخص و یک نسخهٔ کوچک جایگزین می‌چینی.',
-      'شب‌ها پنج دقیقه: کار اول، بهترین ساعت، نسخهٔ کوچک. فردا همان را روی صفحهٔ امروز می‌بینی.'],
-    ['loop', 'حلقهٔ سبک برنامه', 'برنامه‌ریزی را سبک نگه می‌دارد: کارت روزانه و هفته‌ای فقط یک اصلاح.',
-      'چهارده روز: هر روز کارت و ثبت کوتاه، هر هفته یک جلسهٔ بیست‌دقیقه‌ای.'],
-    ['start', 'ورود کوچک', 'برای کسی که شروع‌کردن برایش سخت است. فاصلهٔ «الان شروع می‌کنم» تا کار واقعی را کوتاه می‌کند.',
-      'هفت روز، هر روز یک ورود پنج‌دقیقه‌ای روی اولین حرکت درس.'],
-    ['attn', 'نقشهٔ توجه', 'می‌فهمی وسط جلسه توجهت واقعاً کجاست: روی کار، ظاهراً روی کار، یا جای دیگر.',
-      'سه جلسه با زنگ بی‌صدا. هر بار فقط یکی از سه برچسب را بزن.'],
-    ['ramp', 'رمپ ورود', 'برای وقتی که پشت میز نشسته‌ای ولی وارد کار سخت نمی‌شوی.',
-      'چهار بلوک: چند دقیقه شروع آسان، بعد قفل روی کار اصلی.'],
-    ['keep', 'لنگر، پارک، بازگشت', 'یاد می‌گیری حواس‌پرتی را زود ببینی و با یک حرکت برگردی.',
-      'سه جلسه: هر فکر مزاحم را روی برگهٔ پارک بنویس و برگرد سر قدم بعدی.'],
-    ['fmt', 'قالب جلسه', 'پیدا می‌کنی برای هر نوع کار، جلسهٔ کوتاه بهتر جواب می‌دهد یا بلند.',
-      'سه جلسه با یک نوع کار و یک قالب ثابت؛ بعدش پیش‌فرض خودت را داری.'],
-    ['myths', 'هفت روز «افسانه یا داده؟»', 'باورهای قدیمی‌ات دربارهٔ درس‌خواندن را با تجربهٔ خودت محک می‌زنی.',
-      'هر روز یک باور، یک قانون «اگر، آنگاه»، و آخر روز ثبت نتیجه.'],
-    ['reread', 'دوباره‌خوانی در برابر بازیابی', 'خودت می‌بینی دوباره‌خواندن بهتر جواب می‌دهد یا از حفظ نوشتن.',
-      'دو متن کوتاه، دو روش، و فردا یک آزمون از هر دو.'],
-  ]],
-  ['book', 'زبانهٔ کتاب', [
-    ['read', 'خواندن فصل‌ها', 'متن کامل فصل‌های کتاب، بی‌هیچ تغییری، برای وقتی که می‌خواهی خودِ فصل را بخوانی نه اینکه تمرینش را اجرا کنی.',
-      'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.'],
-    ['pick', 'کدام فصل را بخوانم؟', 'مشکلت را می‌نویسی و هوشواره از روی «مسئله» و «تشخیصِ» خودِ فصل‌ها می‌گوید کدام فصل برای همین مشکل است.',
-      'بالای فهرست فصل‌ها مشکلت را در یکی دو جمله بنویس و دکمه را بزن. فقط وقتی دیده می‌شود که کلید هوشواره را در تنظیمات گذاشته باشی.'],
-  ]],
-  ['settings', 'زبانهٔ تنظیمات', [
-    ['theme', 'رنگ‌بندی', 'ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی و سفید؛ هر کدام روشن یا تیره. هیچ چیز دیگری تغییر نمی‌کند.', 'رنگ را از ردیف بالا و روشن یا تیره را از ردیف پایین انتخاب کن. «مثل گوشی» یعنی با حالت خودِ گوشی عوض شود. انتخابت روی همین گوشی می‌ماند.'],
-    ['notif', 'هشدار پایان تایمر', 'وقتی اپ در پس‌زمینه است، پایان تایمر را خبر می‌دهد.', 'یک‌بار «روشن‌کردن اعلان» را بزن.'],
-    ['ai', 'هوشواره', 'کمک‌یار اختیاری که هدف را دقیق‌تر می‌کند و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
-      'کلید API را وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.'],
-    ['account', 'حساب', 'داده‌هایت را روی اینترنت هم نگه می‌دارد تا با عوض‌شدن گوشی یا پاک‌شدن مرورگر از بین نرود. هر کس حساب و دادهٔ جدای خودش را دارد.',
-      'یک‌بار با ایمیل و رمز حساب بساز. از آن به بعد خودش همگام می‌شود؛ روی گوشی دیگر فقط «ورود» را بزن.'],
-    ['data', 'داده‌ها', 'بدون حساب، همه‌چیز فقط روی همین گوشی ذخیره می‌شود.', 'اگر حساب نداری، هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.'],
-  ]],
+// آموزش صفحهٔ جدا ندارد: هر تکه‌ای که توضیح می‌خواهد یک ردیف اینجا دارد و یک علامت «؟» کنار خودش.
+// هر بخش تازه‌ای که به اپ اضافه می‌شود هم یک ردیف می‌گیرد. at: متن عنوان یا برچسبی که علامت کنارش می‌نشیند؛
+// سرصفحهٔ هر زبانه با کلید tab-… و هر آزمایش با lab-… پیدا می‌شود.
+// همهٔ نمونه‌ها، اینجا و در جای‌خالیِ فرم‌ها، از یک داستان‌اند: ریاضی، مسئله‌های تخفیفِ صفحهٔ ۴۱. نمونهٔ بی‌ربط ننویس.
+// شکل هر ردیف: t عنوان، p برای چیست، steps قدم‌ها (متحرک)، list تعریف گزینه‌ها، bars نمودار [برچسب، عدد]، cap زیرنویس نمودار،
+// form [ردیف‌های نمونهٔ پرشده، شمارهٔ ردیفِ همین خانه]، no و yes نمونهٔ بد و خوب، ex یک نمونه، how چطور.
+const EX_SESSION = [
+  ['موضوع', 'درصد؛ مسئله‌های تخفیفِ صفحهٔ ۴۱'],
+  ['تا پایان این جلسه باید بتوانم…', 'پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم'],
+  ['از کجا می‌فهمم رسیده‌ام؟', 'از همان ۵ مسئله، دست‌کم ۴ تا درست'],
 ];
-const GUIDE_BY = Object.fromEntries(GUIDE.flatMap(([, , items]) => items.map((g) => [g[0], g])));
-// هر ردیف راهنما مال کدام فصل است؛ هرچه اینجا نیست زیر «بقیه» است. کتاب و تنظیمات همیشه هستند.
-const GUIDE_CH = { first: 1, session: 1, chapters: 1, week: 1, bars: 1, obstacle: 2, retrieval: 3, cards: 3, hub: 3, reread: 3, myths: 4, baseline: 5, day: [5, 9], manual: 5, plans: 6, env: 7, digital: 8, time: [9, 10], loop: 10, attn: 11 };
-const guideOn = (group, key) => group === 'book' || group === 'settings' || chAny(GUIDE_CH[key] ?? 0);
-const tip = (k) => (GUIDE_BY[k] ? fold('tip-' + k, 'این بخش برای چیست؟', `<p>${GUIDE_BY[k][2]}</p><p class="count">${GUIDE_BY[k][3]}</p>`) : '');
-const helpBtn = (focus) => `<button class="back help" data-act="guide" data-focus="${focus}">راهنما</button>`;
+const EX_IF = [['اگر', 'ساعت ۵ شد و پشت میز نشستم'], ['آنگاه', 'کتاب را صفحهٔ ۴۱ باز می‌کنم و صورت مسئلهٔ ۱ را می‌خوانم']];
+const EX_TPLAN = [
+  ['فقط یک کار سنگین', 'ده مسئلهٔ درصد از صفحهٔ ۴۱ و ۴۲'],
+  ['پنجرهٔ اوج', '۹ تا ۱۰ صبح'],
+  ['پنجرهٔ جایگزین', '۴ تا ۵ عصر'],
+  ['نسخهٔ کوچکِ همان کار', 'چهار مسئله به‌جای ده تا'],
+  ['نقطهٔ شروع', 'کتاب را صفحهٔ ۴۱ باز می‌کنم و فقط مسئلهٔ ۱ را حل می‌کنم'],
+];
+const EX_WEEK = [
+  ['نتیجهٔ مشخص، نه اسم درس', 'مسئله‌های درصد را برای آزمون ریاضی بلد باشم'],
+  ['حداقل پیشرفت قابل قبول', '۸ مسئلهٔ درصد حل شود و دو خطای پرتکرارم نوشته شود'],
+  ['روزهای اجرا', 'شنبه و دوشنبه'],
+  ['تنها اصلاح این هفته', 'بلوک ریاضی را از عصر به صبح می‌برم'],
+];
+const EX_LAND = [
+  ['کجا متوقف شدم', 'مسئلهٔ ۳، مقدار تخفیف حساب شد'],
+  ['حرکت اول جلسهٔ بعد', 'مسئلهٔ ۴ صفحهٔ ۴۱، فقط نوشتن داده‌ها'],
+  ['اگر چه شد؟', 'فردا ساعت ۵ شد و پشت میز نشستم'],
+];
+const EX_ENERGY = [['صبح', 4], ['ظهر', 2], ['عصر', 3], ['شب', 1]];
+const EX_REAL = [['پای درس نشستم', 25], ['ذهنم واقعاً درگیر بود', 16]];
 
-function viewGuide() {
-  return `
-    <header class="flow"><button class="back" data-act="cancel">بستن راهنما</button><h1>راهنمای اپ</h1></header>
-    <p class="count">هر بخش برای چیست و چطور از آن استفاده کنی. روی هر عنوان بزن.</p>
-    ${GUIDE.map(([k, title, items]) => [k, title, items.filter(([key]) => guideOn(k, key))]).filter(([, , items]) => items.length).map(([k, title, items]) => fold('g-' + k, title, items.map(([, t, what, how]) => `
-      <div class="guide-item"><b>${t}</b><p>${what}</p><p class="count">${how}</p></div>`).join(''), k === A().focus || k === 'start')).join('')}`;
+const HELP = {
+  /* شروع */
+  first: { t: 'ویر در سه قدم', p: 'اپ یک کار می‌کند: جلسهٔ مطالعه را با چیزی که واقعاً یاد گرفته‌ای می‌سنجد، نه با ساعتِ نشستن.',
+    steps: ['قبل از خواندن بنویس آخر جلسه باید چه کاری بتوانی. مثلاً: «پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم».', 'تایمر که تمام شد، کتاب را ببند و از حفظ بنویس یا حل کن.', 'فردا اپ همان مطلب را دوباره از تو می‌پرسد تا ماندگار شود.'],
+    how: 'بقیهٔ بخش‌ها اختیاری‌اند. هر جا علامت «؟» دیدی بزن تا همان تکه، با یک نمونه، توضیح داده شود.' },
+
+  /* زبانهٔ امروز */
+  'tab-today': { t: 'صفحهٔ امروز', p: 'هرچه امروز نوبتش است اینجاست. کار اصلی فقط یک دکمه است: «شروع جلسهٔ مطالعه».',
+    steps: ['کارت‌های بالای صفحه: کارهایی که امروز نوبتشان است، مثل بازیابی دیروز. دو تای اول مهم‌ترند؛ بقیه زیر «کار دیگر برای امروز» جمع شده‌اند.', '«شروع جلسهٔ مطالعه»: هدف می‌نویسی، می‌خوانی و با کتابِ بسته خودت را می‌سنجی.', 'پایین صفحه: جلسه‌های امروز و ثبت‌های کوتاه روزانه.'],
+    how: 'لازم نیست همه‌چیز را پر کنی. فقط همان کاری را بکن که الان به کارت می‌آید.' },
+  start: { t: 'از کدام دکمه شروع کنم؟', p: 'سه راه برای شروع، بسته به حال الانت.',
+    list: [['شروع جلسهٔ مطالعه', 'راه اصلی. هدف می‌نویسی، می‌خوانی و با کتابِ بسته خودت را می‌سنجی.'], ['فقط ۶۰ ثانیه', 'برای وقتی که حوصلهٔ جلسهٔ کامل نداری. یک دقیقه روی اولین حرکت درس می‌مانی؛ بعدش آزادی ادامه بدهی یا بایستی.'], ['شروع نمی‌کنم', 'برای وقتی که از درس فرار می‌کنی. مانع واقعی را انتخاب می‌کنی و اپ یک قدم کوچک برای همان مانع می‌سازد.']],
+    how: 'دو دکمهٔ کوچک فقط وقتی دیده می‌شوند که فصلشان انتخاب شده باشد.' },
+  chapters: { t: 'انتخاب فصل', p: 'اپ را خلوت می‌کند: فقط ابزارهای فصل‌هایی را می‌بینی که الان با آن‌ها کار داری.',
+    how: 'یک یا چند فصل را بزن؛ «همه» همه‌چیز را برمی‌گرداند. چیزی پاک نمی‌شود: داده‌های فصل‌های پنهان سر جایشان می‌مانند و با انتخاب دوباره برمی‌گردند.',
+    ex: 'تازه فصل ۶ را خوانده‌ای؟ فقط «فصل ۶» را بزن تا فرم جلسه همان خانه‌های هدف و معیار را نشان بدهد.' },
+  retrieval: { t: 'بازیابی دیروز', at: ['اول، بازیابی دیروز', 'چه چیزی ماند؟'],
+    p: 'مطلبی که دیروز خوانده‌ای را امروز، بدون بازکردن کتاب، از حافظه بیرون می‌کشی. همین بیرون‌کشیدن است که مطلب را ماندگار می‌کند، نه دوباره‌خواندن.',
+    steps: ['«بازیابی کن» را بزن.', 'بدون نگاه به منبع، هرچه مانده بنویس. مکث و کندی طبیعی است.', 'نوشتهٔ امروز را کنار نوشتهٔ همان روز ببین و بگو چقدرش مانده.'],
+    ex: 'دیروز: مسئله‌های تخفیفِ صفحهٔ ۴۱. امروز: راه حساب‌کردن تخفیف را از حفظ می‌نویسی و یک مسئله را دوباره حل می‌کنی.' },
+  parked: { t: 'برگهٔ پارک', at: ['برگهٔ پارک', 'برگهٔ پارک را خالی کن'],
+    p: 'فکرهایی که وسط جلسه سراغت آمد و برای اینکه رشتهٔ درس پاره نشود، کنار گذاشتی.',
+    how: 'تا آخر امروز هر خط یکی از این سه می‌شود: انجامش بده، زمان دقیق بده، یا حذفش کن. برگه‌ای که خالی نشود، ذهن دیگر به آن اعتماد نمی‌کند.',
+    ex: '«جواب پیام گروه کلاس» ← «بلافاصله بعد از همین جلسه».' },
+  plans: { t: 'هدف‌های نوشته‌شده', at: ['هدف‌های نوشته‌شده'],
+    p: 'هدف جلسه‌ای را که قرار است بعداً بخوانی از قبل می‌نویسی، با لحظهٔ شروعش. وقتش که رسید، دیگر لازم نیست فکر کنی از کجا شروع کنی.',
+    form: [[...EX_SESSION.slice(0, 2), ...EX_IF]],
+    how: 'در فرم جلسه «هدف را نگه دار برای همان لحظه» را بزن. وقتش که رسید، اینجا «الان همان لحظه است» را بزن.' },
+  day: { t: 'خواب و انرژی', at: ['خواب و انرژی', 'خواب و انرژی امروز'],
+    p: 'خواب دیشب و انرژی‌ات در چهار بازهٔ روز را ثبت می‌کنی تا ساعت اوج و فرودت پیدا شود.',
+    bars: EX_ENERGY, cap: 'نمونه: انرژی از ۵. اوج صبح است؛ مسئله‌های درصد را همان‌جا بگذار و کار سبک را برای شب.',
+    how: 'روزی یک‌بار، چند ثانیه. هرچه را تا این ساعت می‌دانی پر کن و بقیه را بعداً کامل کن.' },
+  todaylog: { t: 'جلسه‌های امروز', at: ['جلسه‌های امروز'],
+    p: 'هر جلسه‌ای که امروز تمام کرده‌ای، با نتیجهٔ آزمون کتاب‌بسته‌اش.',
+    how: 'برچسب کنار هر جلسه می‌گوید به هدف «رسیدم»، «تا حدی» یا «نرسیدم». اگر بیرون از اپ درس خواندی، با لینک پایین همین بخش ثبتش کن تا آمارت کامل بماند.' },
+  tplan: { t: 'کار اول', at: ['کار اول امروز', 'فردا را امشب بچین', 'کار اول', 'کار اولِ امروز', 'کار اولِ فردا', 'کارت و ثبت'],
+    p: 'از شبِ قبل فقط یک کار سنگین را برای فردا انتخاب می‌کنی و آن را در بهترین ساعت روزت می‌گذاری، با یک نسخهٔ کوچک برای روز بد.',
+    form: [EX_TPLAN],
+    how: 'فردا همین کارت بالای صفحهٔ امروز است. اگر ساعتش از دست رفت، نسخهٔ کوچک را در پنجرهٔ جایگزین انجام بده.' },
+  week: { t: 'جلسهٔ هفتگی', at: ['جلسهٔ هفتگی، بیست دقیقه', 'اول بررسی، بعد برنامه', 'برنامهٔ هفته، روی یک برگه', 'این هفته'],
+    p: 'هفته‌ای یک‌بار، بیست دقیقه: اول نگاه می‌کنی هفتهٔ قبل واقعاً چه شد، بعد چند نتیجه برای هفتهٔ بعد می‌نویسی و دقیقاً یک چیز را اصلاح می‌کنی.',
+    form: [EX_WEEK], how: 'اول بررسی، بعد برنامه. هفتهٔ بد محاکمه نمی‌خواهد؛ بیشترین داده را همان دارد.' },
+  weekout: { t: 'نتیجهٔ هفته', at: ['نتیجهٔ مشخص، نه اسم درس'],
+    p: 'چیزی که آخر هفته باید به دست آمده باشد. اسم درس نتیجه نیست، چون هیچ‌وقت «تمام» نمی‌شود.',
+    no: 'ریاضی', yes: 'مسئله‌های درصد را برای آزمون ریاضی بلد باشم', form: [EX_WEEK, 0] },
+  weekmin: { t: 'حداقل پیشرفت', at: ['حداقل پیشرفت قابل قبول'],
+    p: 'کمترین مقداری که اگر انجام شود، هفته را قابل‌قبول می‌دانی؛ حتی اگر هفتهٔ بدی باشد.', form: [EX_WEEK, 1] },
+  buffer: { t: 'جای خالیِ برنامه', at: ['چقدر از ظرفیت را پر می‌کنم؟'],
+    p: 'برنامه‌ای که همهٔ وقتت را پر کند با اولین اتفاقِ پیش‌بینی‌نشده می‌ریزد. بخشی را عمداً خالی می‌گذاری.',
+    bars: [['برنامه', 70], ['خالی، برای اتفاق‌ها', 30]], how: '۷۰ درصد برای هفتهٔ معمولی؛ ۵۰ درصد وقتی هفتهٔ شلوغ یا نامعلومی داری.' },
+  fix: { t: 'فقط یک اصلاح', at: ['تنها اصلاح این هفته'],
+    p: 'فقط یک تغییر، آن هم از روی عددهای هفتهٔ قبل. با چند تغییرِ هم‌زمان نمی‌فهمی کدام اثر کرد.',
+    no: 'از این هفته منظم‌تر می‌شوم', yes: 'بلوک ریاضی را از عصر به صبح می‌برم', form: [EX_WEEK, 3] },
+
+  /* فرم جلسه */
+  session: { t: 'جلسهٔ مطالعه', at: ['خروجی این جلسه'],
+    p: 'کار اصلی اپ. قبل از خواندن معلوم می‌کنی آخر جلسه باید چه کاری بتوانی، و بعد با کتابِ بسته خودت را می‌سنجی.',
+    steps: ['بنویس آخر جلسه باید چه کاری بتوانی و از کجا می‌فهمی رسیده‌ای.', '«شروع مطالعه» را بزن و بخوان یا حل کن.', 'زنگ که خورد کتاب را ببند و از حفظ بنویس یا حل کن.', 'نوشته‌ات را با هدف مقایسه کن و بگو دقیقاً کجا کم آوردی.'],
+    form: [EX_SESSION], how: 'فقط خانه‌های بالای دکمهٔ «شروع مطالعه» لازم‌اند. بخش‌های تاشوی پایینش اختیاری‌اند.' },
+  subject: { t: 'موضوع', at: ['موضوع', 'موضوع باریک'],
+    p: 'همان تکه‌ای از درس که در همین یک جلسه تمام می‌شود. اگر تمام نمی‌شود، هنوز موضوع نیست؛ فصل است.',
+    no: 'ریاضی', yes: 'درصد؛ مسئله‌های تخفیفِ صفحهٔ ۴۱', form: [EX_SESSION, 0] },
+  goal: { t: 'خروجی جلسه', at: ['تا پایان این جلسه باید بتوانم…'],
+    p: 'کاری که آخر جلسه، با کتابِ بسته، باید از دستت بربیاید. با یک فعلِ دیدنی بنویس: حل کنم، بنویسم، توضیح بدهم. «بخوانم» و «بفهمم» را نمی‌شود سنجید.',
+    no: 'درصد را بخوانم و بفهمم', yes: 'پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم', form: [EX_SESSION, 1] },
+  criterion: { t: 'معیار', at: ['از کجا می‌فهمم رسیده‌ام؟ بدون نگاه به منبع'],
+    p: 'نشانه‌ای که می‌شود شمرد و فقط از حافظه شدنی است. آخر جلسه همین را اجرا می‌کنی تا معلوم شود رسیده‌ای یا فقط حس می‌کنی بلدی.',
+    no: 'وقتی راه‌حل‌ها را دیدم و فهمیدم', yes: 'از همان ۵ مسئله، دست‌کم ۴ تا درست', form: [EX_SESSION, 2] },
+  minutes: { t: 'مدت', at: ['مدت مطالعه', 'مدت کار'],
+    p: 'مدتِ تایمر، به دقیقه. زنگ که بخورد، منبع را می‌بندی و آزمون کتاب‌بسته شروع می‌شود.',
+    how: 'عدد را از جلسه‌های اخیرت بردار، نه از آرزو. اگر مطمئن نیستی، برای پنج مسئلهٔ تخفیف همان ۲۵ دقیقه شروع خوبی است.' },
+  ping: { t: 'نقشهٔ توجه', at: ['نقشهٔ توجه', 'الان کدام؟'],
+    p: 'یک زنگ بی‌صدا وسط جلسه می‌پرسد توجهت همین الان کجاست. فقط یکی از سه برچسب را می‌زنی و برمی‌گردی.',
+    list: [['تمرکز کاری', 'داری روی خودِ مسئله کار می‌کنی.'], ['شبه‌تمرکز', 'چشمت روی صفحه است ولی ذهنت پردازش نمی‌کند؛ نمی‌توانی جملهٔ آخر را بازگو کنی.'], ['حواس‌پرتی', 'جای دیگری هستی: گوشی، یک فکر، یک صدا.']],
+    bars: [['تمرکز کاری', 15], ['شبه‌تمرکز', 6], ['حواس‌پرتی', 4]], cap: 'نمونه: یک جلسهٔ ۲۵ دقیقه‌ای روی مسئله‌های تخفیف.',
+    how: 'برای شروع «هر ۵ دقیقه» خوب است. اگر زنگ رشتهٔ حل مسئله را پاره می‌کند، «فقط پایان» را بزن و سه عدد را آخر جلسه بنویس.' },
+  load: { t: 'بار ذهنی', at: ['بار ذهنی این کار', 'بار ذهنی'],
+    p: 'این کار چقدر از ذهنت کار می‌کشد. به آشناییِ تو با کار بستگی دارد، نه به اسم درس.',
+    list: [['سنگین', 'کار تازه‌ای که هنوز راهش را بلد نیستی؛ مثل اولین مسئله‌های تخفیف.'], ['متوسط', 'تمرینِ چیزی که یک‌بار یاد گرفته‌ای.'], ['سبک', 'مرتب‌کردن جزوهٔ ریاضی، رونویسی، مرورِ آسان.']],
+    how: 'کار سنگین را در ساعت اوجِ انرژی‌ات بگذار و کار سبک را در ساعت فرود.' },
+  needs: { t: 'وسایل همین جلسه', at: ['برای این جلسه فقط به این‌ها نیاز دارم'],
+    p: 'فهرست کوتاه وسایل و برنامه‌هایی که همین جلسه لازم دارد. هرچه در این فهرست نیست تا آخر جلسه بسته می‌ماند.', ex: 'کتاب ریاضی، دفتر تمرین، مداد.' },
+  phone: { t: 'جای گوشی', at: ['گوشی کجاست؟'],
+    p: 'گوشیِ دمِ دست، حتی بی‌صدا و رو به پایین، بخشی از توجهت را می‌گیرد. اینجا فقط می‌گویی الان کجاست.',
+    list: [['بیرون اتاق', 'بهترین حالت.'], ['کشو یا کیف', 'خوب است، به شرطی که برای برداشتنش باید بلند شوی.'], ['ابزار درس', 'وقتی درس را روی خودِ گوشی می‌خوانی. برنامهٔ درس را تمام‌صفحه باز کن.'], ['روی میز', 'حساب نیست؛ هنوز یک حرکت با تو فاصله دارد.']] },
+  place: { t: 'جای نشستن', at: ['کجا نشسته‌ام؟'],
+    p: 'جای ثابت به ذهن علامت می‌دهد «اینجا جای درس است» و شروع را آسان‌تر می‌کند. اینجا فقط ثبت می‌کنی تا بعداً در «روند» ببینی جای ثابت چقدر فرق می‌کند.' },
+  mode: { t: 'نوع جلسه', at: ['این جلسه چه جور جلسه‌ای است؟'],
+    p: 'همهٔ جلسه‌ها یک‌جور نیستند. نوعش را بگو تا هدف به اندازهٔ همان روز باشد.',
+    list: [['عادی', 'یک هدف اصلی؛ مثل پنج مسئلهٔ تخفیف.'], ['مطلب کاملاً تازه', 'هنوز نمی‌دانی مبحث چه اجزایی دارد. هدف این جلسه شناختن ساختار است، نه حل‌کردن؛ اپ هدف و معیارش را خودش می‌نویسد.'], ['روز کم‌انرژی', 'یک کار کوچک که حتماً تمام می‌شود؛ مثل فقط مسئلهٔ ۱. زنجیره قطع نشود، همین کافی است.']] },
+  out: { t: 'مرز جلسه', at: ['امروز جزو هدف نیست'],
+    p: 'چیزی که ممکن است وسط کار وسوسه شوی سراغش بروی، ولی امروز قرارش نیست. نوشتنش جلوی بزرگ‌شدنِ بی‌صدای هدف را می‌گیرد.', ex: 'مسئله‌های سود بانکی؛ امروز فقط تخفیف.' },
+  ifthen: { t: 'لحظهٔ شروع', at: ['لحظهٔ شروع'],
+    p: 'شروع را به یک اتفاق بیرونی گره می‌زنی تا لازم نباشد منتظر حوصله بمانی. «اگر» یک رخداد است و «آنگاه» اولین حرکتِ کوچک روی خودِ درس.',
+    form: [EX_IF], no: 'اگر حوصله داشتم، آنگاه ریاضی می‌خوانم',
+    how: 'اگر جلسه مال بعد است، «هدف را نگه دار برای همان لحظه» را بزن؛ وقتش که رسید از صفحهٔ امروز شروعش می‌کنی.' },
+  why: { t: 'چرا این؟', at: ['چرا این؟'],
+    p: 'دلیل واقعیِ خودت برای همین کار، در یک خط. وسط جلسه که سخت شد، همین یادت می‌آورد چرا نشسته‌ای.',
+    no: 'چون باید درس خواند', yes: 'هفتهٔ بعد آزمون ریاضی دارم و نصف سؤال‌ها درصد است' },
+  entry: { t: 'ورود کوچک', at: ['ورود کوچک'],
+    p: 'قبل از جلسهٔ اصلی، چند دقیقه فقط روی حرکت اول می‌مانی. قرار نیست خوب پیش برود؛ فقط قرار است شروع شود.',
+    steps: ['حرکت اول را انجام بده: «صورت مسئلهٔ ۱ را می‌خوانم».', 'زنگ که خورد یکی را بزن: ادامه می‌دهم، یا آگاهانه می‌ایستم.'],
+    how: 'هر دو انتخاب درست است؛ فقط عقب‌انداختنِ شروع ممنوع است. «مستقیم» یعنی بدون این بازه.' },
+  fmt: { t: 'قالب جلسه', at: ['قالب این جلسه', 'قالب'],
+    p: 'قالب یعنی طول جلسه و معنیِ زنگ. مدتِ جادویی وجود ندارد؛ هر نوع کار قالب خودش را می‌خواهد.',
+    list: [['کوتاه', '۱۰ تا ۲۰ دقیقه، برای روز سخت یا یک کار کوچک. زنگ یعنی تمام.'], ['پومودورو', '۲۵ تا ۳۵ دقیقه، هر دوره یک واحد کار؛ مثل یک مسئله. زنگ یعنی تمام.'], ['انعطاف‌پذیر', 'وقتی طول کار معلوم نیست. وسطش چند بار بازبینی می‌کنی و عدد، سقف قطعی است.'], ['بلوک عمیق', '۳۰ تا ۹۰ دقیقه برای کاری که اگر قطع شود مسیر فکرت می‌ریزد. زنگ فقط یادآور است.']],
+    how: 'به دو سؤال بالای همین بخش جواب بده؛ اپ خودش قالب را پیشنهاد می‌دهد.' },
+  wtype: { t: 'نوع کار', at: ['نوع کار'],
+    p: 'جنسِ کار، نه اسم درس. اپ برای هر نوع کار یادش می‌ماند کدام قالب به تو جواب داده.', ex: 'حل مسئلهٔ ریاضی.' },
+  ramp: { t: 'رمپ ورود', at: ['رمپ ورود'],
+    p: 'برای وقتی که نشسته‌ای ولی وارد کار سخت نمی‌شوی. چند دقیقه با آسان‌ترین لبهٔ همین کار گرم می‌شوی و بعد روی کار اصلی «قفل» می‌شوی.',
+    steps: ['پارک: بلندترین فکر مزاحم را بنویس و کنار بگذار.', 'بارگذاری: فقط داده‌ها و خواستهٔ مسئلهٔ ۱ را بنویس.', 'قفل: تا پایان بلوک فقط همین مسئله‌ها؛ جابه‌جایی نداری.', 'بررسی میانی: دو جمله که نشان می‌دهد داخل کاری.'],
+    list: [['کامل', 'حداکثر هشت دقیقه بارگذاری.'], ['فشرده', 'سه دقیقه؛ برای بلوک بیست‌دقیقه‌ای.'], ['گرمم', 'جلسهٔ دوم روی همین موضوع؛ بدون بارگذاری.']] },
+  park: { t: 'پارک', at: ['پارک، حداکثر دو دقیقه'],
+    p: 'بلندترین فکری که الان ذهنت را می‌کشد می‌نویسی و برایش زمان می‌گذاری، تا ذهنت خیالش راحت شود و رهایش کند.',
+    form: [[['ذهنم', 'جواب پیام گروه کلاس'], ['کِی', 'بلافاصله بعد از همین جلسه']]] },
+  fallback: { t: 'قدم جایگزین', at: ['اگر گیر کردم، اولین قدم جایگزینم'],
+    p: 'از قبل تصمیم می‌گیری اگر گیر کردی چه می‌کنی، تا گیرکردن بهانهٔ رهاکردن نشود.', ex: 'برمی‌گردم به مثال حل‌شدهٔ صفحهٔ ۴۰.' },
+  guard: { t: 'اگر، آنگاهِ حواس‌پرتی', at: ['محتمل‌ترین حواس‌پرتی این جلسه: اگر…', 'جملهٔ اگر، آنگاه من: اگر…'],
+    p: 'محتمل‌ترین چیزی که این جلسه حواست را می‌برد از قبل می‌نویسی، با جوابش. وقتی آمد، دیگر لازم نیست تصمیم بگیری.',
+    form: [[['اگر', 'خواستم گروه کلاس را چک کنم'], ['آنگاه', 'روی برگه می‌نویسمش و قدم بعدی را انجام می‌دهم']]] },
+
+  /* وسط جلسه */
+  anchor: { t: 'لنگر', at: ['لنگر: قدم بعدی'],
+    p: 'کوچک‌ترین کارِ بعدی، نوشته جلوی چشمت. هر بار حواست پرید، لازم نیست فکر کنی کجا بودی؛ همین را انجام می‌دهی.', ex: 'مقدار تخفیفِ مسئلهٔ ۲ را حساب می‌کنم.' },
+  urge: { t: 'وقتی حواست پرید', p: 'حواس‌پرتی می‌آید؛ قرار نیست با آن بجنگی. فقط نامش را بگو، یک خط بنویس و برگرد. همین ثبت‌ها بعداً در «روند» نشان می‌دهد چه چیزی بیشتر از همه تو را می‌برد.',
+    steps: ['اگر فهرست علت هست، علت را انتخاب کن.', 'یک خط بنویس که چه شد.', '«ثبت» را بزن و برگرد سر قدم بعدی.'],
+    ex: '«به مسئلهٔ ۳ رسیدم و گیر کردم» یا «خواستم گروه کلاس را چک کنم».' },
+  mid: { t: 'بررسی میانی', at: ['بررسی میانی'],
+    p: 'وسط بلوک دو جملهٔ کوتاه می‌نویسی تا معلوم شود واقعاً داخل کاری یا فقط نشسته‌ای.',
+    form: [[['دارم سعی می‌کنم…', 'قیمت بعد از تخفیفِ مسئلهٔ ۳ را پیدا کنم'], ['قدم بعدی‌ام…', 'مقدار تخفیف را از قیمت اول کم می‌کنم']]],
+    how: 'اگر این دو جمله را داری، «کامل شد». اگر نه، «کامل نمی‌شود» را بزن تا یک قدم کوچک‌تر بسازی.' },
+  halve: { t: 'نصف‌کردن هدف', at: ['هدف را نصف کن'],
+    p: 'اگر وسط جلسه دیدی هدف بزرگ‌تر از این جلسه است، همان‌جا کوچکش کن. هدف ابزار هدایت است، نه قرارداد.',
+    ex: 'پنج مسئله ← سه مسئلهٔ اول. معیار تازه: از ۳ تا، ۲ تا درست.' },
+  chunk: { t: 'ببند و بنویس', at: ['منبع را ببند', 'منبع را باز کن'],
+    p: 'به‌جای اینکه یک بخش را دوباره بخوانی، کتاب را می‌بندی و هرچه مانده می‌نویسی. جاهای خالی دقیقاً همان چیزی است که هنوز یاد نگرفته‌ای.',
+    steps: ['یک بخش را بخوان.', 'ببند و از حفظ بنویس؛ ناقص و به‌هم‌ریخته اشکالی ندارد.', 'باز کن و فقط جاهای خالی یا اشتباه را پیدا کن. دوباره نخوان.'],
+    ex: 'مثال حل‌شدهٔ صفحهٔ ۴۰ را خواندی؟ کتاب را ببند و همان مثال را خودت حل کن.' },
+
+  /* پایان جلسه */
+  real: { t: 'دقیقهٔ واقعی', at: ['دقیقهٔ واقعی', 'دقیقهٔ مؤثر', 'دقیقهٔ تمرکز کاری'],
+    p: 'از کل زمانی که پای درس نشسته بودی، چند دقیقه ذهنت واقعاً با مطلب درگیر بود. حدس صادقانه کافی است.',
+    bars: EX_REAL, cap: 'نمونه: جلسهٔ ۲۵ دقیقه‌ای، ۱۶ دقیقهٔ واقعی.', how: 'فاصلهٔ این دو عدد طبیعی است. قرار نیست صفر شود؛ قرار است آن را ببینی.' },
+  presence: { t: 'دقیقهٔ حضور', at: ['دقیقهٔ حضور'],
+    p: 'کل زمانی که پای درس نشسته بودی، از نشستن تا بلندشدن، با همهٔ وقفه‌ها.', bars: EX_REAL, cap: 'نمونه: ۲۵ دقیقه حضور، ۱۶ دقیقهٔ واقعی.' },
+  longest: { t: 'بلندترین تمرکز', at: ['بلندترین تمرکز'],
+    p: 'بلندترین تکه‌ای که بدون وقفهٔ جدی روی کار ماندی، به دقیقه.', ex: 'در جلسهٔ ۲۵ دقیقه‌ای، ۱۱ دقیقه پشت‌سرهم روی مسئلهٔ ۲ و ۳ بودی تا گوشی لرزید: ۱۱.' },
+  pseudo: { t: 'شبه‌تمرکز', at: ['دقیقهٔ شبه‌تمرکز'],
+    p: 'دقیقه‌هایی که چشمت روی صفحه بود ولی ذهنت پردازش نمی‌کرد. نشانه‌اش: نمی‌توانی آخرین جمله‌ای را که خواندی بازگو کنی.', ex: 'صورت مسئلهٔ ۴ را سه بار خواندی و هنوز نمی‌دانی چه خواسته.' },
+  lag: { t: 'دقیقه تا خط اول', at: ['دقیقه تا خط اول'],
+    p: 'از لحظه‌ای که قرار بود شروع کنی تا اولین کار واقعی روی خودِ درس، چند دقیقه گذشت.',
+    ex: 'ساعت ۵ نشستی و ۵:۰۸ صورت مسئلهٔ ۱ را خواندی: ۸ دقیقه.', how: 'مرتب‌کردن میز و پیداکردن مداد «خط اول» نیست.' },
+  firstkind: { t: 'اولین کار', at: ['اولین کاری که کردم', 'اولین کارم'],
+    p: 'اولین حرکتت بعد از نشستن از کدام جنس بود. اگر آماده‌سازی بود، دفعهٔ بعد آن را از قبل انجام بده تا حرکت اول روی خودِ درس باشد.',
+    list: [['روی خودِ درس', 'خواندن صورت مسئلهٔ ۱، نوشتن داده‌ها.'], ['آماده‌سازی', 'پیداکردن کتاب، تراشیدن مداد، مرتب‌کردن میز.']] },
+  feel: { t: 'حدسِ قبل از آزمون', p: 'قبل از اینکه خودت را بسنجی، حدس می‌زنی چقدر به هدف رسیده‌ای. بعد اپ این حس را کنار نتیجهٔ واقعی می‌گذارد.',
+    ex: 'حس: ۸ از ۱۰. آزمون: از ۵ مسئله فقط ۲ تا درست. پس «حس می‌کنم بلدم» هنوز دلیل نیست.',
+    how: 'بعد از چند جلسه در «روند» می‌بینی حسِ هنگام خواندن چقدر قابل‌اعتماد است.' },
+  recall: { t: 'آزمون کتاب‌بسته', at: ['کتاب بسته است'],
+    p: 'قلب اپ. همه‌چیز بسته است و همان معیاری را که اول جلسه نوشتی اجرا می‌کنی. چیزی که اینجا بیرون بیاید، واقعاً یاد گرفته‌ای.',
+    ex: 'پنج مسئلهٔ صفحهٔ ۴۱ را روی کاغذ حل می‌کنی و می‌نویسی: «۱ و ۲ و ۴ درست، ۳ غلط، ۵ نیمه‌کاره».',
+    how: 'با کلمات خودت بنویس، یا روی کاغذ حل کن و نتیجه را اینجا بنویس. ناقص‌بودن اشکالی ندارد؛ همین نقص‌ها قدم بعدی را نشان می‌دهند.' },
+  compare: { t: 'مقایسه با هدف', at: ['مقایسه با هدف'],
+    p: 'هدفِ اول جلسه کنار چیزی که از حافظه بیرون آمد. حالا خودت داوری می‌کنی: رسیدی، تا حدی، یا نه؛ و دقیقاً کجا کم آوردی.',
+    ex: 'هدف: پنج مسئله. از حافظه: سه تا درست. پس «تا حدی»، و شکاف: «در یک مرحلهٔ مشخص گیر کردم».' },
+  ran: { t: 'اجرای معیار', at: ['معیار را واقعاً اجرا کردم؟'],
+    p: 'همان معیار را بدون نگاه به منبع انجام دادی، یا فقط حس می‌کنی بلدی؟ اگر اجرا نشده، نتیجه هنوز حس است، نه سنجش.',
+    ex: 'معیار «از ۵ مسئله، ۴ تا درست» بود. اگر فقط راه‌حل‌ها را نگاه کردی و گفتی «بلدم»، جواب «نه» است.' },
+  gap: { t: 'شکاف', at: ['شکاف دقیقاً چیست؟ «بلد نیستم» جواب نیست.', 'شکاف‌های پرتکرار', 'کجا دقیقاً؟ یک جمله'],
+    p: 'شکاف یعنی فاصلهٔ هدف با چیزی که واقعاً توانستی. هرچه دقیق‌تر نامش را بگویی، قدم بعدی روشن‌تر می‌شود؛ اپ برای هر نوع شکاف یک پیشنهاد دارد.',
+    no: 'درصد را بلد نیستم', yes: 'درصد را از قیمت تازه حساب کردم، نه از قیمت اول' },
+  can: { t: 'حالا می‌توانم', at: ['الان چه کاری می‌توانم بکنم که قبل از این جلسه نمی‌توانستم؟'],
+    p: 'یک جمله دربارهٔ کاری که الان از دستت برمی‌آید و قبل از جلسه برنمی‌آمد. محکم‌ترین نشانهٔ یادگیری همین است، نه ساعتِ نشستن.',
+    no: 'ریاضی خواندم', yes: 'قیمت بعد از تخفیف را بدون نگاه به حل حساب می‌کنم' },
+  trace: { t: 'ردّ قابل‌دیدن', at: ['ردّ قابل‌دیدن این بلوک'],
+    p: 'چیزی که از این بلوک روی کاغذ مانده و می‌شود دید. بدون ردّ فقط حس می‌ماند.', ex: 'راه‌حل مسئله‌های ۱ تا ۳ در دفتر تمرین.' },
+  done: { t: 'نتیجهٔ جلسه', at: ['جلسه ثبت شد'],
+    p: 'دو چیز کنار هم: حدسِ قبل از آزمون و نتیجهٔ واقعی. اگر با هم نخواندند، به آزمون تکیه کن، نه به حس.',
+    how: 'کادر «قدم بعدی» پیشنهاد اپ برای همان شکافی است که انتخاب کردی. بقیهٔ بخش‌های این صفحه اختیاری‌اند.' },
+  landing: { t: 'نقطهٔ فرود', at: ['نقطهٔ فرود، دو دقیقه', 'خروج تمیز، یک دقیقه'],
+    p: 'قبل از بلندشدن، شروعِ جلسهٔ بعد را آماده می‌کنی. الان که ذهنت هنوز وسط درس است، آسان‌ترین وقتِ این کار است.',
+    form: [EX_LAND], how: 'فردا همین را روی صفحهٔ امروز، زیر دکمهٔ شروع می‌بینی.' },
+  rest: { t: 'استراحت با مرز', at: ['استراحت با مرز'],
+    p: '«کمی استراحت» معمولاً کش می‌آید. اینجا استراحت سه مرز دارد: چند دقیقه، تا چه ساعتی، و از کجا برمی‌گردی.',
+    form: [[['مدت', '۵ دقیقه'], ['شروع از', 'مسئلهٔ ۴ صفحهٔ ۴۱، فقط نوشتن داده‌ها']]], how: 'چند قدم راه، آب، نگاه به بیرون. گوشی و ویدئوی کوتاه استراحت نیست.' },
+  stop: { t: 'توقف آگاهانه', at: ['توقف آگاهانه'],
+    p: 'بعد از ورود کوچک تصمیم گرفته‌ای بایستی. این شکست نیست؛ فقط می‌نویسی چرا، و دفعهٔ بعد از کجا وارد می‌شوی.',
+    form: [[['نقطهٔ ورود بعدی', 'مثال حل‌شدهٔ صفحهٔ ۴۰ را رونویسی می‌کنم'], ['اگر چه شد؟', 'فردا ساعت ۵ شد و پشت میز نشستم']]] },
+  quick: { t: 'فقط ۶۰ ثانیه', at: ['شروع ۶۰ ثانیه‌ای'],
+    p: 'برای روزی که هیچ‌چیز آماده نیست و حوصلهٔ جلسهٔ کامل نداری. فقط یک دقیقه روی اولین حرکت درس می‌مانی.',
+    steps: ['بنویس کدام درس: «ریاضی، مسئله‌های درصدِ صفحهٔ ۴۱».', 'یک دقیقه: صورت مسئلهٔ ۱ را بخوان و یک خط از آن بنویس.', 'زنگ که خورد آزادی: ادامه بدهی یا بایستی.'] },
+  window: { t: 'پنجرهٔ گوشی', at: ['پنجرهٔ گوشی'],
+    p: 'ده دقیقهٔ مشخص برای پیام‌ها و شبکه‌ها، بعد از جلسه. وقتی می‌دانی زمانش می‌رسد، وسط درس راحت‌تر کنارش می‌گذاری.' },
+
+  /* شروع‌نکردن و ثبت‌های دیگر */
+  obstacle: { t: 'شروع نمی‌کنم', at: ['الان از کار فاصله گرفته‌ام', 'مانع‌های پرتکرار'],
+    p: 'برای وقتی که از درس فرار می‌کنی. به‌جای «تنبلی»، مانعِ واقعیِ همین لحظه را پیدا می‌کنی و یک قدم کوچک برمی‌داری.',
+    steps: ['بنویس قرار بود چه کاری بکنی: «مسئله‌های درصدِ صفحهٔ ۴۱».', 'مانعی را که الان پررنگ‌تر است انتخاب کن.', 'اپ برای همان مانع یک گام کوچک می‌سازد؛ چند دقیقه فقط همان را انجام بده.'] },
+  obstep: { t: 'گام ورودی', at: ['گام ورودی'],
+    p: 'یک کار خیلی کوچک و روشن روی همان درس، برای چند دقیقه. آن‌قدر کوچک که مانع زورش به آن نرسد.',
+    no: 'ریاضی را شروع کنم', yes: 'فقط داده‌های مسئلهٔ ۱ را روی کاغذ بنویسم' },
+  manual: { t: 'ثبت جلسهٔ بیرون از اپ', at: ['ثبت جلسه‌ای که گذشت'],
+    p: 'جلسه‌ای را که بیرون از اپ خوانده‌ای ثبت می‌کنی تا آمارت کامل بماند. تا چند دقیقه بعد از جلسه بنویس، نه آخر شب از روی حافظه.',
+    form: [[['چه خواندم؟', 'ریاضی، مسئله‌های درصدِ صفحهٔ ۴۱'], ['دقیقهٔ حضور', '۴۰'], ['دقیقهٔ واقعی', '۲۵'], ['یک نشانهٔ یادگیری', 'سه مسئلهٔ تخفیف را بدون نگاه به حل، حل کردم']]] },
+  pattern: { t: 'الگوی شکست‌های قبلی', at: ['الگوی شکست‌های قبلی'],
+    p: 'دو سه باری که برنامهٔ درسی را شروع کردی و رها شد کنار هم می‌گذاری تا ببینی هر بار کجا و چطور تمام شده.',
+    ex: 'هر بار با روزی شش ساعت شروع کردم، روز چهارم یک روز عقب افتادم و کلاً رها کردم.' },
+  myth: { t: 'قانون امروز', at: ['قانون امروز', 'قانون در برابر داده', 'قانون امروز را انتخاب نکرده‌ای'],
+    p: 'یک باور قدیمی دربارهٔ درس‌خواندن را فقط برای امروز کنار می‌گذاری و به‌جایش یک قانون «اگر، آنگاه» اجرا می‌کنی. آخر روز می‌نویسی واقعاً چه شد.',
+    form: [[['باور قدیمی', 'بدون حال خوب حتی یک مسئله هم حل نمی‌شود'], ['قانون امروز', 'اگر حوصله نداشتم، آنگاه فقط صورت مسئلهٔ ۱ را می‌خوانم'], ['واقعاً چه شد؟', 'بی‌حوصله شروع کردم و بعد از پنج دقیقه راه افتادم']]] },
+
+  /* زبانهٔ روند */
+  'tab-trends': { t: 'صفحهٔ روند', p: 'اینجا نتیجهٔ جلسه‌ها را می‌بینی، نه ساعتِ نشستن پای درس.',
+    how: 'اول به «به هدف رسید» نگاه کن، نه به دقیقه‌ها. در بخش‌های میله‌ای، بلندترین میله همان چیزی است که اول باید درستش کنی.',
+    bars: [['در یک مرحلهٔ مشخص گیر کردم', 4], ['فرمول یادم نبود', 2], ['شکافی نبود', 1]], cap: 'نمونه: شکاف‌های یک هفته مسئلهٔ درصد. اول سراغ بلندترین برو.' },
+  week7: { t: 'هفت روز گذشته', at: ['هفت روز گذشته'],
+    p: 'در هفت روز گذشته چند جلسه را با آزمون کتاب‌بسته سنجیده‌ای و در چندتا به هدف رسیده‌ای.',
+    how: 'عدد وسط مهم‌ترین عدد اپ است. اگر جلسه زیاد است ولی «به هدف رسید» کم، هدف‌ها را کوچک‌تر بنویس.' },
+  blocks: { t: 'بلوک‌ها و دقیقه‌ها', at: ['بلوک‌ها و دقیقه‌ها'],
+    p: 'چند بلوک را تا آخر رفتی، چندتا را وسط کار رها کردی، و از کل زمانِ حضور چند دقیقه واقعاً درگیر بودی؛ کنار عدد هفتهٔ قبل.',
+    how: 'دقیقه ورودی است، نه نمره. اگر رهاشده‌ها از تمام‌شده‌ها بیشتر است، بلوک را کوتاه‌تر بچین.' },
+  envstart: { t: 'محیط و شروع', at: ['محیط و شروع'],
+    p: 'شروع چقدر طول می‌کشد و جلسه چقدر دوام می‌آورد؛ چیزهایی که ساعتِ پای میز نشان نمی‌دهد.',
+    ex: 'دقیقه تا خط اول: ۸. یعنی از نشستن تا خواندن صورت مسئلهٔ ۱ هشت دقیقه رفته؛ آخر هر جلسه «نقطهٔ فرود» را بچین تا کم شود.' },
+  feelvs: { t: 'حس در برابر آزمون', at: ['حس تو در برابر آزمون'],
+    p: 'در چند جلسه حدسِ قبل از آزمون با نتیجهٔ واقعی یکی بود. اگر کم است، یعنی حسِ «بلدم» هنوز راهنمای خوبی نیست و باید به آزمون تکیه کنی.' },
+  causes: { t: 'علت وقفه‌ها', at: ['علت وقفه‌ها', 'مقصد پرش‌ها'],
+    p: 'چیزهایی که وسط جلسه حواست را برده‌اند، به ترتیب تکرار. از همان ثبت‌های «حواسم پرید» ساخته می‌شود.',
+    bars: [['گوشی', 5], ['یک فکر', 3], ['سروصدا', 1]], cap: 'نمونه. فقط بلندترین میله را درست کن؛ اینجا یعنی جای گوشی.' },
+  signs: { t: 'نشانه‌های جاافتادن', at: ['نشانه‌های جاافتادن'],
+    p: 'فهرست عادت‌هایی که اپ می‌خواهد در تو جا بیفتد، با پیشرفت هر کدام.', how: 'بسته است تا صفحه خلوت بماند. هر وقت خواستی بازش کن.' },
+
+  /* زبانهٔ آزمایش */
+  'tab-lab': { t: 'آزمایش یعنی چه؟', p: 'هر آزمایش یک تمرین چندروزه برای حل یک مشکل مشخص است، مثل دیر شروع‌کردن یا حواس‌پرتی.',
+    steps: ['یکی را که به مشکلِ الانت می‌خورد باز کن.', 'چند روز همان را اجرا و ثبت کن؛ کارِ هر روزش بالای صفحهٔ امروز می‌آید.', 'آخرش عددها را کنار خط پایه ببین و بگو جواب داد یا نه.'],
+    how: 'لازم نیست همه را انجام بدهی. هم‌زمان یکی کافی است.' },
+  'lab-baseline': { t: 'سه روز ثبت واقعی', p: 'قبل از هر تغییری می‌بینی الان واقعاً چقدر و چطور درس می‌خوانی. برنامه روی عدد واقعی ساخته می‌شود، نه روی تصویری که از خودت داری.',
+    steps: ['سه روز مثل همیشه درس بخوان و چیزی را عوض نکن.', 'بعد از هر جلسه چند عدد کوتاه ثبت کن.', 'آخرش یک پروفایل از نقطهٔ شروعت می‌گیری.'], bars: EX_REAL, cap: 'نمونهٔ یک ثبت: ۲۵ دقیقه حضور، ۱۶ دقیقهٔ واقعی.' },
+  'lab-env': { t: 'بازطراحی محیط مطالعه', p: 'میز، نور، صدا و جای گوشی را یک‌بار درست می‌چینی و اثرش را با عدد می‌بینی. اتاق رؤیایی لازم نیست.',
+    steps: ['خط پایه: سه عدد از آخرین جلسهٔ معمولی.', 'ممیزی: شش عامل را یکی‌یکی ببین و همان روز اصلاح کن.', 'چند جلسه بعد، همان سه عدد را دوباره بسنج.'] },
+  'lab-digital': { t: 'هفت روز محیط دیجیتال', p: 'اعلان‌ها و دسترسی به گوشی را طوری می‌چینی که وسط درس مزاحم نشوند. یک‌بار سیستم را می‌سازی، بعد فقط اجرا می‌کنی.',
+    steps: ['روز اول: خط پایه، سه ستون، ساخت سیستم و قاعدهٔ جلسه.', 'شش روز بعد: فقط اجرا و بعد از هر جلسه یک ثبت کوتاه.', 'روز هفتم: عددها را کنار خط پایه ببین.'] },
+  'lab-time': { t: 'معماری زمان', p: 'ساعت‌های روز با هم برابر نیستند. کار سنگین را در ساعت اوجت می‌گذاری، با برآورد واقعی و یک نسخهٔ کوچکِ جایگزین.',
+    steps: ['چند روز «خواب و انرژی» را ثبت کن تا نقشهٔ انرژی ساخته شود.', 'هر شب، پنج دقیقه: کار اولِ فردا، بهترین ساعت، نسخهٔ کوچک.', 'فردا شب بررسی کن کار اول کجا انجام شد.'], form: [EX_TPLAN] },
+  'lab-loop': { t: 'حلقهٔ سبک برنامه', p: 'برنامه‌ریزی را سبک نگه می‌دارد: برنامه، اجرا، ثبت، بررسی، اصلاح. روزی پنج دقیقه، هفته‌ای بیست.',
+    steps: ['هر روز: یک کارت با یک کار اصلی.', 'آخر روز: ثبت کوتاه که چه شد و چقدر طول کشید.', 'هر هفته: جلسهٔ بیست‌دقیقه‌ای و دقیقاً یک اصلاح.'], how: 'چهارده روز پشت‌سرهم. کارتِ ناتمامِ قابل‌اجرا از کارتِ کاملِ اجرانشده بهتر است.' },
+  'lab-start': { t: 'ورود کوچک', p: 'برای کسی که شروع‌کردن برایش سخت است. مشکل خواستن نیست؛ فاصلهٔ «الان شروع می‌کنم» تا اولین کار واقعی روی درس است.',
+    steps: ['الگوی فعلی: سه بار اخیر، از قرار تا اولین کار چند دقیقه شد؟', 'هفت روز، هر روز یک ورود پنج‌دقیقه‌ای روی حرکت اول.', 'روز هفتم: نسخهٔ شخصیِ شروعت را در یک جمله بنویس.'], form: [EX_IF] },
+  'lab-attn': { t: 'نقشهٔ توجه', p: '«تمرکز ندارم» چند چیز متفاوت است. اول می‌بینی وسط جلسه توجهت واقعاً کجاست؛ درمان بعد.',
+    steps: ['سه جلسه با زنگ بی‌صدا، روی همان درس این روزها.', 'با هر زنگ فقط یکی را بزن: تمرکز کاری، شبه‌تمرکز، حواس‌پرتی.', 'بعد از جلسهٔ سوم، مسئلهٔ اصلی و فقط یک تغییر کوچک.'],
+    bars: [['تمرکز کاری', 15], ['شبه‌تمرکز', 6], ['حواس‌پرتی', 4]], cap: 'نمونه: یک جلسهٔ ۲۵ دقیقه‌ای روی مسئله‌های تخفیف.' },
+  'lab-ramp': { t: 'رمپ ورود', p: 'برای وقتی که پشت میز نشسته‌ای ولی وارد کار سخت نمی‌شوی. ورود را با خروجی می‌سنجی، نه با حس.',
+    steps: ['پارک: بلندترین فکر مزاحم را بنویس و کنار بگذار.', 'بارگذاری: چند دقیقه با آسان‌ترین لبهٔ همین کار؛ مثل نوشتن داده‌های مسئلهٔ ۱.', 'قفل: تا پایان بلوک فقط همین کار.', 'بررسی میانی و یک ردّ دیدنی روی کاغذ.'], how: 'چهار بلوک. بعد از بلوک چهارم می‌بینی در چندتا واقعاً وارد شدی.' },
+  'lab-keep': { t: 'لنگر، پارک، بازگشت', p: 'حواس‌پرتی قرار است بیاید. یاد می‌گیری زود ببینی‌اش و با یک حرکت برگردی.',
+    list: [['لنگر', 'قدم بعدی، نوشته جلوی چشمت: «مقدار تخفیفِ مسئلهٔ ۲».'], ['پارک', 'فکر مزاحم را روی برگه می‌نویسی و زمانش را می‌گذاری: «پیام گروه، بعد از جلسه».'], ['بازگشت', 'با یک عمل برمی‌گردی سر همان قدمِ نوشته‌شده.']], how: 'سه جلسه. هدف صفرشدنِ حواس‌پرتی نیست؛ ارزان‌شدنِ برگشتن است.' },
+  'lab-fmt': { t: 'قالب جلسه', p: 'پیدا می‌کنی برای هر نوع کار، جلسهٔ کوتاه بهتر جواب می‌دهد یا بلند.',
+    steps: ['یک نوع کارِ پرتکرار را بنویس: «حل مسئلهٔ ریاضی».', 'سه جلسه با همان نوع کار و یک قالب ثابت.', 'قاعدهٔ تصمیم می‌گوید همین قالب بماند، کوتاه‌تر شود یا بلندتر.'] },
+  'lab-myths': { t: 'افسانه یا داده؟', p: 'باورهای قدیمی‌ات دربارهٔ درس‌خواندن را با تجربهٔ خودت محک می‌زنی. باور با استدلال عوض نمی‌شود؛ با چند روز شاهد عوض می‌شود.',
+    steps: ['هر روز فقط یک باور انتخاب کن.', 'یک قانون «اگر، آنگاه» به‌جایش بگذار و یک جلسه با آن بخوان.', 'آخر روز بنویس واقعاً چه شد.'],
+    form: [[['باور قدیمی', 'بدون حال خوب حتی یک مسئله هم حل نمی‌شود'], ['قانون امروز', 'اگر حوصله نداشتم، آنگاه فقط صورت مسئلهٔ ۱ را می‌خوانم'], ['واقعاً چه شد؟', 'بی‌حوصله شروع کردم و بعد از پنج دقیقه راه افتادم']]] },
+  'lab-reread': { t: 'دوباره‌خوانی در برابر بازیابی', p: 'خودت می‌بینی دوباره‌خواندن بهتر جواب می‌دهد یا از حفظ نوشتن؛ با یک عدد از عملکرد خودت.',
+    steps: ['دو متن کوتاهِ هم‌اندازه انتخاب کن.', 'یکی را دو بار بخوان؛ دیگری را یک بار بخوان، ببند و از حفظ بنویس.', 'فردا، بدون مرور، از هر دو آزمون بده و نمره‌ها را مقایسه کن.'] },
+  base: { t: 'خط پایه', at: ['خط پایه', 'الگوی فعلی'],
+    p: 'چند عدد از وضعیت فعلی، قبل از هر تغییری. بدون این، بعداً نمی‌شود فهمید تغییر اثر کرده یا نه.',
+    ex: 'آخرین جلسهٔ معمولیِ ریاضی: ۳ بار بلندشدن، ۵ بار دست به گوشی، ۸ دقیقه تا خط اول.' },
+  audit: { t: 'ممیزی شش عامل', at: ['ممیزی شش عامل'],
+    p: 'شش چیزِ محیط را یکی‌یکی نگاه می‌کنی: الان چطور است و همین امروز چه تغییری لازم دارد.',
+    form: [[['عامل', 'میدان دید و سطح میز'], ['وضعیت فعلی', 'گوشی، لیوان و سه کتاب دیگر روی میز'], ['تغییر لازم امروز', 'فقط کتاب ریاضی، دفتر تمرین و مداد بماند']]], how: 'با همین وسایلی که داری؛ کل کار حداکثر ۴۵ دقیقه.' },
+  cols: { t: 'سه ستون', at: ['سه ستون'],
+    p: 'هر برنامه، سایت یا نوع پیام فقط یکی از سه برچسب را می‌گیرد؛ تنظیم اعلان‌ها از روی همین است.',
+    list: [['فوری', 'فقط همین‌ها از حالت تمرکز رد می‌شوند؛ مثل تماس مادر و پدر. اگر شک داری، فوری نیست.'], ['تأخیرپذیر', 'اعلان لحظه‌ای ندارد؛ دو سه نوبت مشخص در روز. مثل گروه کلاس.'], ['غیرضروری', 'اعلان کاملاً بسته و بیرون از صفحهٔ اول گوشی.']] },
+  rule: { t: 'قاعدهٔ جلسه', at: ['قاعدهٔ جلسه'],
+    p: 'سه تصمیم که یک‌بار می‌گیری تا هر جلسه از نو با گوشی چانه نزنی. اپ همین قاعده را بالای فرم هر جلسه یادت می‌آورد.',
+    form: [[['جای گوشی من هنگام مطالعه', 'کشوی اتاق کناری'], ['کسانی که اجازه دارند فوری برسند', 'مادر و پدر'], ['زمان مجاز بعدی برای پیام و شبکه', 'ده دقیقه بعد از هر جلسه']]] },
+  energy: { t: 'نقشهٔ انرژی', at: ['نقشهٔ انرژی'],
+    p: 'از ثبت‌های «خواب و انرژی» هفت روز اخیر ساخته می‌شود و نشان می‌دهد کدام بازهٔ روز اوجِ توست و کدام فرود.',
+    bars: EX_ENERGY, cap: 'نمونه: اوج صبح، فرود شب. مسئله‌های درصد صبح؛ مرتب‌کردن جزوه شب.' },
+  capacity: { t: 'ظرفیت واقعی', at: ['ظرفیت واقعی'],
+    p: 'چند دقیقه در روز واقعاً کار مؤثر می‌کنی، از روی جلسه‌های ثبت‌شده؛ نه عددی که دلت می‌خواهد. سقف برنامهٔ فردا حدود هفتاد درصدِ همین است.',
+    ex: 'دیروز ۶۰ و امروز ۸۰ دقیقهٔ مؤثر داشتی؛ سقف فردا حدود ۵۰ دقیقه است. ده مسئلهٔ درصد در آن جا می‌شود، بیست تا نه.' },
+  coef: { t: 'ضریب خطا', at: ['ضریب خطای من'],
+    p: 'کارها معمولاً بیشتر از تخمین طول می‌کشند. این عدد می‌گوید برای تو چند برابر.',
+    ex: 'تخمین زدی ده مسئلهٔ درصد ۴۰ دقیقه است و ۶۰ دقیقه شد: ضریب ۱٫۵. دفعهٔ بعد تخمینت را در ۱٫۵ ضرب کن.' },
+  profile: { t: 'پروفایل نقطهٔ شروع', at: ['پروفایل مطالعهٔ من', 'پروفایل نقطهٔ شروع آماده است'],
+    p: 'خلاصهٔ عددهای واقعیِ همین چند روز: روزی چند دقیقه واقعاً می‌خوانی، بلندترین تمرکزت چقدر است و چه چیزی بیشتر قطعت می‌کند. قدم‌های بعدی روی همین ساخته می‌شود.' },
+  peak: { t: 'پنجرهٔ اوج', at: ['پنجرهٔ اوج'], p: 'بازه‌ای از روز که معمولاً بیشترین انرژی را داری. کار سنگین اینجا می‌نشیند و در این بازه فقط همان کار.', form: [EX_TPLAN, 1] },
+  alt: { t: 'پنجرهٔ جایگزین', at: ['پنجرهٔ جایگزین'], p: 'اگر پنجرهٔ اوج از دست رفت، همین بازه جایش را می‌گیرد؛ از قبل معلوم، تا روز از دست نرود.', form: [EX_TPLAN, 2] },
+  small: { t: 'نسخهٔ کوچک', at: ['نسخهٔ کوچکِ همان کار'], p: 'کوچک‌ترین شکلِ همان کار، برای روز بد. انجامش یعنی روز صفر نشده.', form: [EX_TPLAN, 3] },
+  firststep: { t: 'نقطهٔ شروع', at: ['نقطهٔ شروع'], p: 'اولین عملِ خیلی مشخص. فقط شروع را معلوم کن، نه برنامهٔ دقیقه‌به‌دقیقه را.', no: 'ریاضی را شروع می‌کنم', form: [EX_TPLAN, 4] },
+  heavy: { t: 'کار سنگین', at: ['فقط یک کار سنگین'], p: 'همان یک کاری که اگر فقط خودش درست انجام شود، روز باخته نیست. کاری که بیشترین فکر را می‌خواهد، نه طولانی‌ترین کار.', form: [EX_TPLAN, 0] },
+  estimate: { t: 'برآورد زمان', at: ['زمانش را از کجا می‌دانم؟'],
+    p: 'برآورد از روی آخرین باری که کار مشابهی کردی دقیق‌تر از حدس است. اگر سابقه نداری، حدس اولت را بنویس؛ اپ بعداً با زمان واقعی مقایسه‌اش می‌کند.',
+    ex: 'دفعهٔ قبل پنج مسئلهٔ تخفیف ۳۰ دقیقه شد؛ پس ده مسئله حدود ۶۰ دقیقه است، نه ۴۰.' },
+  criteria: { t: 'از کجا بفهمم جواب داده؟', at: ['می‌توانم با عدد جواب بدهم؟', 'سیستم کار می‌کند؟', 'حلقه بسته می‌شود؟', 'تشخیص به کار می‌آید؟', 'شروع قابل‌اعتماد شده؟', 'ورود تکرارپذیر شده؟', 'بازگشت ارزان شده؟', 'قالب جا افتاده؟ شش جلسه', 'نشانه‌های هفت روز اخیر'],
+    p: 'هر آزمایش چند نشانهٔ شمردنی دارد. هر کدام که پر شود، تیک می‌خورد. وقتی بیشترشان پر شد، آن عادت جا افتاده و می‌توانی سراغ آزمایش بعدی بروی.',
+    how: 'اگر بعد از اجرای کامل هنوز پر نشده، مشکل از تو نیست؛ گره جای دیگری است و اپ همان‌جا می‌گوید کجا.' },
+  snag: { t: 'چیزی درست کار نمی‌کند؟', at: ['چیزی درست کار نمی‌کند؟', 'جواب نداد؟'],
+    p: 'اگر آزمایش آن‌طور که باید پیش نمی‌رود، نزدیک‌ترین وضعیت را از فهرست انتخاب کن؛ اپ برای همان یک پیشنهاد مشخص می‌دهد.' },
+
+  /* زبانهٔ کتاب */
+  'tab-book': { t: 'زبانهٔ کتاب', p: 'متن کامل فصل‌های کتاب، بی‌هیچ تغییری؛ برای وقتی که می‌خواهی خودِ فصل را بخوانی، نه اینکه تمرینش را اجرا کنی.',
+    how: 'روی یک فصل بزن و بخوان. با فهرست بالای فصل به هر بخش می‌پری. اپ یادش می‌ماند تا کجا خوانده‌ای و دفعهٔ بعد از همان‌جا باز می‌کند.' },
+  pick: { t: 'کدام فصل را بخوانم؟', at: ['مشکلت در مطالعه چیست؟'],
+    p: 'مشکلت را در یکی دو جمله می‌نویسی و هوشواره از روی «مسئله» و «تشخیصِ» خودِ فصل‌ها می‌گوید کدام فصل برای همین مشکل است.',
+    ex: 'می‌نشینم سر مسئله‌های درصد ولی هر چند دقیقه گوشی را برمی‌دارم.', how: 'فقط با زدنِ دکمه یک درخواست کوتاه می‌رود.' },
+
+  /* زبانهٔ تنظیمات */
+  'tab-settings': { t: 'تنظیمات', p: 'ظاهر اپ، هشدار تایمر، هوشواره، حساب و داده‌ها. هیچ‌کدام برای شروع لازم نیست؛ اپ بدون دست‌زدن به این صفحه کامل کار می‌کند.' },
+  theme: { t: 'رنگ‌بندی', at: ['رنگ‌بندی'], p: 'فقط ظاهر اپ را عوض می‌کند: آبی و سرخ، یا سبز و طلایی؛ هر کدام روشن یا تیره.',
+    how: 'رنگ را از ردیف بالا و روشن یا تیره را از ردیف پایین انتخاب کن. «مثل گوشی» یعنی با حالت خودِ گوشی عوض شود. انتخابت روی همین گوشی می‌ماند.' },
+  notif: { t: 'هشدار پایان تایمر', at: ['هشدار پایان تایمر'], p: 'وقتی اپ در پس‌زمینه است، پایان تایمر را با یک اعلان خبر می‌دهد. بدون آن، تایمر فقط با صدا خبر می‌دهد.', how: 'یک‌بار «روشن‌کردن اعلان» را بزن.' },
+  ai: { t: 'هوشواره', at: ['هوشواره', 'نگاه هوشواره به این هفته'],
+    p: 'کمک‌یار اختیاری. مثلاً هدف مبهم را تیز می‌کند، نوشتهٔ کتاب‌بسته‌ات را با هدف می‌سنجد و هفته‌ات را تحلیل می‌کند. اپ بدون آن هم کامل است.',
+    no: 'درصد را بخوانم', yes: 'پنج مسئلهٔ تخفیفِ صفحهٔ ۴۱ را بدون نگاه به حل، خودم حل کنم',
+    how: 'کلید API را در تنظیمات وارد کن. فقط وقتی دکمه‌اش را بزنی درخواست می‌رود و روی ارزان‌ترین حالت تنظیم است.' },
+  account: { t: 'حساب', at: ['حساب'], p: 'داده‌هایت را روی اینترنت هم نگه می‌دارد تا با عوض‌شدن گوشی یا پاک‌شدن مرورگر از بین نرود. هر کس حساب و دادهٔ جدای خودش را دارد.',
+    how: 'یک‌بار با ایمیل و رمز حساب بساز. از آن به بعد خودش همگام می‌شود؛ روی گوشی دیگر فقط «ورود» را بزن.' },
+  data: { t: 'داده‌ها', at: ['داده‌ها'], p: 'بدون حساب، همه‌چیز فقط روی همین گوشی و همین مرورگر ذخیره می‌شود.', how: 'اگر حساب نداری، هر چند وقت یک فایل پشتیبان بگیر؛ با پاک‌شدن مرورگر، داده‌ها هم می‌روند.' },
+};
+const HELP_AT = {};
+for (const [k, h] of Object.entries(HELP)) for (const label of h.at || []) HELP_AT[label] = k;
+
+// علامت کوچک آموزش؛ کنار هر عنوان یا برچسبی که توضیح می‌خواهد
+const q = (k) => `<button type="button" class="q" data-help="${k}" aria-label="توضیح: ${HELP[k].t}">؟</button>`;
+
+// بعد از هر رندر، علامت را کنار عنوان‌ها و برچسب‌هایی می‌گذارد که ردیفی در HELP دارند
+function helpMarks() {
+  const a = A();
+  if (a?.kind === 'book') return;
+  const top = a ? '' : db.tab === 'lab' && db.lab !== 'hub' ? 'lab-' + db.lab : 'tab-' + db.tab;
+  if (HELP[top] && $('#app h1')) $('#app h1').insertAdjacentHTML('beforeend', q(top));
+  for (const el of document.querySelectorAll('#app h1, #app h2, #app legend, #app .field > span, #app summary > span')) {
+    const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
+    if (HELP_AT[own] && !el.querySelector('.q')) el.insertAdjacentHTML('beforeend', q(HELP_AT[own]));
+  }
+}
+
+const helpBars = (rows, cap) => {
+  const max = Math.max(...rows.map(([, n]) => n));
+  return `<div class="help-fig"><ul class="bars">${rows.map(([l, n], i) => `<li><span>${l}</span><i style="--w:${(n / max) * 100}%;--i:${i}"></i><b>${fa(n)}</b></li>`).join('')}</ul>${cap ? `<small>${cap}</small>` : ''}</div>`;
+};
+const helpHtml = (h) => `
+  <div class="help-back" data-help-close></div>
+  <div class="help-sheet" role="dialog" aria-modal="true" aria-labelledby="help-t" tabindex="-1">
+    <span class="help-tag">آموزش</span>
+    <h2 id="help-t">${h.t}</h2>
+    <p>${h.p}</p>
+    ${h.steps ? `<ol class="help-steps">${h.steps.map((s, i) => `<li><i>${fa(i + 1)}</i><span>${s}</span></li>`).join('')}</ol>` : ''}
+    ${h.list ? `<dl class="help-list">${h.list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>` : ''}
+    ${h.bars ? helpBars(h.bars, h.cap) : ''}
+    ${h.form ? `<div class="help-form"><span>نمونهٔ پرشده، از یک جلسهٔ ریاضی</span>${h.form[0].map(([l, v], i) => `<div${h.form[1] === i ? ' class="on"' : ''}><small>${l}</small><p>${v}</p></div>`).join('')}</div>` : ''}
+    ${h.no || h.yes ? `<div class="help-vs">${h.no ? `<p class="no"><b>مبهم</b>${h.no}</p>` : ''}${h.yes ? `<p class="yes"><b>دقیق</b>${h.yes}</p>` : ''}</div>` : ''}
+    ${h.ex ? `<div class="help-ex"><span>نمونه</span><p>${h.ex}</p></div>` : ''}
+    ${h.how ? `<p class="count">${h.how}</p>` : ''}
+    <button class="btn primary big" data-help-close>فهمیدم</button>
+  </div>`;
+
+// برگهٔ آموزش روی صفحه می‌نشیند و با «برگشت» گوشی هم بسته می‌شود
+let helpKey = null, helpTimer = 0, helpFrom = null;
+const helpEl = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'help', hidden: true }));
+
+function openHelp(k) {
+  if (!HELP[k]) return;
+  helpFrom = document.activeElement;
+  helpKey = k;
+  helpEl.innerHTML = helpHtml(HELP[k]);
+  helpEl.hidden = false;
+  document.body.classList.add('helping');
+  $('.help-sheet').focus();
+  // قدم‌ها یکی‌یکی روشن می‌شوند
+  const steps = [...helpEl.querySelectorAll('.help-steps li')];
+  clearInterval(helpTimer);
+  if (steps.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let i = 0;
+    steps[0].classList.add('on');
+    helpTimer = setInterval(() => { steps[i].classList.remove('on'); i = (i + 1) % steps.length; steps[i].classList.add('on'); }, 2200);
+  }
+}
+
+function closeHelp() {
+  if (!helpKey) return;
+  helpKey = null;
+  clearInterval(helpTimer);
+  helpEl.hidden = true;
+  helpEl.innerHTML = '';
+  document.body.classList.remove('helping');
+  if (helpFrom?.isConnected) helpFrom.focus({ preventScroll: true });
 }
 
 function viewSettings() {
@@ -3501,7 +3828,7 @@ function viewSettings() {
 /* ---------- رندر ---------- */
 
 const TABS = [['today', 'امروز'], ['trends', 'روند'], ['lab', 'آزمایش'], ['book', 'کتاب'], ['settings', 'تنظیمات']];
-const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, guide: viewGuide, book: viewBook };
+const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, book: viewBook };
 
 function render() {
   const a = A();
@@ -3512,10 +3839,8 @@ function render() {
   const view = a ? FLOWS[a.kind]
     : { today: viewToday, trends: viewTrends, lab: viewLab, book: viewBookTab, settings: viewSettings }[db.tab] || viewToday;
   const html = view();
-  // راهنما همه‌جا یک‌جور: دکمه بالای هر زبانه، توضیح کوتاه بالای هر آزمایش
-  app.innerHTML = a ? html
-    : db.tab === 'lab' && db.lab !== 'hub' && GUIDE_BY[db.lab] ? html.replace('</header>', '</header>' + tip(db.lab))
-    : html.replace('<header class="top">', '<header class="top">' + helpBtn(db.tab));
+  app.innerHTML = html;
+  helpMarks();
   document.body.classList.toggle('in-flow', !!a);
   document.body.classList.toggle('covered', !!$('.cover'));
   $('#tabs').innerHTML = a ? '' : tabs.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${l}</button>`).join('');
@@ -3527,11 +3852,11 @@ function render() {
 /* ---------- دکمهٔ برگشتِ گوشی ---------- */
 
 // هر قدم رو به جلو یک خانه در تاریخچهٔ مرورگر می‌گیرد تا «برگشت» همان یک قدم را برگرداند، نه اینکه اپ را ببندد.
-// عمق: امروز = ۰، زبانهٔ دیگر = ۱، یک آزمایشِ باز = ۲، و هر صفحهٔ بازشده (جلسه، راهنما، فصل کتاب) یکی بیشتر.
+// عمق: امروز = ۰، زبانهٔ دیگر = ۱، یک آزمایشِ باز = ۲، و هر صفحهٔ بازشده (جلسه، فصل کتاب) و برگهٔ آموزش یکی بیشتر.
 const depth = () => {
   let d = db.tab === 'today' ? 0 : db.tab === 'lab' && db.lab !== 'hub' ? 2 : 1;
   for (let a = A(); a; a = a.parent) d++;
-  return d;
+  return helpKey ? d + 1 : d;
 };
 let hist = history.state?.d || 0, histHold = false;
 history.scrollRestoration = 'manual';
@@ -3547,8 +3872,9 @@ function histSync() {
 
 // یک قدم به عقب، همان کاری که دکمهٔ برگشتِ خودِ صفحه می‌کند
 function backStep() {
+  if (helpKey) return closeHelp();
   if (A()) {
-    const b = $('#app .back:not(.help)');
+    const b = $('#app .back');
     return b ? b.click() : toast('از دکمه‌های همین صفحه ادامه بده.');
   }
   if (db.tab === 'lab' && db.lab !== 'hub') db.lab = 'hub'; else db.tab = 'today';
@@ -3608,7 +3934,6 @@ const actions = {
   tab: (el) => { db.tab = el.dataset.tab; if (el.dataset.view) db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
   'lab-view': (el) => { db.lab = el.dataset.view; render(); window.scrollTo(0, 0); },
 
-  guide: (el) => { db.guideSeen = true; open({ kind: 'guide', focus: el.dataset.focus }); },
   'guide-skip': () => { db.guideSeen = true; render(); },
   'new-session': () => open(newSession(fromLanding())),
   'start-study': () => {
@@ -4243,6 +4568,10 @@ function saveLanding() {
 const validScore = (v) => v !== '' && v != null && +v >= 0 && +v <= 10;
 
 document.addEventListener('click', (e) => {
+  const mark = e.target.closest('[data-help]');
+  // preventDefault تا علامتِ داخل برچسب یا عنوانِ تاشو، خودِ آن را فعال نکند
+  if (mark) { e.preventDefault(); openHelp(mark.dataset.help); return histSync(); }
+  if (e.target.closest('[data-help-close]')) closeHelp();
   const el = e.target.closest('[data-act]');
   if (el && actions[el.dataset.act]) actions[el.dataset.act](el);
   histSync();
@@ -4280,6 +4609,7 @@ document.addEventListener('toggle', (e) => {
 }, true);
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && helpKey) { closeHelp(); histSync(); }
   if (e.key === 'Enter' && e.target.id === 'urge') actions.urge();
 });
 

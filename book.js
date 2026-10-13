@@ -215,16 +215,16 @@ function viewBookTab() {
   bookLoad();
   const last = db.book.last && !db.book[db.book.last]?.done ? book.chapters[db.book.last] : null;
   return `
-    <header class="top"><h1>کتاب مطالعه مؤثر</h1><p>متن کامل فصل‌ها، همان‌طور که نوشته شده‌اند.</p></header>
+    <header class="top"><h1>کتاب مطالعه مؤثر</h1><p>متن کامل ${fa(BOOK_COUNT)} فصل.</p></header>
     ${book.state !== 'ready' ? bkWait() : `
     ${bookAsk()}
-    ${last && bkPct(last.n) > 0 ? `<button class="btn big primary" data-act="book-open" data-ch="${last.n}">ادامهٔ ${last.label}</button>` : ''}
+    ${last && bkPct(last.n) > 0 ? `<button class="btn big primary" data-act="book-open" data-ch="${last.n}">${ic('book')}ادامهٔ ${last.label}</button>` : ''}
     <ul class="bk-shelf">${Object.values(book.chapters).map((c) => {
       const pct = bkPct(c.n);
       return `<li><button class="bk-ch${pct === 100 ? ' done' : ''}" data-act="book-open" data-ch="${c.n}">
         <i aria-hidden="true">${fa(c.n)}</i>
         <span><small>${c.label} · حدود ${fa(c.mins)} دقیقه</small><b>${esc(c.title)}</b>
-          <em>${pct === 100 ? 'خوانده شد' : pct ? `${fa(pct)}٪ خوانده‌ای` : 'هنوز نخوانده‌ای'}</em></span>
+          ${pct ? `<em>${pct === 100 ? 'خوانده شد' : `${fa(pct)}٪ خوانده‌ای`}</em>` : ''}</span>
         <u style="--w:${pct}%"></u>
       </button></li>`;
     }).join('')}</ul>`}`;

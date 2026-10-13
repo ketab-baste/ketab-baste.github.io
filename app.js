@@ -812,8 +812,8 @@ function weekSigns() {
 // انتخاب ظاهر مال همین دستگاه است؛ جدا از داده‌ها می‌ماند. [نام، رنگ نوار مرورگر، سه رنگ نمونه]
 const THEME_KEY = 'ketab-baste-theme';
 const THEMES = {
-  blue: ['آبی و سرخ', '#16233f', ['#16233f', '#c2334d', '#f9fafb']],
-  green: ['سبز و طلایی', '#14432f', ['#14432f', '#c9a227', '#ffffff']],
+  blue: ['آبی و سرخ', '#eef1f7', ['#131c40', '#2843d6', '#cf2f4c']],
+  green: ['سبز و طلایی', '#f4f3ea', ['#0f3626', '#17734a', '#c9a227']],
 };
 const MODE_KEY = 'ketab-baste-mode';
 const MODES = { auto: 'مثل گوشی', light: 'روشن', dark: 'تیره' };
@@ -826,7 +826,7 @@ function applyTheme() {
   const root = document.documentElement.dataset;
   if (theme === 'blue') delete root.theme; else root.theme = theme;
   root.mode = mode === 'auto' ? (sysDark.matches ? 'dark' : 'light') : mode;
-  document.querySelector('meta[name="theme-color"]').content = THEMES[theme][1];
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || THEMES[theme][1];
 }
 applyTheme();
 sysDark.addEventListener('change', applyTheme);
@@ -1025,6 +1025,40 @@ function aiPart(task, label) {
 /* ---------- تکه‌های مشترک رابط ---------- */
 
 const A = () => db.active;
+// آیکن‌های خطی؛ همه با یک ضخامت و یک قاب ۲۴ تایی
+const ICONS = {
+  today: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  trends: '<path d="M4 4v16h16"/><path d="M8 15l3.5-4.5 3.5 2.5L20 7"/>',
+  lab: '<path d="M9 3h6M10 3v6l-5.4 9.4A1.7 1.7 0 0 0 6.1 21h11.8a1.7 1.7 0 0 0 1.5-2.6L14 9V3"/><path d="M7.6 15h8.8"/>',
+  book: '<path d="M12 7v14"/><path d="M3 18V5a1 1 0 0 1 1-1h4a4 4 0 0 1 4 3 4 4 0 0 1 4-3h4a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-5a3 3 0 0 0-3 2 3 3 0 0 0-3-2H4a1 1 0 0 1-1-1z"/>',
+  settings: '<path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h7M17 18h3"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="14" cy="18" r="2.2"/>',
+  play: '<path d="M8 5v14l11-7z" fill="currentColor"/>',
+  bolt: '<path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/>',
+  wall: '<circle cx="12" cy="12" r="9"/><path d="M5.7 5.7l12.6 12.6"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  recall: '<path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  lamp: '<path d="M8.5 3h7l3.5 8h-14z"/><path d="M12 11v9M8 21h8"/>',
+  scale: '<path d="M12 4v17M8 21h8M5 7h14"/><path d="M5 7l-2.6 6a2.8 2.8 0 0 0 5.2 0zM19 7l-2.6 6a2.8 2.8 0 0 0 5.2 0z"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  door: '<path d="M14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M9 16l4-4-4-4M13 12H3"/>',
+  ramp: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  anchor: '<circle cx="12" cy="5" r="2"/><path d="M12 7v14M9 11h6M4 13a8 8 0 0 0 16 0"/>',
+  frame: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 10h18M9 20V10"/>',
+  loop: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+  sheet: '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',
+  park: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+  pencil: '<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  go: '<path d="M14.5 6l-6 6 6 6"/>',
+  spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+};
+const ic = (name) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+const tile = (name) => `<i class="ic-tile">${ic(name)}</i>`;
 // بخش‌های تاشو: هرچه برای قدم بعدی لازم نیست بسته می‌ماند
 const folds = {};
 const fold = (key, title, inner, openByDefault = false, sub = '') => `
@@ -1175,13 +1209,13 @@ function viewToday() {
           <div><b>${esc(s.subject)}</b><span>${esc(s.goal)}</span></div>
           <button class="btn" data-act="retrieve" data-id="${s.id}">بازیابی کن</button>
         </div>`).join('')}
-    </section>` : ''],
+    </section>` : '', 'recall'],
     [3, expDue ? `
     <section class="due">
       <h2>نوبت دوم آزمایش رسیده</h2>
       <p>بدون هیچ مروری، همان پنج سؤال هر دو متن را دوباره جواب بده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="reread">ثبت نمره‌های امروز</button>
-    </section>` : ''],
+    </section>` : '', 'lab'],
     [5, b && baseRunning(b) ? `
     <section class="due">
       <h2>ثبت واقعی، روز ${fa(baseDayNo(b))} از ${fa(b.days)}</h2>
@@ -1192,7 +1226,7 @@ function viewToday() {
       <h2>پروفایل نقطهٔ شروع آماده است</h2>
       <p>عددهای واقعی این چند روز کنار هم چیده شده.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="baseline">دیدن پروفایل</button>
-    </section>` : ''],
+    </section>` : '', 'sheet'],
     [4, m ? `
     <section class="due">
       <h2>قانون امروز</h2>
@@ -1205,7 +1239,7 @@ function viewToday() {
       <h2>قانون امروز را انتخاب نکرده‌ای</h2>
       <p>روز ${fa(mythDays() + 1)} از ۷. فقط یک افسانه، فقط برای امروز.</p>
       <button class="btn" data-act="new-myth">انتخاب قانون امروز</button>
-    </section>` : ''],
+    </section>` : '', 'scale'],
     [[9, 10], tp && !tp.done ? `
     <section class="due">
       <h2>کار اول امروز</h2>
@@ -1225,13 +1259,13 @@ function viewToday() {
       <h2>فردا را امشب بچین</h2>
       <p>فقط سه تصمیم: کار اول، بهترین پنجره، نسخهٔ کوچک.</p>
       <button class="btn" data-act="new-tplan">طراحی فردا</button>
-    </section>` : ''],
+    </section>` : '', 'clock'],
     [10, db.loop && !weekNow() ? `
     <section class="due">
       <h2>جلسهٔ هفتگی، بیست دقیقه</h2>
       <p>اول بررسی هفتهٔ قبل، بعد سه خروجی و دقیقاً یک اصلاح.</p>
       <button class="btn" data-act="new-week">شروع جلسهٔ هفتگی</button>
-    </section>` : ''],
+    </section>` : '', 'loop'],
     [0, sl && slDay <= 7 && !didStart(today()) ? `
     <section class="due">
       <h2>ورود کوچک، روز ${fa(slDay)} از ۷</h2>
@@ -1242,76 +1276,75 @@ function viewToday() {
       <h2>هفت روزِ ورود کوچک تمام شد</h2>
       <p>عددها را کنار خط پایه ببین و نسخهٔ شخصی شروعت را بنویس.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="start">تحلیل روز هفتم</button>
-    </section>` : ''],
+    </section>` : '', 'door'],
     [11, at && atN < 3 ? `
     <section class="due">
       <h2>نقشهٔ توجه، جلسهٔ ${fa(atN + 1)} از ۳</h2>
       <p>همان درس این روزها، با زنگ هر پنج دقیقه. فقط ببین و نام بگذار.</p>
       <button class="btn" data-act="attn-session">شروع جلسه با نقشه</button>
-    </section>` : ''],
+    </section>` : '', 'eye'],
     [0, db.ramp && rampList().length < 4 ? `
     <section class="due">
       <h2>رمپ ورود، بلوک ${fa(rampList().length + 1)} از ۴</h2>
       <p>پارک، واحد کار، بارگذاریِ زمان‌دار، قفل. ورود را با خروجی بسنج، نه با حس.</p>
       <button class="btn" data-act="ramp-session">شروع بلوک با رمپ</button>
-    </section>` : ''],
+    </section>` : '', 'ramp'],
     [0, db.keep && keepList().length < 3 ? `
     <section class="due">
       <h2>لنگر، پارک، بازگشت؛ جلسهٔ ${fa(keepList().length + 1)} از ۳</h2>
       <p>حواس‌پرتی می‌آید. فقط زود ببین و با یک عمل برگرد.</p>
       <button class="btn" data-act="keep-session">شروع جلسه با برگهٔ پارک</button>
-    </section>` : ''],
+    </section>` : '', 'anchor'],
     [0, db.fmtLab && fmtList().length < 3 ? `
     <section class="due">
       <h2>قالب جلسه، ${fa(fmtList().length + 1)} از ۳</h2>
       <p>${has(db.fmtLab.type) ? `نوع کار: ${esc(db.fmtLab.type)}. ` : ''}همان قالب، بدون تغییر وسط جلسه؛ بعدش یک خط ثبت.</p>
       <button class="btn" data-act="fmt-session">شروع جلسهٔ این نوع کار</button>
-    </section>` : ''],
+    </section>` : '', 'frame'],
     [8, dig && !dig.wrap ? `
     <section class="due">
       <h2>${baseDayNo(dig) <= 7 ? `محیط دیجیتال، روز ${fa(baseDayNo(dig))} از ۷` : 'جمع‌بندی هفتهٔ دیجیتال'}</h2>
       <p>${baseDayNo(dig) > 7 ? 'هفت روز گذشت. عددها را کنار خط پایه ببین.'
         : has(dig.rule?.place) ? `گوشی: ${esc(dig.rule.place)}${has(dig.rule.next) ? `. چک بعدی: ${esc(dig.rule.next)}` : ''}` : 'این هفته چیزی به سیستم اضافه نکن؛ فقط اجرا و ثبت.'}</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="digital">${baseDayNo(dig) > 7 ? 'جمع‌بندی' : 'کاربرگ هفت روز'}</button>
-    </section>` : ''],
+    </section>` : '', 'phone'],
     [7, envLeft ? `
     <section class="due">
       <h2>بازطراحی محیط، ${fa(envLeft)} عامل مانده</h2>
       <p>با همین وسایلی که داری. اگر کش آمده، با همین وضعیت یک جلسهٔ کوتاه بخوان.</p>
       <button class="btn" data-act="tab" data-tab="lab" data-view="env">ادامهٔ ممیزی</button>
-    </section>` : ''],
+    </section>` : '', 'lamp'],
   ].filter(([, html]) => html);
-  const dues = allDues.filter(([c]) => chAny(c)).map(([, html]) => html), hiddenDues = allDues.length - dues.length;
+  const dues = allDues.filter(([c]) => chAny(c)).map(([, html, icon]) => html.replace('<h2>', '<h2>' + tile(icon))), hiddenDues = allDues.length - dues.length;
   const R = chOn(0);
   return `
-    <header class="top">
-      <p class="date">${dateFa(Date.now())}</p>
+    <header class="brand"><b>ویر</b><span>${dateFa(Date.now())}</span></header>
+
+    <section class="hero">
       <h1>اگر همین الان منبع را ببندی، چه چیزی در ذهنت می‌ماند؟</h1>
-    </header>
+      <div class="with-q"><button class="btn primary big" data-act="new-session">${ic('play')}شروع جلسهٔ مطالعه</button>${q('start')}</div>
+      ${R || chOn(2) ? `<div class="row eq">${R ? `<button class="btn" data-act="new-quick">${ic('bolt')}فقط ۶۰ ثانیه</button>` : ''}${chOn(2) ? `<button class="btn" data-act="new-obstacle">${ic('wall')}شروع نمی‌کنم</button>` : ''}</div>` : ''}
+      ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
+      ${R && has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
+    </section>
 
     ${chChips()}
 
     ${db.guideSeen ? '' : `
     <section class="due">
-      <h2>هر جا این علامت را دیدی، بزن${q('first')}</h2>
-      <p>کنار هر بخشی که توضیح می‌خواهد همین علامت هست. همان تکه را کوتاه و با یک نمونهٔ پرشده توضیح می‌دهد.</p>
-      <div class="row acts"><button class="btn" data-help="first">ویر در سه قدم</button><button class="btn quiet" data-act="guide-skip">فهمیدم</button></div>
+      <h2>${tile('spark')}هر جا «؟» دیدی، بزن${q('first')}</h2>
+      <p>همان تکه را کوتاه و با یک نمونهٔ پرشده توضیح می‌دهد.</p>
+      <div class="row acts"><button class="btn primary" data-help="first">ویر در سه قدم</button><button class="btn quiet" data-act="guide-skip">فهمیدم</button></div>
     </section>`}
 
+    ${dues.length ? `<div class="sec-title"><h2>کارهای امروز</h2><span>${fa(dues.length)} کار</span></div>` : ''}
     ${dueStack(dues)}
-    ${hiddenDues ? `<p class="fine">${fa(hiddenDues)} کار امروز مال فصل‌هایی است که الان انتخاب نکرده‌ای. <button class="btn link" data-act="ch" data-ch="all">همه را نشان بده</button></p>` : ''}
-
-    <section class="start">
-      <div class="with-q"><button class="btn primary big" data-act="new-session">شروع جلسهٔ مطالعه</button>${q('start')}</div>
-      ${R || chOn(2) ? `<div class="row eq">${R ? '<button class="btn quiet" data-act="new-quick">فقط ۶۰ ثانیه</button>' : ''}${chOn(2) ? '<button class="btn quiet" data-act="new-obstacle">شروع نمی‌کنم</button>' : ''}</div>` : ''}
-      ${R || chOn(7) ? `      ${db.landing ? `<p class="count">نقطهٔ ورود بعدی${has(db.landing.subject) ? ` از ${esc(db.landing.subject)}` : ''}: ${has(db.landing.when) ? `اگر ${esc(db.landing.when)}، آنگاه ` : ''}${esc(db.landing.text)}</p>` : ''}
-      ${R && has(sl?.recipe) ? `<p class="count">نسخهٔ شروع من: ${esc(sl.recipe)}</p>` : ''}` : ''}
-    </section>
+    ${hiddenDues ? `<p class="fine">${fa(hiddenDues)} کار دیگر مال فصل‌هایی است که انتخاب نکرده‌ای. <button class="btn link" data-act="ch" data-ch="all">همه را نشان بده</button></p>` : ''}
 
     ${R && openParked().length ? `
     <section>
       <h2>برگهٔ پارک</h2>
-      <p class="fine">چیزهایی که وسط جلسه کنار گذاشتی. تا آخر امروز: انجام، زمان دقیق، یا حذف.</p>
+      <p class="fine">تا آخر امروز: انجام، زمان دقیق، یا حذف.</p>
       ${parkSheet(openParked())}
     </section>` : ''}
 
@@ -1323,28 +1356,35 @@ function viewToday() {
           <div class="log-head"><b>${esc(p.subject)}</b><span class="tag">${fa(p.minutes)} دقیقه</span></div>
           <p>${esc(p.goal)}</p>
           <small>اگر ${esc(p.ifWhen)}، آنگاه ${esc(p.ifThen)}</small>
-          <div class="row acts"><button class="btn" data-act="plan-start" data-id="${p.id}">الان همان لحظه است</button><button class="btn quiet" data-act="plan-drop" data-id="${p.id}">حذف</button></div>
+          <div class="row acts"><button class="btn primary" data-act="plan-start" data-id="${p.id}">الان همان لحظه است</button><button class="btn quiet" data-act="plan-drop" data-id="${p.id}">حذف</button></div>
         </li>`).join('')}</ul>
     </section>` : ''}
 
     ${R || chOn(5) || chOn(9) ? `<section>
       <h2>خواب و انرژی</h2>
-      ${d ? `<p class="count">${sleepHours(d) != null ? `${fa1(sleepHours(d))} ساعت خواب` : 'ساعت خواب ثبت نشده'}${d.quality ? `، کیفیت ${fa(d.quality)} از ۵` : ''}${[d.e1, d.e2, d.e3, d.e4].some(Boolean) ? `، انرژی ${[d.e1, d.e2, d.e3, d.e4].map((e, i) => (e ? `${SLOTS[i]} ${fa(e)}` : '')).filter(Boolean).join('، ')}` : ''}</p>` : '<p class="empty">سوختِ امروز را هم اندازه بگیر، نه فقط اراده را.</p>'}
-      <button class="btn big" data-act="new-day">${d ? 'تکمیل ثبت امروز' : 'ثبت خواب و انرژی امروز'}</button>
+      ${d ? `<p class="count">${sleepHours(d) != null ? `${fa1(sleepHours(d))} ساعت خواب` : 'ساعت خواب ثبت نشده'}${d.quality ? `، کیفیت ${fa(d.quality)} از ۵` : ''}${[d.e1, d.e2, d.e3, d.e4].some(Boolean) ? `، انرژی ${[d.e1, d.e2, d.e3, d.e4].map((e, i) => (e ? `${SLOTS[i]} ${fa(e)}` : '')).filter(Boolean).join('، ')}` : ''}</p>` : ''}
+      <button class="btn big quiet" data-act="new-day">${ic('moon')}${d ? 'تکمیل ثبت امروز' : 'ثبت خواب و انرژی امروز'}</button>
     </section>` : ''}
 
     <section>
       <h2>جلسه‌های امروز</h2>
-      ${todays.length ? `<ul class="log">${todays.map(sessionRow).join('')}</ul>` : `<p class="empty">هنوز جلسه‌ای ثبت نشده. اولین جلسه را با یک خروجی کوچک شروع کن.</p>`}
-      ${R || chOn(5) ? '<button class="btn link" data-act="new-manual">بدون اپ درس خواندم؛ همین حالا ثبتش کن</button>' : ''}
+      ${todays.length ? `<ul class="log">${todays.map(sessionRow).join('')}</ul>` : `<p class="empty">هنوز جلسه‌ای ثبت نشده.</p>`}
+      ${R || chOn(5) ? `<button class="btn big quiet" data-act="new-manual">${ic('pencil')}بدون اپ درس خواندم</button>` : ''}
     </section>`;
 }
 
-const chChips = () => `
-  <div class="chips" role="group" aria-label="ابزارهای کدام فصل؟">
-    ${q('chapters')}<button data-act="ch" data-ch="all" aria-pressed="${!db.chapters.length}">همه</button>${CHAPTERS.map(([n, t]) => `
-    <button data-act="ch" data-ch="${n}" aria-pressed="${db.chapters.includes(n)}">${n ? `فصل ${fa(n)} · ` : ''}${t}</button>`).join('')}
-  </div>`;
+// انتخاب فصل: یک ردیفِ بسته که با زدن باز می‌شود
+const chChips = () => {
+  const on = db.chapters, label = !on.length ? 'همهٔ فصل‌ها' : on.length === 1 ? (on[0] ? `فصل ${fa(on[0])}` : CHAPTERS.find(([n]) => n === on[0])[1]) : `${fa(on.length)} فصل`;
+  return `
+  <details class="fold chf" data-fold="chf"${folds.chf ? ' open' : ''}>
+    <summary><span>${ic('filter')}ابزارهای <b>${label}</b>${q('chapters')}</span></summary>
+    <div class="chips" role="group" aria-label="ابزارهای کدام فصل؟">
+      <button data-act="ch" data-ch="all" aria-pressed="${!on.length}">همه</button>${CHAPTERS.map(([n, t]) => `
+      <button data-act="ch" data-ch="${n}" aria-pressed="${on.includes(n)}">${n ? `${fa(n)} · ` : ''}${t}</button>`).join('')}
+    </div>
+  </details>`;
+};
 
 const sessionRow = (s) => `
   <li>
@@ -2205,33 +2245,34 @@ function viewLab() {
   const b = db.baseline, e = db.experiment, en = db.env, dg = db.digital;
   const sl = db.startLab, at = db.attn, atN = at ? db.sessions.filter((s) => s.ping && s.date >= at.start).length : 0;
   const tp = planFor(tomorrowKey()) || planFor(today());
+  const LAB_IC = { baseline: 'sheet', env: 'lamp', digital: 'phone', time: 'clock', loop: 'loop', start: 'door', attn: 'eye', ramp: 'ramp', keep: 'anchor', fmt: 'frame', myths: 'scale', reread: 'recall' };
   const card = (view, title, text, status) => !labOn(view) ? [false, ''] : [status !== 'شروع نشده', `
-    <li><button class="lab-row" data-act="lab-view" data-view="${view}">
-      <b>${title}</b>${status !== 'شروع نشده' ? `<span class="tag">${status}</span>` : ''}
-      <small>${text}</small>
+    <li><button class="lab-row${status !== 'شروع نشده' ? ' on' : ''}" data-act="lab-view" data-view="${view}">
+      ${tile(LAB_IC[view])}<b>${title}</b>
+      <small>${status !== 'شروع نشده' ? `<span class="tag">${status}</span>` : text}</small>${ic('go')}
     </button></li>`];
   const cards = [
-    card('baseline', 'سه روز ثبت واقعی', 'قبل از هر برنامه‌ای، ببین الان دقیقاً کجا ایستاده‌ای.',
+    card('baseline', 'سه روز ثبت واقعی', 'ببین الان دقیقاً کجا ایستاده‌ای.',
       !b ? 'شروع نشده' : baseRunning(b) ? `روز ${fa(baseDayNo(b))} از ${fa(b.days)}` : 'پروفایل آماده است'),
-    card('env', 'بازطراحی محیط مطالعه', 'یک‌بار میز، نور، صدا و جای گوشی را بچین و اثرش را با عدد ببین.',
+    card('env', 'بازطراحی محیط مطالعه', 'میز، نور، صدا و جای گوشی.',
       !en ? 'شروع نشده' : auditLeft(en) ? `${fa(auditLeft(en))} عامل مانده` : 'ممیزی کامل شد'),
-    card('digital', 'هفت روز محیط دیجیتال', 'اعلان، دسترسی و حالت مطالعه را یک‌بار بچین؛ بعد فقط اجرا و ثبت.',
+    card('digital', 'هفت روز محیط دیجیتال', 'اعلان، دسترسی و حالت مطالعه.',
       !dg ? 'شروع نشده' : dg.wrap ? 'هفته جمع‌بندی شد' : `روز ${fa(Math.min(7, baseDayNo(dg)))} از ۷`),
-    card('time', 'معماری زمان', 'کار سنگین در ساعت اوج، با برآورد واقعی و یک نسخهٔ کوچکِ جایگزین.',
+    card('time', 'معماری زمان', 'کار سنگین در ساعت اوج.',
       tp ? `کار اولِ ${dayWord(tp)} قفل شده` : db.tplans.length ? 'کار اول فردا نوشته نشده' : 'شروع نشده'),
-    card('loop', 'حلقهٔ سبک برنامه', 'کارت پنج‌دقیقه‌ای، ثبت نودثانیه‌ای و هفته‌ای یک اصلاح؛ چهارده روز.',
+    card('loop', 'حلقهٔ سبک برنامه', 'کارت روزانه و هفته‌ای یک اصلاح.',
       !db.loop ? 'شروع نشده' : !weekNow() ? 'جلسهٔ هفتگی مانده' : `روز ${fa(Math.min(14, baseDayNo(db.loop)))} از ۱۴`),
-    card('start', 'ورود کوچک', 'فاصلهٔ «الان شروع می‌کنم» تا اولین کار واقعی را هفت روز اندازه بگیر و کوتاه کن.',
+    card('start', 'ورود کوچک', 'فاصلهٔ تصمیم تا اولین کار واقعی.',
       !sl ? 'شروع نشده' : baseDayNo(sl) > 7 ? 'تحلیل روز هفتم' : `روز ${fa(baseDayNo(sl))} از ۷`),
-    card('attn', 'نقشهٔ توجه', 'سه جلسه فقط ببین و نام بگذار: تمرکز کاری، شبه‌تمرکز یا حواس‌پرتی.',
+    card('attn', 'نقشهٔ توجه', 'توجهت وسط جلسه واقعاً کجاست؟',
       !at ? 'شروع نشده' : atN >= 3 ? 'خط پایه آماده است' : `${fa(atN)} جلسه از ۳`),
-    card('ramp', 'رمپ ورود', 'نشسته‌ای ولی وارد نشده‌ای؟ چهار بلوک: پارک، بارگذاری، قفل و بررسی میانی.',
+    card('ramp', 'رمپ ورود', 'نشسته‌ای ولی وارد کار نشده‌ای؟',
       !db.ramp ? 'شروع نشده' : rampList().length >= 4 ? 'تحلیل چهار بلوک' : `${fa(rampList().length)} بلوک از ۴`),
-    card('keep', 'لنگر، پارک، بازگشت', 'سه جلسه: پرش را زود ببین و ارزان برگرد؛ هدف صفرِ حواس‌پرتی نیست.',
+    card('keep', 'لنگر، پارک، بازگشت', 'پرش را زود ببین و ارزان برگرد.',
       !db.keep ? 'شروع نشده' : keepList().length >= 3 ? 'جمع‌بندی سه جلسه' : `${fa(keepList().length)} جلسه از ۳`),
-    card('fmt', 'قالب جلسه', 'کوتاه، پومودورو، بلوک عمیق یا انعطاف‌پذیر؟ برای هر نوع کار، پیش‌فرض خودت را پیدا کن.',
+    card('fmt', 'قالب جلسه', 'کوتاه، پومودورو یا بلوک عمیق؟',
       !db.fmtLab ? 'شروع نشده' : fmtList().length >= 3 ? 'قاعدهٔ تصمیم آماده است' : `${fa(fmtList().length)} جلسه از ۳`),
-    card('myths', 'هفت روز «افسانه یا داده؟»', 'هر روز یک باور قدیمی را با یک قانون «اگر، آنگاه» محک بزن.',
+    card('myths', 'هفت روز «افسانه یا داده؟»', 'هر روز یک باور قدیمی را محک بزن.',
       db.mythWrap ? 'هفته جمع‌بندی شد' : db.myths.length ? `${fa(Math.min(7, mythDays()))} روز از ۷` : 'شروع نشده'),
     card('reread', 'دوباره‌خوانی در برابر بازیابی', 'دو متن، دو روش، یک روز فاصله.',
       !e ? 'شروع نشده' : e.later ? 'نتیجه آماده است' : 'منتظر نوبت دوم'),
@@ -2239,9 +2280,9 @@ function viewLab() {
   const on = cards.filter(([started]) => started).map(([, html]) => html), off = cards.filter(([started, html]) => !started && html).map(([, html]) => html);
   return `
     <header class="top"><h1>آزمایش روی خودت</h1>
-      <p>هر آزمایش یک تمرین چندروزه است. هم‌زمان یکی کافی است.</p></header>
-    ${on.length ? `<section><h2>شروع‌کرده‌ای</h2><ul class="lab-list">${on.join('')}</ul></section>` : ''}
-    ${off.length ? `<section><h2>${on.length ? 'بقیهٔ آزمایش‌ها' : 'یکی را انتخاب کن'}</h2><ul class="lab-list">${off.join('')}</ul></section>` : ''}`;
+      <p>تمرین‌های چندروزه. هم‌زمان یکی کافی است.</p></header>
+    ${on.length ? `<div class="sec-title"><h2>در جریان</h2><span>${fa(on.length)} آزمایش</span></div><ul class="lab-list">${on.join('')}</ul>` : ''}
+    ${off.length ? `<div class="sec-title"><h2>${on.length ? 'بقیهٔ آزمایش‌ها' : 'یکی را انتخاب کن'}</h2></div><ul class="lab-list">${off.join('')}</ul>` : ''}`;
 }
 
 
@@ -3776,19 +3817,18 @@ function viewSettings() {
     </section>
     <section>
       <h2>هشدار پایان تایمر</h2>
-      <p>${perm === 'granted' ? 'اعلان روشن است. وقتی اپ در پس‌زمینه باز باشد، پایان تایمر را خبر می‌دهد.'
+      <p class="count">${perm === 'granted' ? 'اعلان روشن است. وقتی اپ در پس‌زمینه باز باشد، پایان تایمر را خبر می‌دهد.'
         : perm === 'denied' ? 'اعلان در تنظیمات مرورگر مسدود شده است. از همان‌جا می‌توانی آزادش کنی.'
         : perm === 'unsupported' ? 'این مرورگر اعلان ندارد. تایمر با صدا و لرزش خبر می‌دهد.'
         : 'تایمر با صدا خبر می‌دهد. برای وقتی که اپ در پس‌زمینه است، اعلان را روشن کن.'}</p>
       ${perm === 'default' ? '<button class="btn big" data-act="notif">روشن‌کردن اعلان</button>' : ''}
-      <p class="fine">یادآور «بازیابی فردا» با بازکردن اپ نشان داده می‌شود. برای یادآور سر ساعت، بعد از هر جلسه آن را به تقویم گوشی اضافه کن.</p>
     </section>
     <section>
       <h2>هوشواره</h2>
-      <p>${aiCfg.key ? 'روشن است. هر جا دکمه‌اش را ببینی، فقط با زدنِ خودت یک درخواست کوتاه می‌رود.' : 'اختیاری است و اپ بدون آن کامل کار می‌کند. با کلید API کلاود روشن می‌شود.'}</p>
+      <p class="count">${aiCfg.key ? 'روشن است. فقط با زدنِ خودت درخواست می‌رود.' : 'اختیاری؛ با کلید API کلاود روشن می‌شود.'}</p>
       <label class="field"><span>کلید API کلاود</span>
         <input type="password" data-ai="key" value="${esc(aiCfg.key)}" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" dir="ltr">
-        <small>از console.anthropic.com بگیر. فقط روی همین دستگاه می‌ماند، وارد فایل پشتیبان نمی‌شود و فقط به خودِ Anthropic فرستاده می‌شود.</small></label>
+        <small>از console.anthropic.com بگیر. فقط روی همین دستگاه می‌ماند.</small></label>
       ${aiCfg.key ? `<div class="field"><span>مدل</span>${pick('data-ai', 'model', Object.entries(AI_MODELS).map(([k, v]) => [k, v[0]]), aiCfg.model, 'مدل هوشواره')}
         <small>Haiku برای همهٔ کارهای این اپ کافی است و حدود بیست برابر از Sonnet ارزان‌تر.</small></div>
       <div class="field"><span>سقف درخواست در روز</span>${pick('data-ai', 'cap', [[10, '۱۰'], [30, '۳۰'], [100, '۱۰۰']], aiCfg.cap, 'سقف روزانه')}</div>
@@ -3808,7 +3848,7 @@ function viewSettings() {
       <button class="btn big danger" data-act="acc-out">خروج از حساب</button>
     </section>` : `<section>
       <h2>حساب</h2>
-      <p>اختیاری است. با حساب، داده‌هایت روی اینترنت هم نگه داشته می‌شود و روی هر گوشی که وارد شوی همان را می‌بینی.</p>
+      <p class="count">اختیاری؛ داده‌هایت روی هر گوشی که وارد شوی همراهت است.</p>
       <label class="field"><span>ایمیل</span><input type="email" id="acc-email" autocomplete="email" spellcheck="false" dir="ltr"></label>
       <label class="field"><span>رمز</span><input type="password" id="acc-pass" autocomplete="current-password" dir="ltr">
         <small>دست‌کم ۶ نویسه.</small></label>
@@ -3818,7 +3858,7 @@ function viewSettings() {
     </section>`}
     <section>
       <h2>داده‌ها</h2>
-      <p>${acc.uid ? 'داده‌ها هم روی این دستگاه است و هم در حسابت. بدون اینترنت هم کار می‌کند و بعداً همگام می‌شود.' : 'همه‌چیز فقط روی همین دستگاه و همین مرورگر ذخیره می‌شود.'}</p>
+      <p class="count">${acc.uid ? 'روی این دستگاه و در حسابت. بدون اینترنت هم کار می‌کند.' : 'همه‌چیز فقط روی همین دستگاه ذخیره می‌شود.'}</p>
       <button class="btn big" data-act="export">گرفتن فایل پشتیبان</button>
       <label class="btn big file">بازگرداندن از فایل پشتیبان<input type="file" accept="application/json" data-import hidden></label>
       <button class="btn big danger" data-act="wipe">پاک‌کردن همهٔ داده‌ها</button>
@@ -3830,6 +3870,22 @@ function viewSettings() {
 const TABS = [['today', 'امروز'], ['trends', 'روند'], ['lab', 'آزمایش'], ['book', 'کتاب'], ['settings', 'تنظیمات']];
 const FLOWS = { session: viewSession, obstacle: viewObstacle, retrieval: viewRetrieval, day: viewDay, manual: viewManual, pattern: viewPattern, myth: viewMyth, tplan: viewTplan, window: viewWindow, quick: viewQuick, week: viewWeek, rest: viewRest, book: viewBook };
 
+// در صفحه‌های گام‌به‌گام، فیلدهای پشت‌سرهم روی یک کارت می‌نشینند
+const FORM_CORE = '.field, .hint, .check, .choice, .grid2, .scale, .ifthen, .stepper', FORM_SOFT = '.fine, .count, .advice, .ai-box, .btn.ai';
+function groupFields(app) {
+  let run = [], held = [];
+  const flush = () => {
+    if (run.length) { const box = document.createElement('section'); box.className = 'form'; run[0].before(box); box.append(...run); }
+    run = []; held = [];
+  };
+  for (const el of [...app.children]) {
+    if (el.matches(FORM_CORE)) { run.push(...held, el); held = []; }
+    else if (run.length && el.matches(FORM_SOFT)) held.push(el);
+    else flush();
+  }
+  flush();
+}
+
 function render() {
   const a = A();
   const app = $('#app');
@@ -3840,10 +3896,12 @@ function render() {
     : { today: viewToday, trends: viewTrends, lab: viewLab, book: viewBookTab, settings: viewSettings }[db.tab] || viewToday;
   const html = view();
   app.innerHTML = html;
+  if (a && a.kind !== 'book') groupFields(app);
   helpMarks();
+  paintTimer();
   document.body.classList.toggle('in-flow', !!a);
   document.body.classList.toggle('covered', !!$('.cover'));
-  $('#tabs').innerHTML = a ? '' : tabs.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${l}</button>`).join('');
+  $('#tabs').innerHTML = a ? '' : tabs.map(([k, l]) => `<button data-act="tab" data-tab="${k}"${db.tab === k ? ' aria-current="page"' : ''}>${ic(k)}${l}</button>`).join('');
   if (a && a.kind === 'book') bookMount();
   save();
   histSync();
@@ -4626,11 +4684,21 @@ document.addEventListener('change', (e) => {
 
 /* ---------- تایمر ---------- */
 
+// حلقهٔ دور تایمر: سهمِ زمانِ مانده. طول بازه از اولین باری که همان پایان دیده شد حساب می‌شود
+const timerSpan = {};
+function paintTimer(el = $('[data-timer]')) {
+  if (!el) return;
+  const end = +el.dataset.timer, left = end - Date.now(), a = A();
+  const full = a && a.endsAt === end && a.startedAt < end ? end - a.startedAt : (timerSpan[end] ||= Math.max(left, 1));
+  el.style.setProperty('--p', Math.min(1, Math.max(0, left / full)).toFixed(4));
+}
+
 setInterval(() => {
   const el = $('[data-timer]');
   if (!el) return;
   const left = +el.dataset.timer - Date.now();
   el.textContent = clock(left);
+  paintTimer(el);
   const a = A();
   if (left <= 0 && a && !a.rang) {
     const cap = a.kind === 'tplan' ? 'پنج دقیقه تمام شد. قلم زمین؛ همین را قفل کن.' : a.kind === 'week' ? 'بیست دقیقه تمام شد. برنامهٔ ناتمامِ قابل‌اجرا کافی است.' : '';
